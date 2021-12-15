@@ -1,4 +1,4 @@
-import { HtmlHTMLAttributes, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Container } from "react-bootstrap";
 import ReactMarkdown from "react-markdown"
 import RemarkMathPlugin from 'remark-math';
@@ -32,7 +32,7 @@ function TextCell(props: TextCellProps) {
     textarea.style.height = (textarea.scrollHeight + 5).toString() + 'px'
   }
 
-  /* adapt textareas height to its content after going to edit mode */
+  /* adapt textarea's height to its content after going to edit mode */
   useEffect(() => {
     if (editing) {
       const txt = contentEl.current;
