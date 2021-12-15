@@ -1,14 +1,11 @@
-import React from 'react';
-import { Container } from "react-bootstrap";
+import { createEmbeddedApp } from '../../EmbeddedApps';
 
 export interface AppCellProps {
-  type?: string
+  type: string
 }
 
 function AppCell(props: AppCellProps) {
-  return (
-    <Container>App cell of type: '{props.type}'</Container>
-  )
+  return createEmbeddedApp(props.type)()
 }
 
 export default AppCell;

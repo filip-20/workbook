@@ -25,7 +25,10 @@
     "rehype-katex": "^6.0.2",
     "remark-math": "^5.1.1",
     "typescript": "^4.5.2",
-    "web-vitals": "^1.1.2"
+    "web-vitals": "^1.1.2",
+    "resolution-editor": "github:4zzz/resolution-editor",
+    "tableaueditor": "github:4zzz/tableauEditor",
+    "fol-graphexplorer": "github:4zzz/structure-explorer"
   },
   "scripts": {
     "start": "react-scripts start",

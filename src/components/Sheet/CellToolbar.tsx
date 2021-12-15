@@ -1,7 +1,9 @@
-import { Button, ButtonGroup, ButtonToolbar, Col, Container, Dropdown, DropdownButton, Row } from "react-bootstrap";
+import { Button, ButtonGroup, ButtonToolbar, Dropdown, DropdownButton } from "react-bootstrap";
 import { ArrowDown, ArrowUp, Plus, Trash } from "react-bootstrap-icons";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { insertTextCell, insertAppCell, removeCell, moveUpCell, moveDownCell, selectFirstCellId, selectLastCellId } from "./sheetSlice";
+import { embeddedApps } from "../../EmbeddedApps";
+
 
 export interface CellToolbarProps {
   cellId?: number,
@@ -34,9 +36,7 @@ function CellToolbar(props: CellToolbarProps) {
       <ButtonGroup onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave} className="me-2" size="sm">
         <Button variant="secondary" onClick={() => dispatch(insertTextCell('some content', props.cellId!!))}><Plus /> Text</Button>
         <DropdownButton size="sm" variant="secondary" as={ButtonGroup} title={<><Plus /> App</>}>
-          <Dropdown.Item onClick={() => dispatch(insertAppCell('app1', '{}', props.cellId!!))} size="sm">app1</Dropdown.Item>
-          <Dropdown.Item onClick={() => dispatch(insertAppCell('app2', '{}', props.cellId!!))} size="sm">app2</Dropdown.Item>
-          <Dropdown.Item onClick={() => dispatch(insertAppCell('app3', '{}', props.cellId!!))} size="sm">app3</Dropdown.Item>
+          {embeddedApps.map( app => <Dropdown.Item onClick={() => dispatch(insertAppCell(app.typeName, '{}', props.cellId!!))} size="sm">{app.name}</Dropdown.Item>)}
         </DropdownButton>
       </ButtonGroup>
     )
