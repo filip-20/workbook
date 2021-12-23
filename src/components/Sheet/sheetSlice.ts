@@ -4,7 +4,7 @@ import { RootState } from '../../store/store'
 export interface Cell {
   id: number,
   type: string,
-  data: string,
+  data: any,
 }
 
 export interface SheetState {
@@ -47,6 +47,12 @@ export const sheetSlice = createSlice({
         updateFirstLastCellId(state);
       }
     },
+    updateCellData: (state, action: PayloadAction<{cellId: number, data: any}>) => {
+      const index = state.cells.findIndex((cell) => cell.id === action.payload.cellId);
+      if (index !== -1) {
+        state.cells[index].data = action.payload.data
+      }
+    },
     moveUpCell: (state, action: PayloadAction<number>) => {
       const cellId = action.payload
       const index = state.cells.findIndex((cell) => cell.id === cellId);
@@ -82,9 +88,9 @@ function updateFirstLastCellId(state: SheetState) {
 }
 
 /* Actions */
-export const { insertCell, removeCell, moveUpCell, moveDownCell } = sheetSlice.actions;
+export const { insertCell, removeCell, updateCellData, moveUpCell, moveDownCell } = sheetSlice.actions;
 export const insertTextCell = (text: string, afterId: number) => insertCell({ afterId, type: 'text', data: text })
-export const insertAppCell = (type: string, state: string, afterId: number) => insertCell({ afterId, type, data: state })
+export const insertAppCell = (type: string, state: any, afterId: number) => insertCell({ afterId, type, data: state })
 /* Selectors */
 export const selectCells = (state: RootState) => state.sheet.cells;
 export const selectFirstCellId = (state: RootState) => state.sheet.firstCellId;
