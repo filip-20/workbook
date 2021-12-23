@@ -36,7 +36,7 @@ function CellToolbar(props: CellToolbarProps) {
       <ButtonGroup onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave} className="me-2" size="sm">
         <Button variant="secondary" onClick={() => dispatch(insertTextCell('some content', props.cellId!!))}><Plus /> Text</Button>
         <DropdownButton size="sm" variant="secondary" as={ButtonGroup} title={<><Plus /> App</>}>
-          {embeddedApps.map( app => <Dropdown.Item onClick={() => dispatch(insertAppCell(app.typeName, '{}', props.cellId!!))} size="sm">{app.name}</Dropdown.Item>)}
+          {embeddedApps.map( app => <Dropdown.Item key={app.typeName} onClick={() => dispatch(insertAppCell(app.typeName, null, props.cellId!!))} size="sm">{app.name}</Dropdown.Item>)}
         </DropdownButton>
       </ButtonGroup>
     )
