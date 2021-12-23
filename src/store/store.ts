@@ -12,7 +12,8 @@ export const store = configureStore({
 });
 
 store.subscribe(()=>{
-  localStorage.setItem('reduxState', JSON.stringify(store.getState()))
+  console.log('Saving state as JSON string');
+  localStorage.setItem('reduxState', JSON.stringify(store.getState()));
 })
 
 export type AppDispatch = typeof store.dispatch;
