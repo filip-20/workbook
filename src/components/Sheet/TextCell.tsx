@@ -5,16 +5,20 @@ import RemarkMathPlugin from 'remark-math';
 import 'katex/dist/katex.min.css';
 import styles from './TextCell.module.css'
 import rehypeKatex from "rehype-katex";
+import { useAppDispatch } from "../../store/hooks";
+import { updateCellData } from "./sheetSlice";
 
 export interface TextCellProps {
-  text?: string
+  cellId: number,
+  text?: string,
 }
 
-const defaultProps: TextCellProps = {
-  text: ''
+const defaultProps: {text: string} = {
+  text: '',
 }
 
 function TextCell(props: TextCellProps) {
+  const dispatch = useAppDispatch();
   const [content, setContent] = useState(props.text!!);
   const [editing, setEditing] = useState(false);
   const contentEl = useRef<HTMLTextAreaElement>(null);
@@ -27,9 +31,17 @@ function TextCell(props: TextCellProps) {
     setEditing(!editing);
   }
 
+  /* updates textarea's height based on content  */
   const updateTextAreaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = 'auto';
     textarea.style.height = (textarea.scrollHeight + 5).toString() + 'px'
+  }
+
+  const onContentChange = (target: HTMLTextAreaElement) => {
+    setContent(target.value);
+    dispatch(updateCellData({cellId: props.cellId, data: content}));
+    /* update textarea's height while typing */
+    updateTextAreaHeight(target);
   }
 
   /* adapt textarea's height to its content after going to edit mode */
@@ -43,7 +55,7 @@ function TextCell(props: TextCellProps) {
   });
 
   const editCell = () => {
-    return (<textarea ref={contentEl} className={styles.textedit} onChange={e => {setContent(e.target.value); updateTextAreaHeight(e.target)}} value={content}></textarea>)
+    return (<textarea ref={contentEl} className={styles.textedit} onChange={e => onContentChange(e.target)} value={content}></textarea>)
   }
 
   const displayCell = () => {

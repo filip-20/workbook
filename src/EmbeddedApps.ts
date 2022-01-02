@@ -1,32 +1,52 @@
-import { AppModule as appResolutionEditor } from 'resolution-editor'
-import { AppModule as appStructureExplorer } from 'fol-graphexplorer'
-import { AppModule as appTableauEditor } from 'tableaueditor'
+import ResolutionEditor from 'resolution-editor'
+import StructureExplorer from 'resolution-editor'
+import TableauEditor from 'resolution-editor'
 
-const embeddedApps =
+interface PrepareResult {
+  instance: any,
+  getState: (instance: any) => any,
+}
+type PrepareFunction = (
+  initialState: any
+) => PrepareResult
+
+interface EmeddedApp {
+  name: string,
+  typeName: string,
+  prepare: PrepareFunction,
+  AppComponent: (props: any) => JSX.Element,
+}
+
+const embeddedApps: EmeddedApp[] = 
   [
     {
       name: 'Resolution editor',
       typeName: 'resolutionEditor',
-      appModule: appResolutionEditor,
+      ...
+      ResolutionEditor
     },
     {
       name: 'Structure explorer',
       typeName: 'structureExplorer',
-      appModule: appStructureExplorer,
+      ...
+      StructureExplorer
     },
     {
       name: 'Tableau editor',
       typeName: 'tableauEditor',
-      appModule: appTableauEditor,
+      ...
+      TableauEditor
     },
   ]
 
+var appType2AppInfo: { [key: string]: EmeddedApp} = {};
 
-const appTypeNameToMod: { [key: string]: () => JSX.Element } = {}
-embeddedApps.map(app => appTypeNameToMod[app.typeName] = app.appModule )
+embeddedApps.forEach( app => {
+  appType2AppInfo[app.typeName] = app
+});
 
-function createEmbeddedApp(typeName: string): () => JSX.Element {
-  return appTypeNameToMod[typeName];
+function getAppInfo(typeName: string): EmeddedApp {
+  return appType2AppInfo[typeName];
 }
 
-export { embeddedApps, createEmbeddedApp }
+export { embeddedApps, getAppInfo }

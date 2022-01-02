@@ -18,17 +18,17 @@ function Sheet() {
     )
   }
 
-  const createCell = (type: string, data: string) => {
+  const createCell = (id: number, type: string, data: any) => {
     if (type === 'text') {
-      return (<TextCell text={data}/>)
+      return (<TextCell cellId={id} text={data}/>)
     } else {
-      return (<AppCell type={type} />)
+      return (<AppCell cellId={id} type={type} initialState={data} />)
     }
   }
 
   return (
     <Container>
-      {cells.map(cell => <CellWrapper key={cell.id} cellId={cell.id}>{createCell(cell.type, cell.data)}</CellWrapper>)}
+      {cells.map(cell => <CellWrapper key={cell.id} cellId={cell.id}>{createCell(cell.id, cell.type, cell.data)}</CellWrapper>)}
       {cells.length === 0 ? displayToolbar() : ''}
     </Container>
   )
