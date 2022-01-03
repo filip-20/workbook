@@ -10,12 +10,8 @@ export interface CellToolbarProps {
   addGroup?: boolean,
   removeGroup?: boolean,
   moveGroup?: boolean,
-
-  onMouseEnter?: () => void
-  onMouseLeave?: () => void
-  onMouseMove?: () => void
-
-  style?: React.CSSProperties
+  onDropdownToggled?: (isOpen: boolean) => void,
+  style?: React.CSSProperties,
 }
 
 const defaultProps: CellToolbarProps = {
@@ -33,9 +29,9 @@ function CellToolbar(props: CellToolbarProps) {
 
   const addGroup = () => {
     return (
-      <ButtonGroup onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave} className="me-2" size="sm">
+      <ButtonGroup className="me-2" size="sm">
         <Button variant="secondary" onClick={() => dispatch(insertTextCell('some content', props.cellId!!))}><Plus /> Text</Button>
-        <DropdownButton size="sm" variant="secondary" as={ButtonGroup} title={<><Plus /> App</>}>
+        <DropdownButton onToggle={(isOpen, evt) => props.onDropdownToggled?.call(null, isOpen)} size="sm" variant="secondary" as={ButtonGroup} title={<><Plus /> App</>}>
           {embeddedApps.map( app => <Dropdown.Item key={app.typeName} onClick={() => dispatch(insertAppCell(app.typeName, null, props.cellId!!))} size="sm">{app.name}</Dropdown.Item>)}
         </DropdownButton>
       </ButtonGroup>

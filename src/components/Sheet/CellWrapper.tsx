@@ -9,8 +9,25 @@ type CellWrapperProps = {
 };
 
 function CellWrapper(props: CellWrapperProps) {
-  const [addToolbarHovered, setAddToolbarHovered] = useState(false);
+  const [addToolbarVisible, setAddToolbarVisible] = useState(false);
   const [cellHovered, setCellHovered] = useState(false);
+  
+  console.log('CellWrapper function called')
+
+  const [addToolbarHovered, setAddToolbarHovered] = useState(false);
+  const [dropdownOpened, setDropdownOpened] = useState(false);
+  
+  const toggleVisibility = (toolbarHovered: boolean, dropdownOpened: boolean) => {
+    setAddToolbarHovered(toolbarHovered);
+    setDropdownOpened(dropdownOpened);
+
+    if (dropdownOpened || toolbarHovered) {
+      setAddToolbarVisible(true);
+    } else {
+      setAddToolbarVisible(false);
+    }
+  }
+
   return (
     <>
       <Container
@@ -22,13 +39,14 @@ function CellWrapper(props: CellWrapperProps) {
         {props.children}
       </Container>
       <Container
-        onMouseEnter={() => setAddToolbarHovered(true)}
-        onMouseLeave={() => setAddToolbarHovered(false)}
+        onMouseEnter={() => toggleVisibility(true, dropdownOpened)}
+        onMouseLeave={() => toggleVisibility(false, dropdownOpened)}
         style={{ height: '12px', display: 'flex' }}
       >
 
-        <CellToolbar onMouseEnter={() => console.log('celltoolbar mouseenter')} onMouseLeave={() => console.log('celltoolbar mouseleave')}
-          style={addToolbarHovered ? { display: 'block', marginTop: '-10px', marginLeft: 'auto', marginRight: 'auto' } : { display: 'none' }}
+        <CellToolbar
+          onDropdownToggled={(isOpen) => { toggleVisibility(addToolbarHovered, isOpen); console.log('dropdownToggled: ' + isOpen)} }
+          style={addToolbarVisible ? { display: 'block', marginTop: '-10px', marginLeft: 'auto', marginRight: 'auto' } : { display: 'none' }}
           cellId={props.cellId}
         />
 
