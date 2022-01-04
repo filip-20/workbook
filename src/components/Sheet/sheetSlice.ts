@@ -9,14 +9,16 @@ export interface Cell {
 
 export interface SheetState {
   idCounter: number,
-  cells: Array<Cell>,
+  cells: {[key: number]: Cell},
+  cellsOrder: Array<number>,
   firstCellId: number,
   lastCellId: number,
 }
 
 const initialState: SheetState = {
   idCounter: 0,
-  cells: [],
+  cells: {},
+  cellsOrder: [],
   firstCellId: -1,
   lastCellId: -1,
 };
@@ -25,73 +27,84 @@ export const sheetSlice = createSlice({
   name: 'sheet',
   initialState,
   reducers: {
-    insertCell: (state, action: PayloadAction<{ afterId: number, type: string, data: string }>) => {
+    insertCell: (state, action: PayloadAction<{ afterIndex: number, type: string, data: string }>) => {
+      const { afterIndex, type, data } = action.payload;
       const cell = {
         id: state.idCounter,
-        type: action.payload.type,
-        data: action.payload.data
+        type,
+        data,
       };
-      if (action.payload.afterId === -1) {
-        state.cells.push(cell);
-      } else {
-        const index = state.cells.findIndex((cell) => cell.id === action.payload.afterId);
-        state.cells.splice(index+1, 0, cell);
-      }
-      state.idCounter += 1;
-      updateFirstLastCellId(state);
-    },
-    removeCell: (state, action: PayloadAction<number>) => {
-      const index = state.cells.findIndex((cell) => cell.id === action.payload);
-      if (index !== -1) {
-        state.cells.splice(index, 1)
+      if (afterIndex >= -2 && afterIndex < state.cellsOrder.length) {
+        state.cells[cell.id] = cell;
+        if (action.payload.afterIndex === -2) {
+          state.cellsOrder.push(cell.id);
+        } else {
+          state.cellsOrder.splice(action.payload.afterIndex+1, 0, cell.id);
+        }
+        state.idCounter += 1;
         updateFirstLastCellId(state);
+      } else {
+        console.log('Invalid afterIndex parameters for insertCell action. ' + action.payload);
+      }
+    },
+    removeCell: (state, action: PayloadAction<{cellIndex: number, cellId: number}>) => {
+      const {cellIndex, cellId} = action.payload;
+      if (cellIndex >= 0 && cellIndex < state.cellsOrder.length && state.cells[cellId] !== undefined) {
+        delete state.cells[cellId];
+        state.cellsOrder.splice(cellIndex, 1);
+      } else {
+        console.log('Invalid arguments for removeCell action. ' + action.payload);
       }
     },
     updateCellData: (state, action: PayloadAction<{cellId: number, data: any}>) => {
-      const index = state.cells.findIndex((cell) => cell.id === action.payload.cellId);
-      if (index !== -1) {
-        state.cells[index].data = action.payload.data
+      const { cellId, data } = action.payload;
+      if (state.cells[cellId] !== undefined) {
+        state.cells[cellId].data = data;
+      } else {
+        console.log('Invalid cellId parameters for insertCell action. ' + action.payload);
       }
     },
     moveUpCell: (state, action: PayloadAction<number>) => {
-      const cellId = action.payload
-      const index = state.cells.findIndex((cell) => cell.id === cellId);
-      if (index !== -1 && index !== 0) {
-        const cell = state.cells[index]
-        state.cells.splice(index, 1)
-        state.cells.splice(index-1, 0, cell)
-        
+      const cellIndex = action.payload
+      if (cellIndex >= 1 && cellIndex < state.cellsOrder.length) {
+        const cellId = state.cellsOrder[cellIndex];
+        state.cellsOrder.splice(cellIndex, 1);
+        state.cellsOrder.splice(cellIndex-1, 0, cellId)
         updateFirstLastCellId(state);
+      } else {
+        console.log('Invalid cellIndex parameters for moveUpCell action. ' + action.payload);
       }
     },
     moveDownCell: (state, action: PayloadAction<number>) => {
-      const cellId = action.payload
-      const index = state.cells.findIndex((cell) => cell.id === cellId);
-      if (index !== -1 && index !== state.cells.length - 1) {
-        const cell = state.cells[index]
-        state.cells.splice(index, 1)
-        state.cells.splice(index+1, 0, cell)
+      const cellIndex = action.payload
+      if (cellIndex >= 0 && cellIndex < state.cellsOrder.length - 1) {
+        const cellId = state.cellsOrder[cellIndex];
+        state.cellsOrder.splice(cellIndex, 1);
+        state.cellsOrder.splice(cellIndex+1, 0, cellId)
         updateFirstLastCellId(state);
+      } else {
+        console.log('Invalid cellIndex parameters for moveDownCell action. ' + action.payload);
       }
     },
   }
 });
 
 function updateFirstLastCellId(state: SheetState) {
-  if (state.cells.length === 0) {
+  if (state.cellsOrder.length === 0) {
     state.firstCellId = -1;
     state.lastCellId = -1;
   } else {
-    state.firstCellId = state.cells[0].id;
-    state.lastCellId = state.cells[state.cells.length-1].id
+    state.firstCellId = state.cellsOrder[0];
+    state.lastCellId = state.cellsOrder[state.cellsOrder.length-1];
   }
 }
 
 /* Actions */
 export const { insertCell, removeCell, updateCellData, moveUpCell, moveDownCell } = sheetSlice.actions;
-export const insertTextCell = (text: string, afterId: number) => insertCell({ afterId, type: 'text', data: text })
-export const insertAppCell = (type: string, state: any, afterId: number) => insertCell({ afterId, type, data: state })
+export const insertTextCell = (text: string, afterIndex: number) => insertCell({ afterIndex, type: 'text', data: text })
+export const insertAppCell = (type: string, state: any, afterIndex: number) => insertCell({ afterIndex, type, data: state })
 /* Selectors */
+export const selectCellsOrder = (state: RootState) => state.sheet.cellsOrder;
 export const selectCells = (state: RootState) => state.sheet.cells;
 export const selectFirstCellId = (state: RootState) => state.sheet.firstCellId;
 export const selectLastCellId = (state: RootState) => state.sheet.lastCellId;

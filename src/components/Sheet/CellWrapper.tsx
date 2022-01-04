@@ -5,6 +5,7 @@ import CellToolbar from './CellToolbar';
 type CellWrapperProps = {
   key: number,
   cellId: number,
+  cellIndex: number,
   children: JSX.Element,
 };
 
@@ -48,6 +49,7 @@ function CellWrapper(props: CellWrapperProps) {
           onDropdownToggled={(isOpen) => { toggleVisibility(addToolbarHovered, isOpen); console.log('dropdownToggled: ' + isOpen)} }
           style={addToolbarVisible ? { display: 'block', marginTop: '-10px', marginLeft: 'auto', marginRight: 'auto' } : { display: 'none' }}
           cellId={props.cellId}
+          cellIndex={props.cellIndex}
         />
 
       </Container>

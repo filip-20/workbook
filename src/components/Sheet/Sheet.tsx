@@ -3,11 +3,14 @@ import { useAppSelector } from "../../store/hooks";
 import AppCell from "./AppCell";
 import CellToolbar from "./CellToolbar";
 import CellWrapper from "./CellWrapper";
-import { selectCells } from "./sheetSlice";
+import { selectCellsOrder, selectCells } from "./sheetSlice";
 import TextCell from "./TextCell";
 
 function Sheet() {
-  const cells = useAppSelector(selectCells)
+  const cellsOrder = useAppSelector(selectCellsOrder);
+  const cells = useAppSelector(selectCells);
+
+  console.log(cellsOrder);
 
   const displayToolbar = () => {
     return (
@@ -28,8 +31,8 @@ function Sheet() {
 
   return (
     <Container>
-      {cells.map(cell => <CellWrapper key={cell.id} cellId={cell.id}>{createCell(cell.id, cell.type, cell.data)}</CellWrapper>)}
-      {cells.length === 0 ? displayToolbar() : ''}
+      {cellsOrder.map( (cellId, index) => <CellWrapper key={cellId} cellId={cellId} cellIndex={index}>{createCell(cellId, cells[cellId].type, cells[cellId].data)}</CellWrapper>)}
+      {cellsOrder.length === 0 ? displayToolbar() : ''}
     </Container>
   )
 }
