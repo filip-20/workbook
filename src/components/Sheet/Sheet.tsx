@@ -3,7 +3,7 @@ import { useAppSelector } from "../../store/hooks";
 import AppCell from "./AppCell";
 import CellToolbar from "./CellToolbar";
 import CellWrapper from "./CellWrapper";
-import { selectCellsOrder, selectCells } from "./sheetSlice";
+import { selectCellsOrder, selectCells } from "../../store/sheetSlice";
 import TextCell from "./TextCell";
 
 function Sheet() {

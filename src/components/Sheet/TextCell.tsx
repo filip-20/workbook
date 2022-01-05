@@ -6,7 +6,7 @@ import 'katex/dist/katex.min.css';
 import styles from './TextCell.module.css'
 import rehypeKatex from "rehype-katex";
 import { useAppDispatch } from "../../store/hooks";
-import { updateCellData } from "./sheetSlice";
+import { updateCellData } from "../../store/sheetSlice";
 
 export interface TextCellProps {
   cellId: number,

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { getAppInfo } from '../../EmbeddedApps';
 import { useAppDispatch } from '../../store/hooks';
-import { updateCellData } from './sheetSlice';
+import { updateCellData } from '../../store/sheetSlice';
 
 export interface AppCellProps {
   cellId: number,

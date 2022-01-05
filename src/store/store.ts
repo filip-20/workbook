@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import sheetReducer from '../components/Sheet/sheetSlice'
+import sheetReducer from './sheetSlice'
 
 const jsonState = localStorage.getItem('reduxState')
 const preloadedState = jsonState === null ? undefined : JSON.parse(jsonState)
