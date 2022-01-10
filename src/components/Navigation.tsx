@@ -12,6 +12,7 @@ function Navigation() {
         <Nav className="justify-content-end">
           <Nav.Link as={Link} to="/">Home</Nav.Link>
           <Nav.Link as={Link} to="/zadania">Zadania</Nav.Link>
+          <Nav.Link as={Link} to="/repos">Repozitár</Nav.Link>
           <Nav.Link as={Link} to="/sheet">Zošit</Nav.Link>
         </Nav>
       </Navbar.Collapse>

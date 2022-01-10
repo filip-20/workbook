@@ -1,0 +1,20 @@
+.itemIcon {
+  margin-right: 1em;
+}
+
+.fileItem:hover {
+  background-color:rgb(247, 247, 247);
+}
+
+.linkStyle:hover {
+  text-decoration: underline;
+}
+
+.pathBreadcrumb ol {
+  margin-bottom: 0px !important;
+}
+
+.linkStyle {
+  color: black;
+  text-decoration: none;
+}
