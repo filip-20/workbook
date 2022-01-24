@@ -22,20 +22,17 @@ const embeddedApps: EmeddedApp[] =
     {
       name: 'Resolution editor',
       typeName: 'resolutionEditor',
-      ...
-      ResolutionEditor
+      ...ResolutionEditor
     },
     {
       name: 'Structure explorer',
       typeName: 'structureExplorer',
-      ...
-      StructureExplorer
+      ...StructureExplorer
     },
     {
       name: 'Tableau editor',
       typeName: 'tableauEditor',
-      ...
-      TableauEditor
+      ...TableauEditor
     },
   ]
 
