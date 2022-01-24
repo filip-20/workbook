@@ -42,20 +42,17 @@ function RepoList(props: RepoListProps) {
     return (
       <Col key={item.id} md={6} style={{ padding: '0.5rem' }}>
         <Card className="h-100">
-          <Card.Header>
-            <a href={`/repo/${item.name}`} onClick={(e) => { e.preventDefault(); props.onRepoClicked(item.name) }}>{item.name}</a>
-            <Badge pill bg="secondary" style={{ float: 'right' }}>
-              {item.private ? 'Private' : 'Public'}
-            </Badge>
-          </Card.Header>
           <Card.Body>
+            <Card.Title>
+              <a href={`/repo/${item.name}`} onClick={(e) => { e.preventDefault(); props.onRepoClicked(item.name) }}>{item.name}</a>
+            </Card.Title>
             <Card.Text>
               {item.description || <span className="text-muted">Bez popisu</span>}
             </Card.Text>
           </Card.Body>
           <Card.Footer>
-            <Badge pill bg="primary" style={{ marginLeft: 'auto' }}>
-              {item.language}
+            <Badge pill bg="secondary">
+                {item.private ? 'Private' : 'Public'}
             </Badge>
             {item.updatedAt && <Moment locale='sk' className="text-muted" style={{ float: 'right' }} fromNow>{item.updatedAt}</Moment>}
           </Card.Footer>

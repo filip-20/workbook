@@ -4,8 +4,8 @@ import { useDispatch } from "react-redux";
 import { useAppSelector } from "../../store/hooks";
 import { FileItem, openRepo, openFile, fetchFiles, selectRepoInfo, selectRepoState, selectStatus, closeRepo } from "../../store/repoExplorerSlice";
 import { File, FolderFill } from 'react-bootstrap-icons';
-import { BiGitBranch } from 'react-icons/bi'
-import { BsCaretRightFill } from 'react-icons/bs'
+import { BiGitBranch } from 'react-icons/bi';
+import { BsCaretRightFill } from 'react-icons/bs';
 import styles from './RepoExplorer.module.css';
 
 export interface RepoExplorerProps {
