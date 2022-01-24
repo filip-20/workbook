@@ -27,7 +27,7 @@ console.log('RepoListPage called with page: ' + page);
 
   return (
     <Container>
-      <h1>Zoznam repozitárov: </h1>
+      <h1>Zoznam repozitárov</h1>
       <RepoList
         username="LineageOS"
         itemsPerPage={10}

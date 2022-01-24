@@ -20,6 +20,7 @@ function RepoPage() {
 
   return (
     <Container>
+      <h1>{params.repo!!}</h1>
       <RepoExplorer
         username="LineageOS"
         repo={params.repo!!}
