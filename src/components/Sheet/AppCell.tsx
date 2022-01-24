@@ -1,6 +1,6 @@
 import { PrepareResult } from 'fol-graphexplorer';
 import { useEffect, useRef } from 'react';
-import { getAppInfo } from '../../EmbeddedApps';
+import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch } from '../../store/hooks';
 import { updateCellData } from '../../store/sheetSlice';
 

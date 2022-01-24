@@ -2,7 +2,7 @@ import { Button, ButtonGroup, ButtonToolbar, Dropdown, DropdownButton } from "re
 import { ArrowDown, ArrowUp, Plus, Trash } from "react-bootstrap-icons";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { insertTextCell, insertAppCell, removeCell, moveUpCell, moveDownCell, selectFirstCellId, selectLastCellId } from "../../store/sheetSlice";
-import { embeddedApps } from "../../EmbeddedApps";
+import { embeddedApps } from "../../embeddedApps";
 
 
 export interface CellToolbarProps {
