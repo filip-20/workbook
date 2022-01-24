@@ -1,3 +1,4 @@
+import { PrepareResult } from 'fol-graphexplorer';
 import { useEffect, useRef } from 'react';
 import { getAppInfo } from '../../EmbeddedApps';
 import { useAppDispatch } from '../../store/hooks';
@@ -13,7 +14,12 @@ function AppCell(props: AppCellProps) {
   const dispatch = useAppDispatch();
   const { prepare, AppComponent } = getAppInfo(props.type)
 
-  const {instance, getState} = useRef(prepare(props.initialState)).current;
+  const prepareResult = useRef<PrepareResult | null>(null);
+  if (prepareResult.current === null) {
+    prepareResult.current = prepare(props.initialState)
+  }
+  
+  const {instance, getState} = prepareResult.current;
   const stateChanged = useRef(false)
 
   var onAppStateChanged = () => {
