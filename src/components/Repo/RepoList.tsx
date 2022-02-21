@@ -6,13 +6,14 @@ import { closeList, fetchRepos, openList, RepoItem, selectListInfo, selectListSt
 import Paginate from "../Paginate";
 
 import 'moment/locale/sk';
+import RepoListItem from "./RepoListItem";
 
 export interface RepoListProps {
   username: string,
   itemsPerPage: number,
   page?: number,
-  onPageChanged: (page: number) => void,
-  onRepoClicked: (repo: string) => void,
+  makeRepoLink: (repoName: string) => string,
+  makePageLink: (page: number) => string,
 }
 
 function RepoList(props: RepoListProps) {
@@ -32,31 +33,10 @@ function RepoList(props: RepoListProps) {
     }
   }, [props.page]);
 
-  useEffect(() => {
-    if (listState && props.page !== listState.currentPage && !(!props.page && listState.currentPage === 1)) {
-      props.onPageChanged(listState.currentPage);
-    }
-  }, [listState?.currentPage]);
-
   const renderItem = (item: RepoItem) => {
     return (
       <Col key={item.id} md={6} style={{ padding: '0.5rem' }}>
-        <Card className="h-100">
-          <Card.Body>
-            <Card.Title>
-              <a href={`/repo/${item.name}`} onClick={(e) => { e.preventDefault(); props.onRepoClicked(item.name) }}>{item.name}</a>
-            </Card.Title>
-            <Card.Text>
-              {item.description || <span className="text-muted">Bez popisu</span>}
-            </Card.Text>
-          </Card.Body>
-          <Card.Footer>
-            <Badge pill bg="secondary">
-                {item.private ? 'Private' : 'Public'}
-            </Badge>
-            {item.updatedAt && <Moment locale='sk' className="text-muted" style={{ float: 'right' }} fromNow>{item.updatedAt}</Moment>}
-          </Card.Footer>
-        </Card>
+        <RepoListItem item={item} makeRepoLink={props.makeRepoLink} />
       </Col>
     )
   }
@@ -72,7 +52,7 @@ function RepoList(props: RepoListProps) {
     const { repos, currentPage } = listState;
 
     const pagination = (
-      <Paginate onPageChange={onPageChangeHandler} pageCount={lastPage} currentPage={currentPage || 1} />
+      <Paginate makePageLink={props.makePageLink} pageCount={lastPage} currentPage={currentPage || 1} />
     )
 
     return (

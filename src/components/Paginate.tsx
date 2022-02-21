@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
 import { Pagination } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+import { LinkContainer } from 'react-router-bootstrap';
 
 export interface PaginateProps {
   pageCount: number,
   currentPage: number,
-  onPageChange: (page: number) => void,
   pagesFromStart?: number,
   pagesToEnd?: number,
   pagesAroundCurrent?: number,
+  makePageLink: (page: number) => string,
 }
 
 const defaultProps: {
@@ -68,18 +70,18 @@ function Paginate(props: PaginateProps) {
       ))
     } else {
       pageItems.push((
-        <Pagination.Item key={page} onClick={() => props.onPageChange(page)}>{page}</Pagination.Item>
+        <LinkContainer to={props.makePageLink(page)}><Pagination.Item key={page}>{page}</Pagination.Item></LinkContainer>
       ))
     }
   })
 
   return (
     <Pagination className="justify-content-center">
-      <Pagination.First onClick={e => { e.preventDefault(); props.onPageChange(1) }} />
-      <Pagination.Prev onClick={e => { e.preventDefault(); props.onPageChange(props.currentPage - 1)}} />
+      <LinkContainer to={props.makePageLink(1)}><Pagination.First /></LinkContainer>
+      <LinkContainer to={props.makePageLink(props.currentPage - 1)}><Pagination.Prev /></LinkContainer>
       {pageItems}
-      <Pagination.Next onClick={e => { e.preventDefault(); props.onPageChange(props.currentPage + 1) }} />
-      <Pagination.Last onClick={e => { e.preventDefault(); props.onPageChange(props.pageCount) }} />
+      <LinkContainer to={props.makePageLink(props.currentPage + 1)}><Pagination.Next /></LinkContainer>
+      <LinkContainer to={props.makePageLink(props.pageCount)}><Pagination.Last /></LinkContainer>
     </Pagination>
   )
 }

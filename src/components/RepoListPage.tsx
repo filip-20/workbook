@@ -12,7 +12,7 @@ function RepoListPage() {
   }
 
 console.log('RepoListPage called with page: ' + page);
-
+/*
   const pageChangeHandler = (page: number) => {
     console.log('navigating to ' + page);
     navigate('/repos/' + page);
@@ -23,7 +23,10 @@ console.log('RepoListPage called with page: ' + page);
   const repoClickHandler = (repo: string) => {
     console.log('repo selected: ' + repo);
     navigate('/repo/' + repo);
-  }
+  }*/
+
+  const makeRepoLink = (repoName: string) => `/repo/${repoName}`;
+  const makePageLink = (page: number) => page === 1 ? '/repos' : `/repos/${page}`;
 
   return (
     <Container>
@@ -32,8 +35,8 @@ console.log('RepoListPage called with page: ' + page);
         username="LineageOS"
         itemsPerPage={10}
         page={(params.page && parseInt(params.page)) || undefined}
-        onPageChanged={pageChangeHandler}
-        onRepoClicked={repoClickHandler}
+        makePageLink={makePageLink}
+        makeRepoLink={makeRepoLink}
       />
     </Container>
   )
