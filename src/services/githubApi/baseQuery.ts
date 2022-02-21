@@ -3,13 +3,15 @@ import {
   FetchArgs,
   fetchBaseQuery,
   FetchBaseQueryError,
+  FetchBaseQueryMeta,
 } from "@reduxjs/toolkit/query/react";
 
 const baseQuery = fetchBaseQuery({ baseUrl: "https://api.github.com/" });
 const githubBaseQuery: BaseQueryFn<
   string | FetchArgs,
-  unknown,
-  FetchBaseQueryError
+  unknown, FetchBaseQueryError,
+  {},
+  FetchBaseQueryMeta
 > = async (args, api, extraOptions) => {
   /*
   console.log('args:');
