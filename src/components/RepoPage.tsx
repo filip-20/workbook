@@ -1,33 +1,28 @@
 import { Container } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import RepoExplorer from "./Repo/RepoExplorer";
 
 function RepoPage() {
-  const navigate = useNavigate();
+
   const params = useParams();
 
-  console.log(params);
+  //console.log(params);
 
-  const makeLink = (path: string, fileName: string, fileType: 'file' | 'dir', repo: string, branch: string) => {
+  const makeLink = (path: string, fileType: 'file' | 'dir', repo: string, branch?: string) => {
     const type = fileType === 'file' ? 'blob' : 'tree';
-    const absPath = fileName === '' ? path : (path === '' ? fileName : `${path}/${fileName}`);
-    return `/repo/${repo}/${type}/${branch}/${absPath}`
-  }
-
-  const onPathChangedHandler = (_: string, linkUrl: string) => {
-    navigate(linkUrl);
+    const b = branch ? branch + '/' : ''
+    return `/repo/${repo}/${type}/${b}${path}`;
   }
 
   return (
     <Container>
       <h1>{params.repo!!}</h1>
       <RepoExplorer
-        username="LineageOS"
+        owner="LineageOS"
         repo={params.repo!!}
         branch={params.branch}
-        path={params['*']}
+        path={params['*'] || ''}
         makeLink={makeLink}
-        onPathChanged={onPathChangedHandler}
       />
     </Container>
   )

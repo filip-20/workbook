@@ -1,38 +1,39 @@
 import { Breadcrumb } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
-import styles from './RepoExplorer.module.css';
+import styles from './styles.module.css';
 
-export interface RepoPathbarProps {
+export interface PathbarProps {
+  style?: React.CSSProperties,
   repoName: string,
-  branch: string,
+  branch?: string,
   path: string,
-  makeLink: (path: string, fileName: string, fileType: 'file' | 'dir', repo: string, branch: string) => string
+  makeLink: (path: string, fileType: 'file' | 'dir', repo: string, branch?: string) => string
 }
 
-function RepoPathbar(props: RepoPathbarProps) {
+function Pathbar(props: PathbarProps) {
   const items = [{
     name: props.repoName,
     path: '',
-    link: props.makeLink('', '', 'dir', props.repoName, props.branch),
+    link: props.makeLink('', 'dir', props.repoName, props.branch),
     active: '' === props.path
   }];
   if (props.path !== '') {
     let path = '';
     props.path.split('/').forEach(item => {
       const p = path === '' ? item : `${path}/${item}`;
+      path += path === '' ? item : '/' + item
       items.push({
         name: item,
         path: p,
-        link: props.makeLink(path, item, 'dir', props.repoName, props.branch),
+        link: props.makeLink(path, 'dir', props.repoName, props.branch),
         active: p === props.path,
       });
-      path += path === '' ? item : '/' + item
     });
   }
 
   return (
-    <Breadcrumb className={styles.pathBreadcrumb} style={{ display: 'inline-block' }}>
+    <Breadcrumb className={styles.pathBreadcrumb} style={{ display: 'inline-block', ...props.style }}>
       {
         items.map(item => (
           <Breadcrumb.Item
@@ -49,4 +50,4 @@ function RepoPathbar(props: RepoPathbarProps) {
   )
 }
 
-export default RepoPathbar;
+export default Pathbar;

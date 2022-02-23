@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Pagination } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
 import { LinkContainer } from 'react-router-bootstrap';
 
 export interface PaginateProps {
@@ -60,7 +59,7 @@ function Paginate(props: PaginateProps) {
   keys.sort((a, b) => a-b).forEach(page => {
     if (page - prevPage !== 1) {
       pageItems.push((
-        <Pagination.Ellipsis key={id++} disabled/>
+        <Pagination.Ellipsis key={`e${id++}`} disabled/>
       ))
     }
     prevPage = page;
@@ -70,7 +69,7 @@ function Paginate(props: PaginateProps) {
       ))
     } else {
       pageItems.push((
-        <LinkContainer to={props.makePageLink(page)}><Pagination.Item key={page}>{page}</Pagination.Item></LinkContainer>
+        <LinkContainer key={page} to={props.makePageLink(page)}><Pagination.Item>{page}</Pagination.Item></LinkContainer>
       ))
     }
   })

@@ -1,32 +1,46 @@
-import { Badge, Card } from "react-bootstrap";
-import { RepoItem } from "../../store/repoListSlice";
-
-import 'moment/locale/sk';
-import Moment from "react-moment";
+import { Badge, Card, Placeholder } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import Moment from "react-moment";
+import 'moment/locale/sk';
+import { MinimalRepository } from "../../services/githubApi/endpoints/repos";
 
 export interface RepoListProps {
-  item: RepoItem,
+  item: MinimalRepository,
+  placeholder?: boolean,
   makeRepoLink: (repoName: string) => string
 }
 
 function RepoListItem(props: RepoListProps) {
-  const { item } = props;
+  const { item, placeholder } = props;
   return (
     <Card className="h-100">
       <Card.Body>
         <Card.Title>
-          <Link to={props.makeRepoLink(item.name)}>{item.name}</Link>
+          {
+            placeholder ?
+              <Placeholder xs={2} bg="primary" />
+              : <Link to={props.makeRepoLink(item.name)}>{item.name}</Link>
+          }
         </Card.Title>
         <Card.Text>
-          {item.description || <span className="text-muted">Bez popisu</span>}
+          {
+            placeholder ? 
+            <Placeholder xs={4} bg="secondary" />
+            : item.description || <span className="text-muted">Bez popisu</span>
+          }
         </Card.Text>
       </Card.Body>
       <Card.Footer>
-        <Badge pill bg="secondary">
-          {item.private ? 'Private' : 'Public'}
-        </Badge>
-        {item.updatedAt && <Moment locale='sk' className="text-muted" style={{ float: 'right' }} fromNow>{item.updatedAt}</Moment>}
+        {
+          placeholder ? 
+          <Placeholder xs={1} bg="secondary" />
+          : <Badge pill bg="secondary">{item.private ? 'Private' : 'Public'}</Badge>
+        }
+        {
+          placeholder ? 
+          <Placeholder style={{ float: 'right' }} xs={3} />
+          : (item.updated_at && <div className="text-muted" style={{ float: 'right' }}>Zmenené <Moment locale='sk' fromNow>{item.updated_at}</Moment></div>)
+        }
       </Card.Footer>
     </Card>
   )

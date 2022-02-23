@@ -1,12 +1,10 @@
-import { useEffect } from "react";
-import { Badge, Card, Col, Container, Row } from "react-bootstrap";
-import Moment from "react-moment";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { closeList, fetchRepos, openList, RepoItem, selectListInfo, selectListState } from "../../store/repoListSlice";
+import React from "react";
+import { Alert,Col, Container, Row, Spinner } from "react-bootstrap";
 import Paginate from "../Paginate";
-
-import 'moment/locale/sk';
 import RepoListItem from "./RepoListItem";
+import { useReposListForUserHeadersQuery } from "../../services/githubApi/baseApi";
+import { MinimalRepository, useReposListForUserQuery } from "../../services/githubApi/endpoints/repos";
+import { displayLoadable } from "./displayLoadable";
 
 export interface RepoListProps {
   username: string,
@@ -17,53 +15,58 @@ export interface RepoListProps {
 }
 
 function RepoList(props: RepoListProps) {
-  const dispatch = useAppDispatch();
-  const listInfo = useAppSelector(selectListInfo);
-  const listState = useAppSelector(selectListState);
+  const { username, itemsPerPage, page } = props;
 
-  useEffect(() => {
-    console.log('calling openList with page ' + props.page)
-    dispatch(openList(props.username, props.itemsPerPage, props.page))
-    return () => { dispatch(closeList()) };
-  }, [props.username, props.itemsPerPage]);
+  const repos = useReposListForUserQuery({ username, perPage: itemsPerPage, page });
+  const paginationInfo = useReposListForUserHeadersQuery({ username, perPage: itemsPerPage });
 
-  useEffect(() => {
-    if (listState && listState.currentPage !== props.page) {
-      dispatch(fetchRepos(props.page));
+  console.log('RepoList: ');
+  console.log(repos);
+
+  const parseLastPage = (link?: string) => {
+    let lastPage: number | null = null;
+    if (link) {
+      link.split(', ').forEach(item => {
+        const parts = item.split('; ');
+        if (parts[1] === 'rel="last"') {
+          const match = parts[0].match(/.*[?&]+page=([0-9]+)/)
+          /* was positive integer parsed? */
+          if (match && match[1] !== undefined && /^\d+$/.test(match[1])) {
+            lastPage = parseInt(match[1]);
+          }
+        }
+      })
     }
-  }, [props.page]);
+    if (!lastPage) {
+      return 1
+    } else {
+      return lastPage;
+    }
+  }
 
-  const renderItem = (item: RepoItem) => {
+  const renderListItem = (item: MinimalRepository) => {
     return (
       <Col key={item.id} md={6} style={{ padding: '0.5rem' }}>
-        <RepoListItem item={item} makeRepoLink={props.makeRepoLink} />
+        <RepoListItem placeholder={repos.status === 'pending'} item={item} makeRepoLink={props.makeRepoLink} />
       </Col>
     )
   }
-
-  const onPageChangeHandler = (page: number) => {
-    dispatch(fetchRepos(page));
+  const loading = <div style={{width: '100%', textAlign: 'center'}}><Spinner animation="grow" role="status" /></div>
+  const err = (message: string) => {
+    return <Alert variant="danger">{message}</Alert>
+  }
+  const renderList = (data: MinimalRepository[]) => <Row>{data.map(item => renderListItem(item))}</Row>
+  const renderPagination = (data: {link?: string}) => {
+    const lastPage = parseLastPage(data.link);
+    return lastPage !== 1 ? <Paginate makePageLink={props.makePageLink} pageCount={lastPage} currentPage={page || 1} /> : <></>
   }
 
-  if (!listInfo || !listState) {
-    return (<></>)
-  } else {
-    const { lastPage } = listInfo;
-    const { repos, currentPage } = listState;
-
-    const pagination = (
-      <Paginate makePageLink={props.makePageLink} pageCount={lastPage} currentPage={currentPage || 1} />
-    )
-
-    return (
-      <Container>
-        <Row>
-          {listState.repos.map(item => renderItem(item))}
-        </Row>
-        {lastPage !== 1 && pagination}
-      </Container>
-    )
-  }
+  return (
+    <Container>
+      {displayLoadable(repos, loading, renderList, err('Načítanie repozitárov zlyhalo'))}
+      {displayLoadable(paginationInfo, <></>, renderPagination, err('Načítanie stránkovania zlyhalo'))}
+    </Container>
+  )
 }
 
 export default RepoList;

@@ -24,3 +24,5 @@ export const githubApi = createApi({
     })
   }),
 });
+
+export const { useReposListForUserHeadersQuery } = githubApi;
