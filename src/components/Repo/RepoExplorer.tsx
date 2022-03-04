@@ -47,10 +47,15 @@ function isEmptyRepoError(error: any) {
 }
 
 function RepoExplorer(props: RepoExplorerProps) {
-  const { owner, repo, branch, path, makeLink } = props;
+  const { owner, repo, path, makeLink } = props;
+  let { branch } = props;
 
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
   const content = useReposGetContentQuery({ owner, repo, ref: branch, path }, { skip: branch === undefined && !repoInfo.isSuccess });
+
+  if (repoInfo.isSuccess && !branch) {
+    branch = repoInfo.data.default_branch;
+  }
 
   const folderIcon = <FolderFill className={styles.itemIcon} />
   const fileIcon = <File className={styles.itemIcon} />
@@ -74,14 +79,13 @@ function RepoExplorer(props: RepoExplorerProps) {
 
   const renderFileItem = (file: FileItem) => {
     let linkUrl: string;
-    const b = branch || repoInfo.data!.default_branch
     if (file.name === '..') {
       const reducer = (prev: string, current: string) => (prev === '' ? '' : prev + '/') + current;
       const p = path.split('/').slice(0, -1).reduce(reducer, '');
-      linkUrl = props.makeLink(p, 'dir', repo, b);
+      linkUrl = props.makeLink(p, 'dir', repo, branch);
     } else {
       const p = path === '' ? file.name : `${path}/${file.name}`;
-      linkUrl = props.makeLink(p, file.type, repo, b);
+      linkUrl = props.makeLink(p, file.type, repo, branch);
     }
     return (
       <ListGroup.Item className={styles.fileItem} key={file.name}>

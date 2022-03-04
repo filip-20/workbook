@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
-import { Alert, Button, ListGroup, Overlay, Popover, Spinner } from "react-bootstrap";
+import React, { useEffect, useMemo } from "react";
+import { useState } from "react";
+import { Alert, Button, ListGroup, OverlayTrigger, Popover, PopoverProps, Spinner } from "react-bootstrap";
 import { BiGitBranch } from "react-icons/bi";
 import { BsCaretDownFill, BsSlashCircle } from "react-icons/bs";
 import { Link } from "react-router-dom";
@@ -16,23 +17,29 @@ export interface BranchSelectProps {
   makeLink: (path: string, fileType: 'file' | 'dir', repo: string, branch?: string) => string
 }
 
-function BranchSelect(props: BranchSelectProps) {
-  const { owner, repo, branch, path, makeLink } = props;
+const UpdatingPopover = React.forwardRef<HTMLDivElement, PopoverProps>(
+  ({ popper, children, show: _, ...props }, ref) => {
+    useEffect(() => {
+      console.log('updating!');
+      popper.scheduleUpdate();
+    }, [popper, children]);
+    return (
+      <Popover ref={ref} body {...props}>
+        {children}
+      </Popover>
+    );
+  },
+);
 
-  const [show, setShow] = useState(false);
-  const ref = useRef<HTMLButtonElement | null>(null);
+function BranchSelect(props: BranchSelectProps) {
+  const { owner, repo, path, makeLink } = props;
+  let { branch } = props;
 
   const [skip, setSkip] = useState(true);
 
   // load default branch if branch is undefined in props
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
   const branches = useReposListBranchesQuery({ owner, repo }, { skip });
-
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setShow(!show);
-    // load branch list
-    setSkip(false);
-  };
 
   const loading = <Spinner animation="border" role="status" />
   const loadingSmall = <Spinner animation="border" size="sm" role="status" />
@@ -45,7 +52,7 @@ function BranchSelect(props: BranchSelectProps) {
     if (data.length === 0) {
       return (
         <div className="text-center text-muted">
-          <BsSlashCircle style={{margin: '1em'}} size={'2em'} />
+          <BsSlashCircle style={{ margin: '1em' }} size={'2em'} />
         </div>
       )
     }
@@ -56,37 +63,36 @@ function BranchSelect(props: BranchSelectProps) {
           const active = b.name === branch;
           return (
             <ListGroup.Item action active={active} key={b.name}>
-              <Link className={styles.linkStyle} to={linkTo} onClick={() => setShow(false)}>{b.name}</Link>
+              <Link className={styles.linkStyle} to={linkTo} onClick={() => document.body.click()}>{b.name}</Link>
             </ListGroup.Item>
           )
         })}
       </ListGroup>
     )
   }
-  const renderBranchName = (name: string) => <><BiGitBranch />{name}<BsCaretDownFill /></>
 
+  /* using memo prevents rerender loop */
+  const memoizedContent = useMemo(() => {
+    return displayLoadable(branches, loading, renderList, () => err('Načítanie vetiev zlyhalo'))
+  }, [branches, branch]);
+
+  const renderBranchName = (name: string) => <><BiGitBranch />{name}<BsCaretDownFill /></>
   return (
-    <>
-      <Button ref={ref} onClick={handleClick}>
-        {
-          branch ?
-          renderBranchName(branch)
-          : displayLoadable(repoInfo, loadingSmall, (data: ReposGetApiResponse) => renderBranchName(data.default_branch), () => err('Načítanie vetvy zlyhalo'))
-        }
-      </Button>
-      <Overlay
-        show={show}
-        target={ref.current}
+      <OverlayTrigger
+        trigger="click"
         placement="bottom"
-        containerPadding={10}
+        onToggle={() => skip && setSkip(false)}
+        rootClose
+        overlay={(props) => <UpdatingPopover {...props}>{memoizedContent}</UpdatingPopover>}
       >
-        <Popover>
-          <Popover.Body>
-            {displayLoadable(branches, loading, renderList, () => err('Načítanie vetiev zlyhalo'))}
-          </Popover.Body>
-        </Popover>
-      </Overlay>
-    </>
+        <Button>
+          {
+            branch ?
+              renderBranchName(branch)
+              : displayLoadable(repoInfo, loadingSmall, (data: ReposGetApiResponse) => renderBranchName(data.default_branch), () => err('Načítanie vetvy zlyhalo'))
+          }
+        </Button>
+      </OverlayTrigger>
   )
 }
 
