@@ -21,7 +21,7 @@ function Navigation() {
           {
             accessToken?
             <Nav.Link as={Link} to="/logout">Odhlásiť sa</Nav.Link>
-            : <Nav.Link href={`https://github.com/login/oauth/authorize?client_id=${config.githubApi.clientId}&redirect_uri=${config.auth.backendUrl}`}>Prihlásiť sa</Nav.Link>
+            : <Nav.Link href={`https://github.com/login/oauth/authorize?client_id=${config.githubApi.clientId}&redirect_uri=${config.auth.backendUrl}&scope=repo`}>Prihlásiť sa</Nav.Link>
           }
         </Nav>
       </Navbar.Collapse>
