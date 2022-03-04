@@ -36,7 +36,7 @@ export const authSlice = createSlice({
   }
 });
 
-const { setAuthState, setAccessToken } = authSlice.actions;
+export const { setAuthState, setAccessToken } = authSlice.actions;
 
 function parseCookie(cookie: string): {key: string, value: string} {
   const tmp = cookie.split('=');
