@@ -2,8 +2,8 @@ import React from "react";
 import { Alert,Col, Container, Row, Spinner } from "react-bootstrap";
 import Paginate from "../Paginate";
 import RepoListItem from "./RepoListItem";
-import { useReposListForAuthenticatedUserHeadersQuery, useReposListForUserHeadersQuery } from "../../services/githubApi/baseApi";
-import { MinimalRepository, useReposListForAuthenticatedUserQuery, useReposListForUserQuery } from "../../services/githubApi/endpoints/repos";
+import { useReposListForAuthenticatedUserHeadersQuery } from "../../services/githubApi/baseApi";
+import { MinimalRepository, useReposListForAuthenticatedUserQuery } from "../../services/githubApi/endpoints/repos";
 import { displayLoadable } from "./displayLoadable";
 
 export interface RepoListProps {

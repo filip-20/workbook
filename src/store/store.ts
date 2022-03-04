@@ -1,8 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import sheetReducer from './sheetSlice';
 import { githubApi } from '../services/githubApi/endpoints/repos';
-import repoExplorerReducer from './repoExplorerSlice';
-import repoListReducer from './repoListSlice';
 import authReducer from './authSlice';
 
 const jsonState = localStorage.getItem('reduxState')

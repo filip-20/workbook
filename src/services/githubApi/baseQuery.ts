@@ -1,11 +1,4 @@
-import {
-  BaseQueryFn,
-  FetchArgs,
-  fetchBaseQuery,
-  FetchBaseQueryError,
-  FetchBaseQueryMeta,
-} from "@reduxjs/toolkit/query/react";
-
+import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { RootState } from '../../store/store'
 
 const baseQuery = fetchBaseQuery({ 
@@ -18,16 +11,5 @@ const baseQuery = fetchBaseQuery({
     return headers;
   }
  });
- 
- /*
-const githubBaseQuery: BaseQueryFn<
-  string | FetchArgs,
-  unknown, FetchBaseQueryError,
-  {},
-  FetchBaseQueryMeta
-> = async (args, api, extraOptions) => {
-  return baseQuery(args, api, extraOptions);
-};
-*/
 
 export default baseQuery;

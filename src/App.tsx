@@ -9,7 +9,7 @@ import HomePage from './components/HomePage';
 import RepoPage from './components/RepoPage';
 import RepoListPage from './components/RepoListPage';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { checkAuthState, selectAccessToken, selectAuthState, selectUser } from './store/authSlice';
+import { checkAuthState, selectAccessToken, selectAuthState } from './store/authSlice';
 import LogoutPage from './components/LogoutPage';
 import { useUsersGetAuthenticatedQuery } from './services/githubApi/endpoints/users';
 
