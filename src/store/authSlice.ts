@@ -1,24 +1,42 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { githubApi } from "../services/githubApi/endpoints/users";
 import { AppDispatch, RootState } from "./store";
 
+
+export interface User {
+  login: string,
+}
+
 export interface AuthState {
+  authState: 'unknown' | 'authenticated' | 'unauthenticated' | 'tokenExpired',
   accessToken?: string,
+  user?: User,
 }
 
 const initialState: AuthState = {
+  authState: 'unknown'
 };
 
 export const authSlice = createSlice({
   name: 'authSlice',
   initialState,
   reducers: {
+    setAuthState: (state, action: PayloadAction<'unknown' | 'authenticated' | 'unauthenticated' | 'tokenExpired'>) => {
+      state.authState = action.payload;
+    },
     setAccessToken: (state, action: PayloadAction<string | undefined>) => {
       state.accessToken = action.payload;
-    }
+    },
+  },
+  extraReducers: (builder) => {
+    builder.addMatcher(githubApi.endpoints.usersGetAuthenticated.matchFulfilled,
+      (state, { payload }) => {
+        state.user = {login: payload.login}
+      });
   }
 });
 
-const { setAccessToken } = authSlice.actions;
+const { setAuthState, setAccessToken } = authSlice.actions;
 
 function parseCookie(cookie: string): {key: string, value: string} {
   const tmp = cookie.split('=');
@@ -45,9 +63,10 @@ export const checkAuthState = () => {
   return (dispatch: AppDispatch) => {
     const accessToken = getAccessToken();
     if (accessToken) {
-      dispatch(setAccessToken(accessToken))
+      dispatch(setAccessToken(accessToken));
     } else {
-      dispatch(setAccessToken(undefined))
+      dispatch(setAccessToken(undefined));
+      dispatch(setAuthState('unauthenticated'));
     }
   }
 }
@@ -59,6 +78,8 @@ export const logout = () => {
   }
 }
 
+export const selectAuthState = (state: RootState) => { return state.auth.authState };
 export const selectAccessToken = (state: RootState) => { return state.auth.accessToken };
+export const selectUser = (state: RootState) => { return state.auth.user };
 
 export default authSlice.reducer;

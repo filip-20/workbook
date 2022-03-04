@@ -8,13 +8,24 @@ import SheetPage from './components/SheetPage';
 import HomePage from './components/HomePage';
 import RepoPage from './components/RepoPage';
 import RepoListPage from './components/RepoListPage';
-import { useAppDispatch } from './store/hooks';
-import { checkAuthState } from './store/authSlice';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { checkAuthState, selectAccessToken, selectAuthState, selectUser } from './store/authSlice';
 import LogoutPage from './components/LogoutPage';
+import { useUsersGetAuthenticatedQuery } from './services/githubApi/endpoints/users';
 
 function App() {
   const dispatch = useAppDispatch();
-  dispatch(checkAuthState())
+
+  const authState = useAppSelector(selectAuthState);
+  const accessToken = useAppSelector(selectAccessToken);
+  if (authState === 'unknown' && !accessToken) {
+    // Action that sets accessToken if it is given in cookies 
+    dispatch(checkAuthState());
+  }
+  // Load user info if we have accessToken and authState is 'unknown'.
+  // Query result is catched by extraReducer in authSlice.
+  useUsersGetAuthenticatedQuery(undefined, {skip: !(authState === 'unknown' && accessToken)})
+  
   return (
     <BrowserRouter>
       <Navigation />
