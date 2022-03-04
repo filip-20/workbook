@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Alert, Button, ListGroup, Overlay, Popover, Spinner } from "react-bootstrap";
 import { BiGitBranch } from "react-icons/bi";
-import { BsCaretDownFill } from "react-icons/bs";
+import { BsCaretDownFill, BsSlashCircle } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import { ReposGetApiResponse, ReposListBranchesApiResponse, useReposGetQuery, useReposListBranchesQuery } from "../../services/githubApi/endpoints/repos";
 import { displayLoadable } from "./displayLoadable";
@@ -40,6 +40,15 @@ function BranchSelect(props: BranchSelectProps) {
     return <Alert variant="danger">{message}</Alert>
   }
   const renderList = (data: ReposListBranchesApiResponse) => {
+    console.log('render branch list');
+    console.log(data)
+    if (data.length === 0) {
+      return (
+        <div className="text-center text-muted">
+          <BsSlashCircle style={{margin: '1em'}} size={'2em'} />
+        </div>
+      )
+    }
     return (
       <ListGroup variant="flush">
         {data.map(b => {

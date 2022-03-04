@@ -7,6 +7,9 @@ import BranchSelect from "./BranchSelect";
 import { displayLoadable } from "./displayLoadable";
 
 import styles from './styles.module.css';
+import { SerializedError } from "@reduxjs/toolkit";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/dist/query";
+import { BsSlashCircle } from "react-icons/bs";
 
 export interface RepoExplorerProps {
   owner: string,
@@ -21,6 +24,28 @@ type FileItem = {
   type: 'file' | 'dir',
 };
 
+function isEmptyRepoError(error: any) {
+  type github404response = {
+    status: number,
+    data: {
+      message: string,
+      documentation_url: string,
+    }
+  }
+  let githubErrResponse;
+  try {
+    githubErrResponse = error as github404response
+  } catch (e) {
+    return false;
+  }
+  if (githubErrResponse
+    && githubErrResponse.status === 404
+    && githubErrResponse.data.message === 'This repository is empty.') {
+    return true;
+  }
+  return false;
+}
+
 function RepoExplorer(props: RepoExplorerProps) {
   const { owner, repo, branch, path, makeLink } = props;
 
@@ -34,6 +59,19 @@ function RepoExplorer(props: RepoExplorerProps) {
   const err = (message: string) => {
     return <Alert variant="danger">{message}</Alert>
   }
+
+  const emptyOrError = (error: FetchBaseQueryError | SerializedError) => {
+    if (isEmptyRepoError(error)) {
+      return (
+        <div className="text-center text-muted">
+          <BsSlashCircle style={{margin: '5em', marginBottom: '2em'}} size={'10em'} />
+          <h3>Prázdny repozitár</h3>
+        </div>
+      )
+    }
+    return err('Načítanie súborov zlyhalo');
+  }
+
   const renderFileItem = (file: FileItem) => {
     let linkUrl: string;
     const b = branch || repoInfo.data!.default_branch
@@ -52,7 +90,6 @@ function RepoExplorer(props: RepoExplorerProps) {
       </ListGroup.Item>
     )
   }
-
   const renderFiles = (data: ReposGetContentApiResponse) => {
     let files = [];
     if (path !== '') {
@@ -74,19 +111,19 @@ function RepoExplorer(props: RepoExplorerProps) {
     }
     files.sort(cmp);
     return <ListGroup variant="flush">{files.map((file) => renderFileItem({ name: file.name, type: file.type === 'file' ? 'file' : 'dir' }))}</ListGroup>
-}
+  }
 
-return (
-  <Card>
-    <Card.Header className="h5">
-      <BranchSelect owner={owner} repo={repo} path={path} branch={branch} makeLink={makeLink} />
-      <Pathbar style={{marginLeft: '1rem'}} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
-    </Card.Header>
-    <Card.Body>
-      {displayLoadable(content, loading, renderFiles, () => err('Načítanie súborov zlyhalo'))}
-    </Card.Body>
-  </Card>
-)
+  return (
+    <Card>
+      <Card.Header className="h5">
+        <BranchSelect owner={owner} repo={repo} path={path} branch={branch} makeLink={makeLink} />
+        <Pathbar style={{ marginLeft: '1rem' }} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
+      </Card.Header>
+      <Card.Body>
+        {displayLoadable(content, loading, renderFiles, emptyOrError)}
+      </Card.Body>
+    </Card>
+  )
 }
 
 export default RepoExplorer;
