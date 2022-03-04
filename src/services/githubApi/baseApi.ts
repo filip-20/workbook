@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import githubBaseQuery from "./baseQuery";
-import { ReposListForUserApiArg } from "./endpoints/repos";
+import { ReposListForAuthenticatedUserApiArg, ReposListForUserApiArg } from "./endpoints/repos";
 
 export const githubApi = createApi({
   reducerPath: "githubApi",
@@ -21,8 +21,27 @@ export const githubApi = createApi({
       transformResponse(apiResponse, meta) {
         return { link: meta?.response?.headers.get("link") || undefined }
       }
+    }),
+    reposListForAuthenticatedUserHeaders: build.query<{link?: string}, ReposListForAuthenticatedUserApiArg>({
+      query: (queryArg) => ({
+        url: `/user/repos`,
+        params: {
+          visibility: queryArg.visibility,
+          affiliation: queryArg.affiliation,
+          type: queryArg["type"],
+          sort: queryArg.sort,
+          direction: queryArg.direction,
+          per_page: queryArg.perPage,
+          page: queryArg.page,
+          since: queryArg.since,
+          before: queryArg.before,
+        },
+      }),
+      transformResponse(apiResponse, meta) {
+        return { link: meta?.response?.headers.get("link") || undefined }
+      }
     })
   }),
 });
 
-export const { useReposListForUserHeadersQuery } = githubApi;
+export const { useReposListForUserHeadersQuery, useReposListForAuthenticatedUserHeadersQuery } = githubApi;

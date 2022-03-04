@@ -2,12 +2,11 @@ import React from "react";
 import { Alert,Col, Container, Row, Spinner } from "react-bootstrap";
 import Paginate from "../Paginate";
 import RepoListItem from "./RepoListItem";
-import { useReposListForUserHeadersQuery } from "../../services/githubApi/baseApi";
-import { MinimalRepository, useReposListForUserQuery } from "../../services/githubApi/endpoints/repos";
+import { useReposListForAuthenticatedUserHeadersQuery, useReposListForUserHeadersQuery } from "../../services/githubApi/baseApi";
+import { MinimalRepository, useReposListForAuthenticatedUserQuery, useReposListForUserQuery } from "../../services/githubApi/endpoints/repos";
 import { displayLoadable } from "./displayLoadable";
 
 export interface RepoListProps {
-  username: string,
   itemsPerPage: number,
   page?: number,
   makeRepoLink: (repoName: string) => string,
@@ -15,13 +14,10 @@ export interface RepoListProps {
 }
 
 function RepoList(props: RepoListProps) {
-  const { username, itemsPerPage, page } = props;
+  const { itemsPerPage, page } = props;
 
-  const repos = useReposListForUserQuery({ username, perPage: itemsPerPage, page });
-  const paginationInfo = useReposListForUserHeadersQuery({ username, perPage: itemsPerPage });
-
-  console.log('RepoList: ');
-  console.log(repos);
+  const repos = useReposListForAuthenticatedUserQuery({ perPage: itemsPerPage, page });
+  const paginationInfo = useReposListForAuthenticatedUserHeadersQuery({perPage: itemsPerPage, type: 'owner'});
 
   const parseLastPage = (link?: string) => {
     let lastPage: number | null = null;
