@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from "react";
 import { useState } from "react";
 import { Alert, Button, ListGroup, OverlayTrigger, Popover, PopoverProps, Spinner } from "react-bootstrap";
 import { BiGitBranch } from "react-icons/bi";
-import { BsCaretDownFill, BsSlashCircle } from "react-icons/bs";
+import { BsCaretDownFill, BsCircle, BsCircleFill, BsSlashCircle } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import { ReposGetApiResponse, ReposListBranchesApiResponse, useReposGetQuery, useReposListBranchesQuery } from "../../services/githubApi/endpoints/repos";
 import { displayLoadable } from "./displayLoadable";
@@ -62,8 +62,8 @@ function BranchSelect(props: BranchSelectProps) {
           const linkTo = makeLink(path, 'dir', repo, b.name);
           const active = b.name === branch;
           return (
-            <ListGroup.Item action active={active} key={b.name}>
-              <Link className={styles.linkStyle} to={linkTo} onClick={() => document.body.click()}>{b.name}</Link>
+            <ListGroup.Item action key={b.name}>
+              <Link className={styles.linkStyle} to={linkTo} onClick={() => document.body.click()}>{active ? <BsCircleFill size={'0.7em'} /> : <BsCircle size={'0.7em'} />} {b.name}</Link>
             </ListGroup.Item>
           )
         })}
