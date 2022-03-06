@@ -2,7 +2,7 @@ import { Alert, Card, ListGroup, Spinner } from "react-bootstrap";
 import { File, FolderFill } from 'react-bootstrap-icons';
 import { Link } from "react-router-dom";
 import Pathbar from "./Pathbar";
-import { ContentDirectory, ReposGetContentApiResponse, useReposGetContentQuery, useReposGetQuery } from "../../services/githubApi/endpoints/repos";
+import { ContentDirectory, ReposGetContentApiResponse, useReposCreateOrUpdateFileContentsMutation, useReposGetContentQuery, useReposGetQuery } from "../../services/githubApi/endpoints/repos";
 import BranchSelect from "./BranchSelect";
 import { displayLoadable } from "./displayLoadable";
 
@@ -10,6 +10,9 @@ import styles from './styles.module.css';
 import { SerializedError } from "@reduxjs/toolkit";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/dist/query";
 import { BsSlashCircle } from "react-icons/bs";
+import { HiDocumentAdd } from 'react-icons/hi'
+import CreateFileButton from "./CreateFileButton";
+import { useCallback, useRef, useState } from "react";
 
 export interface RepoExplorerProps {
   owner: string,
@@ -53,6 +56,8 @@ function RepoExplorer(props: RepoExplorerProps) {
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
   const content = useReposGetContentQuery({ owner, repo, ref: branch, path }, { skip: branch === undefined && !repoInfo.isSuccess });
 
+  const existingFilenames = useRef<Set<string>>(new Set());
+  
   if (repoInfo.isSuccess && !branch) {
     branch = repoInfo.data.default_branch;
   }
@@ -69,7 +74,7 @@ function RepoExplorer(props: RepoExplorerProps) {
     if (isEmptyRepoError(error)) {
       return (
         <div className="text-center text-muted">
-          <BsSlashCircle style={{margin: '5em', marginBottom: '2em'}} size={'10em'} />
+          <BsSlashCircle style={{ margin: '5em', marginBottom: '2em' }} size={'10em'} />
           <h3>Prázdny repozitár</h3>
         </div>
       )
@@ -114,6 +119,12 @@ function RepoExplorer(props: RepoExplorerProps) {
       }
     }
     files.sort(cmp);
+
+    existingFilenames.current.clear();
+    for (const item of files) {
+      existingFilenames.current.add(item.name);
+    }
+
     return <ListGroup variant="flush">{files.map((file) => renderFileItem({ name: file.name, type: file.type === 'file' ? 'file' : 'dir' }))}</ListGroup>
   }
 
@@ -122,6 +133,21 @@ function RepoExplorer(props: RepoExplorerProps) {
       <Card.Header className="h5">
         <BranchSelect owner={owner} repo={repo} path={path} branch={branch} makeLink={makeLink} />
         <Pathbar style={{ marginLeft: '1rem' }} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
+        <div style={{ float: 'right' }}>
+          <CreateFileButton
+            owner={owner} repo={repo} path={path}
+            existingFilenames={existingFilenames.current}
+            dialogTitle="Názov zošita"
+            closeText="Zrušiť"
+            confirmText="Vytvoriť"
+            errEmptyText="Prázdny názov"
+            errExistsText="Zošit s týmto názvom už existuje"
+            transformFilename={(filename: string) => `${filename}.workbook`}
+            commitMessage="new workbook"
+          >
+            <HiDocumentAdd /> Vytvoriť zošit
+          </CreateFileButton>
+        </div>
       </Card.Header>
       <Card.Body>
         {displayLoadable(content, loading, renderFiles, emptyOrError)}
