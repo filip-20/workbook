@@ -12,6 +12,7 @@ function RepoListPage() {
     <Container>
       <h1>Zoznam repozitárov</h1>
       <RepoList
+        sort="created"
         itemsPerPage={10}
         page={(params.page && parseInt(params.page)) || undefined}
         makePageLink={makePageLink}

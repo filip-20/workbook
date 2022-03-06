@@ -9,14 +9,15 @@ import { displayLoadable } from "./displayLoadable";
 export interface RepoListProps {
   itemsPerPage: number,
   page?: number,
+  sort?: "created" | "updated" | "pushed" | "full_name",
   makeRepoLink: (repoName: string) => string,
   makePageLink: (page: number) => string,
 }
 
 function RepoList(props: RepoListProps) {
-  const { itemsPerPage, page } = props;
+  const { itemsPerPage, page, sort } = props;
 
-  const repos = useReposListForAuthenticatedUserQuery({ perPage: itemsPerPage, page });
+  const repos = useReposListForAuthenticatedUserQuery({ perPage: itemsPerPage, page, sort });
   const paginationInfo = useReposListForAuthenticatedUserHeadersQuery({perPage: itemsPerPage, type: 'owner'});
 
   const parseLastPage = (link?: string) => {
