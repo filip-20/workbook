@@ -36,9 +36,7 @@ function App() {
         <Route path="/repos" element={<RepoListPage />} />
         <Route path="/repos/:page" element={<RepoListPage />} />
         <Route path="/repo/:repo" element={<RepoPage/>} />
-        <Route path="/repo/:repo/tree/:branch" element={<RepoPage />} />
-        <Route path="/repo/:repo/tree/:branch/*" element={<RepoPage />} />
-        <Route path="/repo/:repo/blob/:branch/*" element={<RepoPage />} />
+        <Route path="/repo/:repo/*" element={<RepoPage />} />
         <Route path="/sheet" element={<SheetPage/>} />
       </Routes>
       </div>
