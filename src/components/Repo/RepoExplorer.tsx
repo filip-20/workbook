@@ -20,6 +20,7 @@ export interface RepoExplorerProps {
   branch?: string,
   path: string,
   makeLink: (path: string, fileType: 'file' | 'dir', repo: string, branch?: string) => string
+  transformFileItem?: (path: string, fileType: 'file' | 'dir') => { changeIcon?: JSX.Element }
 }
 
 type FileItem = {
@@ -50,7 +51,7 @@ function isEmptyRepoError(error: any) {
 }
 
 function RepoExplorer(props: RepoExplorerProps) {
-  const { owner, repo, path, makeLink } = props;
+  const { owner, repo, path, makeLink, transformFileItem } = props;
   let { branch } = props;
 
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
@@ -62,8 +63,8 @@ function RepoExplorer(props: RepoExplorerProps) {
     branch = repoInfo.data.default_branch;
   }
 
-  const folderIcon = <FolderFill className={styles.itemIcon} />
-  const fileIcon = <File className={styles.itemIcon} />
+  const folderIcon = <FolderFill />
+  const fileIcon = <File />
 
   const loading = <div style={{ width: '100%', textAlign: 'center' }}><Spinner animation="grow" role="status" /></div>
   const err = (message: string) => {
@@ -84,18 +85,28 @@ function RepoExplorer(props: RepoExplorerProps) {
 
   const renderFileItem = (file: FileItem) => {
     let linkUrl: string;
+    let filePath: string;
+    
     if (file.name === '..') {
       const reducer = (prev: string, current: string) => (prev === '' ? '' : prev + '/') + current;
-      const p = path.split('/').slice(0, -1).reduce(reducer, '');
-      linkUrl = props.makeLink(p, 'dir', repo, branch);
+      filePath = path.split('/').slice(0, -1).reduce(reducer, '');
     } else {
-      const p = path === '' ? file.name : `${path}/${file.name}`;
-      linkUrl = props.makeLink(p, file.type, repo, branch);
+      filePath = path === '' ? file.name : `${path}/${file.name}`;
     }
+    const link = makeLink(filePath, file.type, repo, branch);
+    let icon = file.type === 'file' ? fileIcon : folderIcon
+
+    if (transformFileItem) {
+      let { changeIcon } = transformFileItem(filePath, file.type);
+      if (changeIcon) {
+        icon = changeIcon;
+      }
+    }
+
     return (
       <ListGroup.Item className={styles.fileItem} key={file.name}>
-        {file.type === 'file' ? fileIcon : folderIcon}
-        <Link className={styles.linkStyle} to={linkUrl}>{file.name}</Link>
+        <span className={styles.itemIcon}>{icon}</span>
+        {link ? <Link className={styles.linkStyle} to={link}>{file.name}</Link> : file.name}
       </ListGroup.Item>
     )
   }
@@ -135,7 +146,7 @@ function RepoExplorer(props: RepoExplorerProps) {
         <Pathbar style={{ marginLeft: '1rem' }} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
         <div style={{ float: 'right' }}>
           <CreateFileButton
-            owner={owner} repo={repo} path={path}
+            owner={owner} repo={repo} path={path} branch={branch}
             existingFilenames={existingFilenames.current}
             dialogTitle="Názov zošita"
             closeText="Zrušiť"
