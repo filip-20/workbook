@@ -7,6 +7,7 @@ export interface CreateFileButtonProps {
   children?: React.ReactNode,
   owner: string,
   repo: string,
+  branch?: string,
   path: string,
   dialogTitle: string,
   confirmText: string,
@@ -20,7 +21,7 @@ export interface CreateFileButtonProps {
 }
 
 function CreateFileButton(props: CreateFileButtonProps) {
-  const { owner, repo, path, existingFilenames, children } = props;
+  const { owner, repo, branch, path, existingFilenames, children } = props;
   const { transformFilename, commitMessage, withContent } = props;
   const { dialogTitle, confirmText, closeText, errEmptyText, errExistsText } = props;
 
@@ -44,7 +45,8 @@ function CreateFileButton(props: CreateFileButtonProps) {
       owner, repo, path: filepath,
       body: {
         message: commitMessage,
-        content: btoa(withContent || '')
+        content: btoa(withContent || ''),
+        branch
       }
     });
   }
