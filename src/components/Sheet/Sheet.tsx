@@ -1,12 +1,14 @@
-import { Container } from "react-bootstrap";
+import { Alert, Container, Spinner } from "react-bootstrap";
 import { useAppSelector } from "../../store/hooks";
 import AppCell from "./AppCell";
 import CellToolbar from "./CellToolbar";
 import CellWrapper from "./CellWrapper";
-import { selectCellsOrder, selectCells } from "../../store/sheetSlice";
+import { selectCellsOrder, selectCells, selectLoadState, selectSheetError } from "../../store/sheetSlice";
 import TextCell from "./TextCell";
 
 function Sheet() {
+  const loadState = useAppSelector(selectLoadState);
+  const sheetError = useAppSelector(selectSheetError);
   const cellsOrder = useAppSelector(selectCellsOrder);
   const cells = useAppSelector(selectCells);
 
@@ -29,12 +31,18 @@ function Sheet() {
     }
   }
 
-  return (
-    <Container>
-      {cellsOrder.map( (cellId, index) => <CellWrapper key={cellId} cellId={cellId} cellIndex={index}>{createCell(cellId, cells[cellId].type, cells[cellId].data)}</CellWrapper>)}
-      {cellsOrder.length === 0 ? displayToolbar() : ''}
-    </Container>
-  )
+  if (loadState === "not_loaded") {
+    return (<Container><div style={{ width: '100%', textAlign: 'center' }}><Spinner animation="grow" role="status" /></div></Container>)
+  } else if (loadState === 'load_error') {
+    return (<Container><Alert variant="danger">{sheetError}</Alert></Container>)
+  } else {
+    return (
+      <Container>
+        {cellsOrder.map( (cellId, index) => <CellWrapper key={cellId} cellId={cellId} cellIndex={index}>{createCell(cellId, cells[cellId].type, cells[cellId].data)}</CellWrapper>)}
+        {cellsOrder.length === 0 ? displayToolbar() : ''}
+      </Container>
+    )
+  }
 }
 
 export default Sheet;

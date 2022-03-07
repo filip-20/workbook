@@ -12,7 +12,7 @@ import RepoExplorer from "./Repo/RepoExplorer";
  *  Branch name can contain slashes. If it does, it is put between colons which can't be in branch name.  
  *  @see https://git-scm.com/docs/git-check-ref-format
  */
-function parseGithubUrlPath(urlPath: string): {branch?: string, type: 'file' | 'dir', path: string} | {error: 'invalid_path'} {
+export function parseGithubUrlPath(urlPath: string): {branch?: string, type: 'file' | 'dir', path: string} | {error: 'invalid_path'} {
   if (urlPath === '') {
     return { type: 'dir', path: ''};
   } else {
@@ -42,7 +42,7 @@ function parseGithubUrlPath(urlPath: string): {branch?: string, type: 'file' | '
   }
 }
 
-function parseFilepath(filepath: string): {filename: string, extension: string} {
+export function parseFilepath(filepath: string): {filename: string, extension: string} {
   const a = filepath.split('/');
   const filename = a[a.length-1];
   const b = filename.split('.');

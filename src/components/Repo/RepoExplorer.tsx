@@ -13,6 +13,7 @@ import { BsSlashCircle } from "react-icons/bs";
 import { HiDocumentAdd } from 'react-icons/hi'
 import CreateFileButton from "./CreateFileButton";
 import { useCallback, useRef, useState } from "react";
+import { emptySheet } from "../../store/sheetSlice";
 
 export interface RepoExplorerProps {
   owner: string,
@@ -155,6 +156,7 @@ function RepoExplorer(props: RepoExplorerProps) {
             errExistsText="Zošit s týmto názvom už existuje"
             transformFilename={(filename: string) => `${filename}.workbook`}
             commitMessage="new workbook"
+            withContent={JSON.stringify(emptySheet)}
           >
             <HiDocumentAdd /> Vytvoriť zošit
           </CreateFileButton>
