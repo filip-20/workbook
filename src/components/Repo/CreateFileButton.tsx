@@ -18,12 +18,14 @@ export interface CreateFileButtonProps {
   transformFilename?: (filename: string) => string,
   commitMessage: string,
   withContent?: string,
+  onFileCreated?: (filename: string) => void,
 }
 
 function CreateFileButton(props: CreateFileButtonProps) {
   const { owner, repo, branch, path, existingFilenames, children } = props;
   const { transformFilename, commitMessage, withContent } = props;
   const { dialogTitle, confirmText, closeText, errEmptyText, errExistsText } = props;
+  const { onFileCreated } = props;
 
   const [show, setShow] = useState(false);
   const [validationMsg, setValidationMsg] = useState('');
@@ -79,6 +81,7 @@ function CreateFileButton(props: CreateFileButtonProps) {
   if (createFileResult.isSuccess && pendingCreate) {
     setPendingCreate(false);
     setShow(false);
+    onFileCreated && onFileCreated(filename);
   }
 
   if (createFileResult.error) {
