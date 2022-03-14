@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Alert, Card, Container, Spinner } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { githubApi } from "../services/githubApi/endpoints/repos"
@@ -8,6 +9,8 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { loadSheet } from "../store/sheetSlice";
 import { parseFilepath, parseGithubUrlPath } from "./RepoPage";
 import Sheet from "./Sheet/Sheet";
+import SheetCommitter from "./Sheet/SheetCommitter";
+import { Base64 } from 'js-base64';
 
 import styles from './SheetPage.module.css'
 
@@ -19,6 +22,7 @@ function SheetPage() {
   const { repo } = params;
 
   const dispatch = useAppDispatch();
+  const fileChanged = useRef(false);
 
   const [loadTrigger, loadResult, lastPromiseInfo] = githubApi.useLazyReposGetContentQuery();
 
@@ -36,6 +40,8 @@ function SheetPage() {
       const args = { owner, repo, path, ref: branch };
 
       if (JSON.stringify(lastPromiseInfo.lastArg) !== JSON.stringify(args)) {
+        fileChanged.current = true
+        console.log('refetching');
         loadTrigger(args);
       }
 
@@ -51,16 +57,27 @@ function SheetPage() {
         } else if (!('content' in data)) {
           return (<Container><Alert variant="danger">Cesta neodkazuje na súbor</Alert></Container>)
         } else {
-          let content;
-          try {
-            content = atob(data.content);
-          } catch (e) {
-            return (<Container><Alert variant="danger">Obsah súboru sa nepodarilo dekódovať</Alert></Container>)
+          if (fileChanged.current) {
+            let content;
+            try {
+              content = Base64.decode(data.content)
+            } catch (e) {
+              return (<Container><Alert variant="danger">Obsah súboru sa nepodarilo dekódovať</Alert></Container>)
+            }
+            console.log('loading file');
+            //console.log(data);
+            dispatch(loadSheet({ json: content, fileInfo: { owner, repo, branch, path, sha: data.sha } }))
+            fileChanged.current = false;
           }
-          dispatch(loadSheet({json: content, fileInfo: {owner, repo, branch, path}}))
           body = (
             <Card className={`shadow-lg ${styles.sheetContainer}`}>
+              {/*
+                <Card.Header>
+                  <SheetCommitter />
+                </Card.Header>
+                */}
               <Card.Body>
+                <SheetCommitter />
                 <Sheet />
               </Card.Body>
             </Card>
