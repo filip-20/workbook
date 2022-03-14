@@ -39,7 +39,7 @@ function TextCell(props: TextCellProps) {
 
   const onContentChange = (target: HTMLTextAreaElement) => {
     setContent(target.value);
-    dispatch(updateCellData({cellId: props.cellId, data: content}));
+    dispatch(updateCellData({cellId: props.cellId, data: target.value}));
     /* update textarea's height while typing */
     updateTextAreaHeight(target);
   }
