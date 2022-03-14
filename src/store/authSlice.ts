@@ -32,6 +32,7 @@ export const authSlice = createSlice({
     builder.addMatcher(githubApi.endpoints.usersGetAuthenticated.matchFulfilled,
       (state, { payload }) => {
         state.user = {login: payload.login}
+        state.authState = 'authenticated'
       });
   }
 });
