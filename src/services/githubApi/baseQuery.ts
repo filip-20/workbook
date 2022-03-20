@@ -5,12 +5,14 @@ import { RootState } from '../../store/store'
 const baseQuery = fetchBaseQuery({ 
   baseUrl: "https://api.github.com/",
   prepareHeaders: (headers, { getState }) => {
+    
     const accessToken = (getState() as RootState).auth.accessToken;
     if (accessToken) {
-      headers.set('Authorization', `token ${accessToken}`);
+      headers.append('Authorization', `token ${accessToken}`);
     }
     return headers;
-  }
+  },
+  cache: 'no-cache'
  });
 
  const githubBaseQuery: BaseQueryFn<
@@ -23,11 +25,10 @@ const baseQuery = fetchBaseQuery({
    * is invalid or expired.
    */
   let result = await baseQuery(args, api, extraOptions)
-  console.log(result);
   if (result.error && result.error.status === 401) {
     api.dispatch(setAuthState('tokenExpired'));
   }
   return result;
 };
 
-export default githubBaseQuery;
+export default baseQuery;
