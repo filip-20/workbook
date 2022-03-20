@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, Card, Container, Spinner } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { githubApi } from "../services/githubApi/endpoints/repos"
@@ -23,8 +23,59 @@ function SheetPage() {
 
   const dispatch = useAppDispatch();
   const fileChanged = useRef(false);
-
   const [loadTrigger, loadResult, lastPromiseInfo] = githubApi.useLazyReposGetContentQuery();
+  const [body2, setBody2] = useState(<></>);
+
+  useEffect(() => {
+    if (user?.login && repo && !('error' in parsed)) {
+      const owner = user.login;
+      const { branch, path } = parsed;
+      const { extension } = parseFilepath(path);
+      if (extension === 'workbook' && branch) {
+        const args = { owner, repo, path, ref: branch };
+        if (JSON.stringify(lastPromiseInfo.lastArg) !== JSON.stringify(args)) {
+          fileChanged.current = true;
+          loadTrigger(args);
+        }
+      }
+      if (fileChanged.current && branch) {
+        if (loadResult.isSuccess) {
+          const { data } = loadResult;
+          if (Array.isArray(data)) {
+            setBody2(<Container><Alert variant="danger">Cesta odkazuje na priečinok</Alert></Container>)
+          } else if (!('content' in data)) {
+            setBody2(<Container><Alert variant="danger">Cesta neodkazuje na súbor</Alert></Container>)
+          } else {
+            if (fileChanged.current) {
+              let content;
+              try {
+                content = Base64.decode(data.content)
+              } catch (e) {
+                setBody2 (<Container><Alert variant="danger">Obsah súboru sa nepodarilo dekódovať</Alert></Container>)
+              }
+              if (content) {
+                console.log('loading file');
+                //console.log(data);
+                dispatch(loadSheet({ json: content, fileInfo: { owner, repo, branch, path, sha: data.sha } }))
+                fileChanged.current = false;
+              }
+            }
+            const body = (
+              <Card className={`shadow-lg ${styles.sheetContainer}`}>
+                <Card.Header>
+                  <SheetCommitter />
+                </Card.Header>
+                <Card.Body>
+                  <Sheet />
+                </Card.Body>
+              </Card>
+            )
+            setBody2(body);
+          }
+        }
+      }
+    }
+  }, [user, repo, parsed, loadResult]);
 
   if ('error' in parsed) {
     return (<Container><Alert variant="danger">Chyba URL</Alert></Container>)
@@ -51,38 +102,7 @@ function SheetPage() {
       } else if (loadResult.isError) {
         body = <Alert variant="danger">Načítanie hárku zlyhalo. ({githubApiErrorMessage(loadResult.error)})</Alert>
       } else if (loadResult.isSuccess) {
-        const { data } = loadResult;
-        if (Array.isArray(data)) {
-          return (<Container><Alert variant="danger">Cesta odkazuje na priečinok</Alert></Container>)
-        } else if (!('content' in data)) {
-          return (<Container><Alert variant="danger">Cesta neodkazuje na súbor</Alert></Container>)
-        } else {
-          if (fileChanged.current) {
-            let content;
-            try {
-              content = Base64.decode(data.content)
-            } catch (e) {
-              return (<Container><Alert variant="danger">Obsah súboru sa nepodarilo dekódovať</Alert></Container>)
-            }
-            console.log('loading file');
-            //console.log(data);
-            dispatch(loadSheet({ json: content, fileInfo: { owner, repo, branch, path, sha: data.sha } }))
-            fileChanged.current = false;
-          }
-          body = (
-            <Card className={`shadow-lg ${styles.sheetContainer}`}>
-              {/*
-                <Card.Header>
-                  <SheetCommitter />
-                </Card.Header>
-                */}
-              <Card.Body>
-                <SheetCommitter />
-                <Sheet />
-              </Card.Body>
-            </Card>
-          )
-        }
+        body = body2;
       }
 
       return (
