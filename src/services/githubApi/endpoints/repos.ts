@@ -629,6 +629,7 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/repos/${queryArg.owner}/${queryArg.repo}/contents/${queryArg.path}`,
         params: { ref: queryArg.ref },
       }),
+      providesTags: ['Files']
     }),
     reposCreateOrUpdateFileContents: build.mutation<
       ReposCreateOrUpdateFileContentsApiResponse,
@@ -639,6 +640,8 @@ const injectedRtkApi = api.injectEndpoints({
         method: "PUT",
         body: queryArg.body,
       }),
+      extraOptions: {maxRetries: 0},
+      invalidatesTags: ['Files']
     }),
     reposDeleteFile: build.mutation<
       ReposDeleteFileApiResponse,

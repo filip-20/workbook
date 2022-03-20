@@ -5,6 +5,7 @@ import { ReposListForAuthenticatedUserApiArg, ReposListForUserApiArg } from "./e
 export const githubApi = createApi({
   reducerPath: "githubApi",
   baseQuery: githubBaseQuery,
+  tagTypes: ['Files'],
   endpoints: (build) => ({
     reposListForUserHeaders: build.query<{link?: string}, ReposListForUserApiArg>({
       query: (queryArg) => ({
