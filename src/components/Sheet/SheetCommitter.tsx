@@ -1,21 +1,21 @@
 import { useReposCreateOrUpdateFileContentsMutation } from "../../services/githubApi/endpoints/repos";
-import { selectAuthState, selectUser } from "../../store/authSlice";
-import { dequeueCommit, selectCommitQueueHead } from "../../store/sheetSlice";
+import { authSelectors } from "../../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { selectSheetFileInfo } from "../../store/sheetSlice";
 import { useEffect, useRef, useState } from "react";
 import { githubApiErrorMessage } from "../../services/githubApi/errorMessage";
 import { Base64 } from 'js-base64';
 import { Alert, Button, Spinner } from "react-bootstrap";
+import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
 
 export interface SheetCommitterProps {
-
+  className?: string,
+  style?: React.CSSProperties,
 }
 
 function SheetCommitter(props: SheetCommitterProps) {
-  const authState = useAppSelector(selectAuthState);
-  const fileInfo = useAppSelector(selectSheetFileInfo);
-  const commit = useAppSelector(selectCommitQueueHead);
+  const authState = useAppSelector(authSelectors.authState);
+  const fileInfo = useAppSelector(sheetSelectors.fileInfo);
+  const commit = useAppSelector(sheetSelectors.commitQueueHead);
 
   const dispatch = useAppDispatch();
 
@@ -29,7 +29,7 @@ function SheetCommitter(props: SheetCommitterProps) {
       if (updateFileResult.isSuccess) {
         console.log('update succeeded dequeing commit id ' + lastCommitId);
         const updateSha = updateFileResult.data.content!!.sha!!
-        dispatch(dequeueCommit({ id: lastCommitId, updateSha }))
+        dispatch(sheetActions.dequeueCommit({ id: lastCommitId, updateSha }))
         commiterState.current = 'waiting_for_commit';
       } else if (updateFileResult.isError) {
         console.log('waiting_for_dequeue: update error');
@@ -67,7 +67,7 @@ function SheetCommitter(props: SheetCommitterProps) {
 
   var body;
   if (updateFileResult.isLoading) {
-    body = <div>Ukladám...<Spinner size="sm" role="status" animation="grow" /></div>
+    body = <>Ukladám...<Spinner size="sm" role="status" animation="grow" /></>
   } else if (updateFileResult.isSuccess || (updateFileResult.isUninitialized && !commit)) {
     body = <></>
   } else if (updateFileResult.isError) {
@@ -76,7 +76,7 @@ function SheetCommitter(props: SheetCommitterProps) {
     body = <p>What's going on??</p>
   }
 
-  return body;
+  return <div className={props.className} style={props.style}>{body}</div>;
 }
 
 export default SheetCommitter;

@@ -13,8 +13,9 @@
     "@types/react": "^17.0.37",
     "@types/react-dom": "^17.0.11",
     "@types/react-router-bootstrap": "^0.24.5",
+    "@uiw/react-codemirror": "^4.5.1",
     "bootstrap": "^5.1.3",
-    "fol-graphexplorer": "github:4zzz/structure-explorer",
+    "fol-graphexplorer": "github:4zzz/structure-explorer#0bcbbc505b68329929215043610b735c32552a2e",
     "install": "^0.13.0",
     "js-base64": "^3.7.2",
     "katex": "^0.15.1",
@@ -25,18 +26,17 @@
     "react-bootstrap-icons": "^1.6.1",
     "react-dom": "^17.0.2",
     "react-icons": "^4.3.1",
-    "react-katex": "^2.0.2",
     "react-markdown": "^7.1.1",
     "react-moment": "^1.1.1",
-    "react-paginate": "^8.1.0",
     "react-redux": "^7.2.6",
-    "react-router-bootstrap": "^0.26.0",
+    "react-router-bootstrap": "^0.26.1",
     "react-router-dom": "^6.0.2",
     "react-scripts": "5.0.0",
     "rehype-katex": "^6.0.2",
     "remark-math": "^5.1.1",
-    "resolution-editor": "github:4zzz/resolution-editor",
-    "tableaueditor": "github:4zzz/tableauEditor",
+    "resolution-editor": "github:4zzz/resolution-editor#fb7fa307863b1a872e5d133acd1fa5172c71f426",
+    "tableaueditor": "github:4zzz/tableauEditor#c7ec31912793d4086459d14f620b395d7440cd38",
+    "ts-auto-guard": "^2.4.1",
     "typescript": "^4.5.2",
     "web-vitals": "^1.1.2"
   },
@@ -63,5 +63,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^3.2.3"
   }
 }

@@ -1,21 +1,101 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Card, Container, Spinner } from "react-bootstrap";
+import { Alert, Container, Spinner } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { githubApi } from "../services/githubApi/endpoints/repos"
 import { githubApiErrorMessage } from "../services/githubApi/errorMessage";
-
-import { selectUser } from "../store/authSlice";
+import { MdMenuBook, MdSignalCellular1Bar } from "react-icons/md";
+import { authSelectors } from "../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { loadSheet } from "../store/sheetSlice";
-import { parseFilepath, parseGithubUrlPath } from "./RepoPage";
+import { makeLink, parseFilepath, parseGithubUrlPath } from "./RepoPage";
 import Sheet from "./Sheet/Sheet";
 import SheetCommitter from "./Sheet/SheetCommitter";
 import { Base64 } from 'js-base64';
 
-import styles from './SheetPage.module.css'
+import Pathbar from "./Repo/Pathbar";
+import { sheetActions } from "../store/sheetSlice";
+import { BiGitBranch } from "react-icons/bi";
+import Err404Page from "./Err404Page";
+import BranchLabel from "./Repo/BranchLabel";
 
 function SheetPage() {
-  const user = useAppSelector(selectUser);
+  const user = useAppSelector(authSelectors.user);
+  const params = useParams();
+  const { repo } = params;
+  const repoParams = parseGithubUrlPath(params['*'] || '');
+
+  // state of workbook file loading from github
+  const loadState = useRef<'not-loaded' | 'loaded' | 'decode-fail'>('not-loaded');
+  const [sheetBody, setSheetBody] = useState(<></>);
+
+  const [loadTrigger, loadResult, lastPromiseInfo] = githubApi.useLazyReposGetContentQuery();
+
+  const loading = <div style={{ width: '100%', textAlign: 'center' }}><Spinner animation="grow" role="status" /></div>
+  const loadFail = (msg?: String) => <Alert variant="danger">Načítanie hárku zlyhalo.{msg && <> ({msg})</>}</Alert>
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (loadState.current === 'not-loaded' && loadResult.isSuccess) {
+      const { data } = loadResult;
+      if (!('content' in data)) {
+        loadState.current = 'decode-fail'
+        setSheetBody(loadFail())
+      } else {
+        let content;
+        try {
+          content = Base64.decode(data.content);
+        } catch (e) {}
+        if (content) {
+          loadState.current = 'loaded';
+          const {owner, path, repo, ref} = lastPromiseInfo.lastArg;
+          dispatch(sheetActions.loadSheet({ json: content, fileInfo: { owner, repo, branch: ref!!, path, sha: data.sha } }))
+          setSheetBody(<Sheet />);
+        } else {
+          loadState.current = 'decode-fail';
+          setSheetBody(loadFail('Base64 decode failed'));
+        }
+      }
+    }
+  }, [loadResult, loadState])
+
+  if ('error' in repoParams) {
+    return (<Err404Page />);
+  } else if (!user) {
+    return (<Container><Alert variant="danger">Chyba autentifikácie</Alert></Container>)
+  } else {
+    const { branch, type, path } = repoParams;
+    const { filename, extension } = parseFilepath(path);
+    if (type !== 'file' || extension !== 'workbook' || !repo || !branch) {
+      return (<Err404Page />);
+    } else {
+      const loadArgs = { owner: user.login, repo, path, ref: branch };
+      if (JSON.stringify(lastPromiseInfo.lastArg) !== JSON.stringify(loadArgs)) {
+        console.log('loading workbook');
+        loadTrigger(loadArgs);
+      }
+
+      return (
+        <Container fluid className="w-100 m-0 p-0" style={{ minHeight: '100%', background: 'white' }}>
+          <div className="mx-3 p-3 border-bottom" style={{ fontSize: '1.5rem' }}>
+            <MdMenuBook />
+            <BranchLabel branch={branch} />
+            <Pathbar style={{ color: 'white !important' }} path={path} branch={branch} repoName={repo} makeLink={makeLink} />
+            <div style={{ display: 'inline-block' }}><SheetCommitter style={{ marginLeft: '1rem' }} /></div>
+          </div>
+          <div className="m-3">
+            {loadResult.isLoading && loading}
+            {loadResult.isError && loadFail(githubApiErrorMessage(loadResult.error))}
+            {loadResult.isSuccess && sheetBody}
+          </div>
+        </Container>
+      )
+    }
+  }
+}
+
+/*
+function SheetPage() {
+  const user = useAppSelector(authSelectors.user);
   const params = useParams();
   const urlPath = params['*'] || '';
   const parsed = parseGithubUrlPath(urlPath);
@@ -51,24 +131,19 @@ function SheetPage() {
               try {
                 content = Base64.decode(data.content)
               } catch (e) {
-                setBody2 (<Container><Alert variant="danger">Obsah súboru sa nepodarilo dekódovať</Alert></Container>)
+                setBody2(<Container><Alert variant="danger">Obsah súboru sa nepodarilo dekódovať</Alert></Container>)
               }
               if (content) {
                 console.log('loading file');
                 //console.log(data);
-                dispatch(loadSheet({ json: content, fileInfo: { owner, repo, branch, path, sha: data.sha } }))
+                dispatch(sheetActions.loadSheet({ json: content, fileInfo: { owner, repo, branch, path, sha: data.sha } }))
                 fileChanged.current = false;
               }
             }
+
+
             const body = (
-              <Card className={`shadow-lg ${styles.sheetContainer}`}>
-                <Card.Header>
-                  <SheetCommitter />
-                </Card.Header>
-                <Card.Body>
-                  <Sheet />
-                </Card.Body>
-              </Card>
+              <Sheet />
             )
             setBody2(body);
           }
@@ -106,12 +181,20 @@ function SheetPage() {
       }
 
       return (
-        <Container>
-          {body}
+        <Container fluid className="w-100 m-0 p-0" style={{minHeight: '100%', background: 'white'}}>
+          <div className="mx-3 p-3 border-bottom" style={{fontSize: '1.5rem'}}>
+            <MdMenuBook />
+            <span className="bg-primary text-white fs-5 rounded mx-2 px-2 py-1"><BiGitBranch /> {branch}</span>
+            <Pathbar style={{ color: 'white !important' }} path={path} branch={branch} repoName={repo} makeLink={makeLink} />
+            <div style={{display: 'inline-block'}}><SheetCommitter style={{marginLeft: '1rem'}} /></div>
+          </div>
+          <div className="m-3">
+            {body}
+          </div>
         </Container>
       )
     }
   }
-}
+}*/
 
 export default SheetPage;

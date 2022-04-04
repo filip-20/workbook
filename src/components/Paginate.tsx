@@ -22,6 +22,8 @@ const defaultProps: {
 }
 
 function Paginate(props: PaginateProps) {
+  const {pageCount, currentPage, pagesFromStart, pagesToEnd, pagesAroundCurrent, makePageLink} = props
+
   const clamp = (num: number, min: number, max: number) => Math.min(Math.max(num, min), max);
 
   const pages = useMemo(() => {
@@ -29,24 +31,24 @@ function Paginate(props: PaginateProps) {
     let from, to;
     /* pages from start */
     from = 1;
-    to = clamp(props.pagesFromStart!!, 1, props.pageCount);
+    to = clamp(pagesFromStart!!, 1, pageCount);
     for (let i = from; i <= to; i++) {
       pages[i] = true;
     }
     /* pages around current page */
-    from = clamp(props.currentPage - props.pagesAroundCurrent!!, 1, props.pageCount);
-    to = clamp(props.currentPage + props.pagesAroundCurrent!!, 1, props.pageCount);
+    from = clamp(currentPage - pagesAroundCurrent!!, 1, pageCount);
+    to = clamp(currentPage + pagesAroundCurrent!!, 1, pageCount);
     for (let i = from; i <= to; i++) {
       pages[i] = true;
     }
     /* pages to end */
-    from = clamp(props.pageCount - props.pagesToEnd!! + 1, 1, props.pageCount);
-    to = props.pageCount;
+    from = clamp(pageCount - pagesToEnd!! + 1, 1, pageCount);
+    to = pageCount;
     for (let i = from; i <= to; i++) {
       pages[i] = true;
     }
     return pages;
-  }, [props.currentPage, props.pageCount, props.pagesAroundCurrent, props.pagesFromStart, props.pagesToEnd])
+  }, [currentPage, pageCount, pagesAroundCurrent, pagesFromStart, pagesToEnd])
 
 
   const pageItems: Array<JSX.Element> = [];
@@ -63,24 +65,24 @@ function Paginate(props: PaginateProps) {
       ))
     }
     prevPage = page;
-    if (page === props.currentPage) {
+    if (page === currentPage) {
       pageItems.push((
         <Pagination.Item key={page} active>{page}</Pagination.Item>
       ))
     } else {
       pageItems.push((
-        <LinkContainer key={page} to={props.makePageLink(page)}><Pagination.Item>{page}</Pagination.Item></LinkContainer>
+        <LinkContainer key={page} to={makePageLink(page)}><Pagination.Item>{page}</Pagination.Item></LinkContainer>
       ))
     }
   })
 
   return (
     <Pagination className="justify-content-center">
-      <LinkContainer to={props.makePageLink(1)}><Pagination.First /></LinkContainer>
-      <LinkContainer to={props.makePageLink(props.currentPage - 1)}><Pagination.Prev /></LinkContainer>
+      {currentPage === 1 ? <Pagination.First disabled /> : <LinkContainer to={makePageLink(1)}><Pagination.First /></LinkContainer>}
+      {currentPage === 1 ? <Pagination.Prev disabled /> : <LinkContainer to={makePageLink(currentPage - 1)}><Pagination.Prev /></LinkContainer>}
       {pageItems}
-      <LinkContainer to={props.makePageLink(props.currentPage + 1)}><Pagination.Next /></LinkContainer>
-      <LinkContainer to={props.makePageLink(props.pageCount)}><Pagination.Last /></LinkContainer>
+      {currentPage === pageCount ? <Pagination.Next disabled /> : <LinkContainer to={makePageLink(currentPage + 1)}><Pagination.Next /></LinkContainer>}
+      {currentPage === pageCount ? <Pagination.Last disabled /> : <LinkContainer to={makePageLink(pageCount)}><Pagination.Last /></LinkContainer>}
     </Pagination>
   )
 }

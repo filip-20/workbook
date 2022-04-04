@@ -39,7 +39,7 @@ function RepoListItem(props: RepoListProps) {
         {
           placeholder ? 
           <Placeholder style={{ float: 'right' }} xs={3} />
-          : (item.updated_at && <div className="text-muted" style={{ float: 'right' }}>Zmenené <Moment locale='sk' fromNow>{item.updated_at}</Moment></div>)
+          : (item.updated_at && <div className="text-muted" style={{ float: 'right' }}>Zmenené <Moment locale='sk' fromNow>{item.pushed_at || item.updated_at}</Moment></div>)
         }
       </Card.Footer>
     </Card>

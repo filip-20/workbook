@@ -29,6 +29,7 @@ const injectedRtkApi = api.injectEndpoints({
     reposGet: build.query<ReposGetApiResponse, ReposGetApiArg>({
       query: (queryArg) => ({
         url: `/repos/${queryArg.owner}/${queryArg.repo}`,
+        cache: 'reload'
       }),
     }),
     reposUpdate: build.mutation<ReposUpdateApiResponse, ReposUpdateApiArg>({

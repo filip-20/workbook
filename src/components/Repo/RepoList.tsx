@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Alert,Col, Container, Row, Spinner } from "react-bootstrap";
 import Paginate from "../Paginate";
 import RepoListItem from "./RepoListItem";
 import { useReposListForAuthenticatedUserHeadersQuery } from "../../services/githubApi/baseApi";
 import { MinimalRepository, useReposListForAuthenticatedUserQuery } from "../../services/githubApi/endpoints/repos";
 import { displayLoadable } from "./displayLoadable";
+import Err404Page from "../Err404Page";
 
 export interface RepoListProps {
   itemsPerPage: number,
@@ -18,7 +19,7 @@ function RepoList(props: RepoListProps) {
   const { itemsPerPage, page, sort } = props;
 
   const repos = useReposListForAuthenticatedUserQuery({ perPage: itemsPerPage, page, sort });
-  const paginationInfo = useReposListForAuthenticatedUserHeadersQuery({perPage: itemsPerPage, type: 'owner'});
+  const paginationInfo = useReposListForAuthenticatedUserHeadersQuery({ perPage: itemsPerPage });
 
   const parseLastPage = (link?: string) => {
     let lastPage: number | null = null;
@@ -41,10 +42,12 @@ function RepoList(props: RepoListProps) {
     }
   }
 
+  const lastPage = useRef<number | undefined>(undefined);
+
   const renderListItem = (item: MinimalRepository) => {
     return (
       <Col key={item.id} md={6} style={{ padding: '0.5rem' }}>
-        <RepoListItem placeholder={repos.status === 'pending'} item={item} makeRepoLink={props.makeRepoLink} />
+        <RepoListItem placeholder={repos.isLoading} item={item} makeRepoLink={props.makeRepoLink} />
       </Col>
     )
   }
@@ -54,8 +57,12 @@ function RepoList(props: RepoListProps) {
   }
   const renderList = (data: MinimalRepository[]) => <Row>{data.map(item => renderListItem(item))}</Row>
   const renderPagination = (data: {link?: string}) => {
-    const lastPage = parseLastPage(data.link);
-    return lastPage !== 1 ? <Paginate makePageLink={props.makePageLink} pageCount={lastPage} currentPage={page || 1} /> : <></>
+    lastPage.current = parseLastPage(data.link);
+    return lastPage.current !== 1 ? <Paginate makePageLink={props.makePageLink} pageCount={lastPage.current} currentPage={page || 1} /> : <></>
+  }
+
+  if (lastPage.current && page && page > lastPage.current) {
+    return err('Ste za poslednou stranou');
   }
 
   return (

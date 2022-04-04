@@ -1,34 +1,32 @@
 import { Alert, Container, Spinner } from "react-bootstrap";
-import { useAppSelector } from "../../store/hooks";
-import AppCell from "./AppCell";
-import CellToolbar from "./CellToolbar";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import CellWrapper from "./CellWrapper";
-import { selectCellsOrder, selectCells, selectLoadState, selectSheetError } from "../../store/sheetSlice";
-import TextCell from "./TextCell";
+import AddToolbar from "./AddToolbar";
+import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
 
 function Sheet() {
-  const loadState = useAppSelector(selectLoadState);
-  const sheetError = useAppSelector(selectSheetError);
-  const cellsOrder = useAppSelector(selectCellsOrder);
-  const cells = useAppSelector(selectCells);
+  const dispatch = useAppDispatch();
+  const loadState = useAppSelector(sheetSelectors.loadState);
+  const sheetError = useAppSelector(sheetSelectors.error);
+  const cellsOrder = useAppSelector(sheetSelectors.cellsOrder);
 
-  console.log(cellsOrder);
+  //console.log(cellsOrder);
+
+  const addCellHandler = (typeName: string) => {
+    if (typeName.startsWith('app/')) {
+      dispatch(sheetActions.insertAppCell(typeName.slice(4), null, -1))
+    } else {
+      dispatch(sheetActions.insertTextCell('some content', -1))
+    }
+  }
 
   const displayToolbar = () => {
     return (
-      <CellToolbar
-        removeGroup={false}
-        moveGroup={false}
+      <AddToolbar 
+        className="justify-content-center"
+        onAddCellClick={addCellHandler}
       />
     )
-  }
-
-  const createCell = (id: number, type: string, data: any) => {
-    if (type === 'text') {
-      return (<TextCell cellId={id} text={data}/>)
-    } else {
-      return (<AppCell cellId={id} type={type} initialState={data} />)
-    }
   }
 
   if (loadState === "not_loaded") {
@@ -37,10 +35,10 @@ function Sheet() {
     return (<Container><Alert variant="danger">{sheetError}</Alert></Container>)
   } else {
     return (
-      <Container>
-        {cellsOrder.map( (cellId, index) => <CellWrapper key={cellId} cellId={cellId} cellIndex={index}>{createCell(cellId, cells[cellId].type, cells[cellId].data)}</CellWrapper>)}
+      <>
+        {cellsOrder.map((cellId, index) => <CellWrapper key={cellId} cellId={cellId} cellIndex={index} />)}
         {cellsOrder.length === 0 ? displayToolbar() : ''}
-      </Container>
+      </>
     )
   }
 }

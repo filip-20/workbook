@@ -1,3 +1,27 @@
-.textedit {
-  width: 100%;
+.textEdit {
+  display: inline-block;
+  width: calc(100% - 45rem);
+  vertical-align: top;
+  margin-right: 1rem;
+  padding-right: 1rem;
+  border-right-style: solid;
+  border-right-width: 1px;
+}
+
+.textCell {
+  display: inline-block;
+  max-width: 40rem;
+  vertical-align: top;
+}
+
+@media screen and (max-width: 40rem) {
+  .textEdit {
+    display: block;
+    width: 100%;
+    margin-right: 2rem;
+  }
+  .textCell {
+    display: block;
+    max-width: 40rem;
+  }
 }

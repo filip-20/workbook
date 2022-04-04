@@ -1,8 +1,9 @@
 import { Alert, Container } from "react-bootstrap";
 import { BsFillStarFill } from "react-icons/bs";
 import { useParams } from "react-router-dom";
-import { selectUser } from "../store/authSlice";
+import { authSelectors } from "../store/authSlice";
 import { useAppSelector } from "../store/hooks";
+import Err404Page from "./Err404Page";
 import RepoExplorer from "./Repo/RepoExplorer";
 
 
@@ -42,6 +43,20 @@ export function parseGithubUrlPath(urlPath: string): {branch?: string, type: 'fi
   }
 }
 
+export function makeLink(filepath: string, fileType: 'file' | 'dir', repo: string, branch?: string): string {
+  const type = fileType === 'file' ? 'blob' : 'tree';
+  let bPart = '';
+  if (branch) {
+    bPart = branch.includes('/') ? `:${branch}:/` : `${branch}/`;
+  }
+  const { extension } = parseFilepath(filepath);
+  if (extension === 'workbook') {
+    return `/sheet/${repo}/${type}/${bPart}${filepath}`;
+  } else {
+    return `/repo/${repo}/${type}/${bPart}${filepath}`;
+  }
+}
+
 export function parseFilepath(filepath: string): {filename: string, extension: string} {
   const a = filepath.split('/');
   const filename = a[a.length-1];
@@ -51,22 +66,8 @@ export function parseFilepath(filepath: string): {filename: string, extension: s
 }
 
 function RepoPage() {
-  const user = useAppSelector(selectUser);
+  const user = useAppSelector(authSelectors.user);
   const params = useParams();
-
-  const makeLink = (filepath: string, fileType: 'file' | 'dir', repo: string, branch?: string) => {
-    const type = fileType === 'file' ? 'blob' : 'tree';
-    let bPart = '';
-    if (branch) {
-      bPart = branch.includes('/') ? `:${branch}:/` : `${branch}/`;
-    }
-    const { extension } = parseFilepath(filepath);
-    if (extension === 'workbook') {
-      return `/sheet/${repo}/${type}/${bPart}${filepath}`;
-    } else {
-      return `/repo/${repo}/${type}/${bPart}${filepath}`;
-    }
-  }
 
   const transformFileItem = (filepath: string, type: 'file' | 'dir') => {
     const {filename, extension} = parseFilepath(filepath);
@@ -81,14 +82,14 @@ function RepoPage() {
   let body;
   if (!user) {
     body = <Alert variant="danger">Chyba autentifikácie</Alert>
-  } else if ('error' in parsed) {
-    body = <Alert variant="danger">Chyba URL</Alert>
+  } else if ('error' in parsed || !params.repo) {
+    return <Err404Page />
   } else {
     const username = user.login;
     const { branch, path } = parsed;
     body = (
       <RepoExplorer
-        owner={username} repo={params.repo!!} branch={branch} path={path}
+        owner={username} repo={params.repo} branch={branch} path={path}
         makeLink={makeLink}
         transformFileItem={transformFileItem}
       />

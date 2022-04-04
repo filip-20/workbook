@@ -25,6 +25,7 @@ export const githubApi = createApi({
     }),
     reposListForAuthenticatedUserHeaders: build.query<{link?: string}, ReposListForAuthenticatedUserApiArg>({
       query: (queryArg) => ({
+        method: 'HEAD',
         url: `/user/repos`,
         params: {
           visibility: queryArg.visibility,

@@ -96,7 +96,7 @@ function CreateFileButton(props: CreateFileButtonProps) {
           <Modal.Title>{dialogTitle}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
+          <Form onSubmit={(e) => {e.preventDefault(); handleConfirm()}}>
             <Form.Group>
               <Form.Control
                 type="text"

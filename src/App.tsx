@@ -1,43 +1,49 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
 import Navigation from './components/Navigation';
 import SheetPage from './components/SheetPage';
-import HomePage from './components/HomePage';
 import RepoPage from './components/RepoPage';
 import RepoListPage from './components/RepoListPage';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { checkAuthState, selectAccessToken, selectAuthState } from './store/authSlice';
+import { authSelectors, saveUser } from './store/authSlice';
 import LogoutPage from './components/LogoutPage';
 import { useUsersGetAuthenticatedQuery } from './services/githubApi/endpoints/users';
+import Err404Page from './components/Err404Page';
 
 function App() {
   const dispatch = useAppDispatch();
 
-  const authState = useAppSelector(selectAuthState);
-  const accessToken = useAppSelector(selectAccessToken);
-  if (authState === 'unknown' && !accessToken) {
-    // Action that sets accessToken if it is given in cookies 
-    dispatch(checkAuthState());
-  }
-  // Load user info if we have accessToken and authState is 'unknown'.
-  // Query result is catched by extraReducer in authSlice.
-  useUsersGetAuthenticatedQuery(undefined, {skip: !(authState === 'unknown' && accessToken)})
+  const authState = useAppSelector(authSelectors.authState);
+  const user = useAppSelector(authSelectors.user);
+  const accessToken = useAppSelector(authSelectors.accessToken);
+  const tokenTested = useAppSelector(authSelectors.tokenTested);
+
+  // After user info is loaded, token is marked as tested
+  useUsersGetAuthenticatedQuery(undefined, {skip: ((authState === 'unauthenticated' && !accessToken) || tokenTested)});
+
+  useEffect(() => {
+    if (user && tokenTested) {
+      console.log('saving user to localstorage');
+      saveUser(user);
+    }
+  }, [user, tokenTested])
   
   return (
     <BrowserRouter>
       <Navigation />
-      <div className="m-0 p-2">
+      <div className="m-0 p-0">
       <Routes>
-        <Route path="/" element={<HomePage/>} />
-        <Route path="/logout" element={<LogoutPage/>} />
+        <Route path='*' element={<Err404Page />} />
+        <Route path="/" element={<RepoListPage />} />
         <Route path="/repos" element={<RepoListPage />} />
         <Route path="/repos/:page" element={<RepoListPage />} />
         <Route path="/repo/:repo" element={<RepoPage/>} />
         <Route path="/repo/:repo/*" element={<RepoPage />} />
         <Route path="/sheet/:repo/*" element={<SheetPage/>} />
+        <Route path="/logout" element={<LogoutPage/>} />
       </Routes>
       </div>
     </BrowserRouter>
