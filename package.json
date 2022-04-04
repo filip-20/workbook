@@ -2,6 +2,7 @@
   "name": "workbook",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://fmfi-uk-1-ain-412.github.io/workbook",
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.0",
     "@testing-library/jest-dom": "^5.15.1",
@@ -44,7 +45,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
