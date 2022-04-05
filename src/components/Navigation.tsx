@@ -1,8 +1,8 @@
-import { Container, Nav, Navbar } from "react-bootstrap";
+import { Nav, Navbar } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { authSelectors } from "../store/authSlice";
 import { useAppSelector } from "../store/hooks";
-import config from '../config.json';
+import { getLoginUrl } from "./LoginPage";
 
 function Navigation() {
   const accessToken = useAppSelector(authSelectors.accessToken);
@@ -16,7 +16,7 @@ function Navigation() {
           {
             accessToken ?
               <Nav.Link as={Link} to="/logout">Odhlásiť sa</Nav.Link>
-              : <Nav.Link href={`https://github.com/login/oauth/authorize?client_id=${config.githubApi.clientId}&redirect_uri=${config.auth.backendUrl}&scope=repo`}>Prihlásiť sa</Nav.Link>
+              : <Nav.Link href={getLoginUrl()}>Prihlásiť sa</Nav.Link>
           }
         </Nav>
       </Navbar.Collapse>

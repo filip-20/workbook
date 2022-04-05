@@ -16,8 +16,10 @@ import { sheetActions } from "../store/sheetSlice";
 import { BiGitBranch } from "react-icons/bi";
 import Err404Page from "./Err404Page";
 import BranchLabel from "./Repo/BranchLabel";
+import LoginPage from "./LoginPage";
 
 function SheetPage() {
+  const authState = useAppSelector(authSelectors.authState);
   const user = useAppSelector(authSelectors.user);
   const params = useParams();
   const { repo } = params;
@@ -60,8 +62,8 @@ function SheetPage() {
 
   if ('error' in repoParams) {
     return (<Err404Page />);
-  } else if (!user) {
-    return (<Container><Alert variant="danger">Chyba autentifikácie</Alert></Container>)
+  } else if (!user || authState !== "authenticated") {
+    return <LoginPage msg="Pre pokračovanie sa musíte prihlásiť" readirectTo={window.location.pathname} />
   } else {
     const { branch, type, path } = repoParams;
     const { filename, extension } = parseFilepath(path);

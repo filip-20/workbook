@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { StateEffectType } from "@uiw/react-codemirror";
 
 import { githubApi } from "../services/githubApi/endpoints/users";
 import { isUser } from "./authSlice.guard";
@@ -33,6 +34,10 @@ export const authSlice = createSlice({
     },
     setAccessToken: (state, action: PayloadAction<string | undefined>) => {
       state.accessToken = action.payload;
+    },
+    logout: (state) => {
+      state.accessToken = undefined;
+      state.authState = "unauthenticated";
     }
   },
   extraReducers: (builder) => {
@@ -90,9 +95,9 @@ export function clearSavedUser() {
 
 export const logout = () => {
   return (dispatch: AppDispatch) => {
+    dispatch(authActions.logout);
     clearAccessToken();
     clearSavedUser();
-    dispatch(authActions.setAccessToken(undefined));
   }
 }
 

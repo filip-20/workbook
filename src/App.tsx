@@ -12,6 +12,7 @@ import { authSelectors, saveUser } from './store/authSlice';
 import LogoutPage from './components/LogoutPage';
 import { useUsersGetAuthenticatedQuery } from './services/githubApi/endpoints/users';
 import Err404Page from './components/Err404Page';
+import LoginPage from './components/LoginPage';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -22,7 +23,7 @@ function App() {
   const tokenTested = useAppSelector(authSelectors.tokenTested);
 
   // After user info is loaded, token is marked as tested
-  useUsersGetAuthenticatedQuery(undefined, {skip: ((authState === 'unauthenticated' && !accessToken) || tokenTested)});
+  useUsersGetAuthenticatedQuery(undefined, { skip: ((authState === 'unauthenticated' && !accessToken) || tokenTested) });
 
   useEffect(() => {
     if (user && tokenTested) {
@@ -30,22 +31,21 @@ function App() {
       saveUser(user);
     }
   }, [user, tokenTested])
-  
+
   return (
     <BrowserRouter>
       <Navigation />
-      <div className="m-0 p-0">
       <Routes>
         <Route path='*' element={<Err404Page />} />
         <Route path="/" element={<RepoListPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/repos" element={<RepoListPage />} />
         <Route path="/repos/:page" element={<RepoListPage />} />
-        <Route path="/repo/:repo" element={<RepoPage/>} />
+        <Route path="/repo/:repo" element={<RepoPage />} />
         <Route path="/repo/:repo/*" element={<RepoPage />} />
-        <Route path="/sheet/:repo/*" element={<SheetPage/>} />
-        <Route path="/logout" element={<LogoutPage/>} />
+        <Route path="/sheet/:repo/*" element={<SheetPage />} />
+        <Route path="/logout" element={<LogoutPage />} />
       </Routes>
-      </div>
     </BrowserRouter>
   );
 }

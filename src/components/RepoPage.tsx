@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { authSelectors } from "../store/authSlice";
 import { useAppSelector } from "../store/hooks";
 import Err404Page from "./Err404Page";
+import LoginPage from "./LoginPage";
 import RepoExplorer from "./Repo/RepoExplorer";
 
 
@@ -81,7 +82,7 @@ function RepoPage() {
   const parsed = parseGithubUrlPath(urlPath);
   let body;
   if (!user) {
-    body = <Alert variant="danger">Chyba autentifikácie</Alert>
+    return <LoginPage msg="Pre pokračovanie sa musíte prihlásiť" readirectTo={window.location.pathname} />
   } else if ('error' in parsed || !params.repo) {
     return <Err404Page />
   } else {
