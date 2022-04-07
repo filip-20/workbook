@@ -33,7 +33,7 @@ function App() {
   }, [user, tokenTested])
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/workbook">
       <Navigation />
       <Routes>
         <Route path='*' element={<Err404Page />} />
