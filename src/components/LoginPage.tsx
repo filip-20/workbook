@@ -18,7 +18,7 @@ export default function LoginPage(props: LoginPageProps) {
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - var(--workbook-nav-height))'}}>
     <div style={{ width: '300px', margin: 'auto'}}>
-      {props.msg && <><p>{props.msg}</p><hr /></>}
+      {props.msg && <><p style={{textAlign: 'center'}}>{props.msg}</p><hr /></>}
       <Button className="w-100" variant="dark" href={getLoginUrl(props.readirectTo)}><BsGithub color="white" /> Prihlásiť sa pomocou github</Button>
     </div>
     </div>
