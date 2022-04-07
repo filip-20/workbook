@@ -179,6 +179,7 @@ export const sheetSlice = createSlice({
           author, text, timestamp: new Date().getTime(), id: cell.idCounter++
         }
         commentsAdapter.addOne(cell.comments, comment);
+        enqueUpdate(state, `Added comment to cell ${cellId}`);
       } else {
         console.log('Invalid cellId parameters for addCellComment action. ' + action.payload);
       }
@@ -189,6 +190,7 @@ export const sheetSlice = createSlice({
       if (sheet.cells[cellId] !== undefined) {
         const cell = sheet.cells[cellId];
         commentsAdapter.removeOne(cell.comments, commentId);
+        enqueUpdate(state, `Removed comment of cell ${cellId}`);
       } else {
         console.log('Invalid cellId parameters for removeCellComment action. ' + action.payload);
       }
