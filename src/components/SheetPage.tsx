@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Alert, Container, Spinner } from "react-bootstrap";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { githubApi } from "../services/githubApi/endpoints/repos"
 import { githubApiErrorMessage } from "../services/githubApi/errorMessage";
 import { MdMenuBook, MdSignalCellular1Bar } from "react-icons/md";
@@ -21,6 +21,7 @@ import LoginPage from "./LoginPage";
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
   const user = useAppSelector(authSelectors.user);
+  const location = useLocation();
   const params = useParams();
   const { repo } = params;
   const repoParams = parseGithubUrlPath(params['*'] || '');
@@ -63,7 +64,7 @@ function SheetPage() {
   if ('error' in repoParams) {
     return (<Err404Page />);
   } else if (!user || authState !== "authenticated") {
-    return <LoginPage msg="Pre pokračovanie sa musíte prihlásiť" readirectTo={window.location.pathname} />
+    return <LoginPage msg="Pre pokračovanie sa musíte prihlásiť" readirectTo={location.pathname} />
   } else {
     const { branch, type, path } = repoParams;
     const { filename, extension } = parseFilepath(path);

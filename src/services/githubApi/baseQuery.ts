@@ -1,5 +1,5 @@
 import { BaseQueryFn, FetchArgs, fetchBaseQuery, FetchBaseQueryError, FetchBaseQueryMeta } from "@reduxjs/toolkit/query/react";
-import { authActions, clearAccessToken, clearSavedUser } from "../../store/authSlice";
+import { authActions, clearSavedAuthState } from "../../store/authSlice";
 import { RootState } from '../../store/store'
 
 const baseQuery = fetchBaseQuery({ 
@@ -26,8 +26,7 @@ const baseQuery = fetchBaseQuery({
    */
   let result = await baseQuery(args, api, extraOptions)
   if (result.error && result.error.status === 401) {
-    clearAccessToken();
-    clearSavedUser();
+    clearSavedAuthState();
     api.dispatch(authActions.setAuthState('tokenExpired'));
   }
   return result;

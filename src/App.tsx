@@ -8,7 +8,7 @@ import SheetPage from './components/SheetPage';
 import RepoPage from './components/RepoPage';
 import RepoListPage from './components/RepoListPage';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { authSelectors, saveUser } from './store/authSlice';
+import { authSelectors, saveAuthState } from './store/authSlice';
 import LogoutPage from './components/LogoutPage';
 import { useUsersGetAuthenticatedQuery } from './services/githubApi/endpoints/users';
 import Err404Page from './components/Err404Page';
@@ -20,17 +20,17 @@ function App() {
   const authState = useAppSelector(authSelectors.authState);
   const user = useAppSelector(authSelectors.user);
   const accessToken = useAppSelector(authSelectors.accessToken);
-  const tokenTested = useAppSelector(authSelectors.tokenTested);
+  const tokenState = useAppSelector(authSelectors.tokenState);
 
   // After user info is loaded, token is marked as tested
-  useUsersGetAuthenticatedQuery(undefined, { skip: ((authState === 'unauthenticated' && !accessToken) || tokenTested) });
+  useUsersGetAuthenticatedQuery(undefined, { skip: (tokenState === 'noToken' || tokenState === 'tokenTested') });
 
   useEffect(() => {
-    if (user && tokenTested) {
+    if (user && tokenState === 'tokenTested' && accessToken) {
       console.log('saving user to localstorage');
-      saveUser(user);
+      saveAuthState(user, accessToken);
     }
-  }, [user, tokenTested])
+  }, [user, tokenState])
 
   return (
     <BrowserRouter basename="/workbook">
@@ -38,7 +38,7 @@ function App() {
       <Routes>
         <Route path='*' element={<Err404Page />} />
         <Route path="/" element={<RepoListPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login/*" element={<LoginPage />} />
         <Route path="/repos" element={<RepoListPage />} />
         <Route path="/repos/:page" element={<RepoListPage />} />
         <Route path="/repo/:repo" element={<RepoPage />} />

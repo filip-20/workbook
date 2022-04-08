@@ -1,5 +1,5 @@
 import { Container } from "react-bootstrap";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { authSelectors } from "../store/authSlice";
 import { useAppSelector } from "../store/hooks";
 import Err404Page from "./Err404Page";
@@ -7,6 +7,7 @@ import LoginPage from "./LoginPage";
 import RepoList from "./Repo/RepoList";
 
 function RepoListPage() {
+  const location = useLocation();
   const params = useParams();
   const authState = useAppSelector(authSelectors.authState);
 
@@ -15,7 +16,7 @@ function RepoListPage() {
   }
 
   if (authState !== "authenticated") {
-    return <LoginPage msg="Pre pokračovanie sa musíte prihlásiť" readirectTo={window.location.pathname} />
+    return <LoginPage msg="Pre pokračovanie sa musíte prihlásiť" readirectTo={location.pathname} />
   }
 
   const makeRepoLink = (repoName: string) => `/repo/${repoName}`;
