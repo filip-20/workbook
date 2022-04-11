@@ -42,11 +42,12 @@
     "web-vitals": "^1.1.2"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "prepare": "ln -sf config-local.json src/config.json",
+    "start": "ln -sf config-local.json src/config.json && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "predeploy": "npm run build",
+    "predeploy": "(ln -sf config-ghpage.json src/config.json && npm run build) ; ln -sf config-local.json src/config.json",
     "deploy": "ln -s index.html build/404.html && gh-pages -d build"
   },
   "eslintConfig": {
