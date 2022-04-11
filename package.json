@@ -43,6 +43,7 @@
   },
   "scripts": {
     "prepare": "ln -sf config-local.json src/config.json",
+    "prestart": "npx dotenv-cli -e backend-config.env workbook-auth-backend &",
     "start": "ln -sf config-local.json src/config.json && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -69,6 +70,8 @@
     ]
   },
   "devDependencies": {
-    "gh-pages": "^3.2.3"
+    "dotenv-cli": "^5.1.0",
+    "gh-pages": "^3.2.3",
+    "workbook-auth-backend": "github:4zzz/workbook-auth-backend#9af4c569803f7eab2aaae2c9d86247a44562b014"
   }
 }
