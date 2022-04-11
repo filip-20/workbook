@@ -1,7 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Container, Fade } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-//import { insertAppCell, insertTextCell, moveDownCell, moveUpCell, removeCell, selectCells, selectFirstCellId, selectLastCellId, setCellEdited, sheetActions } from '../../store/sheetSlice';
 import { sheetActions, sheetSelectors } from '../../store/sheetSlice';
 import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
@@ -12,6 +10,7 @@ import styles from './CellWrapper.module.css';
 import AddComment from './AddComment';
 import Comments from './Comments';
 import { BiLock } from 'react-icons/bi';
+import { Button, Modal } from 'react-bootstrap';
 
 type CellWrapperProps = {
   key: number,
@@ -31,6 +30,7 @@ function CellWrapper(props: CellWrapperProps) {
   const [addComment, setAddComment] = useState(false);
   const [addToolbarVisible, setAddToolbarVisible] = useState(false);
   const [cellHovered, setCellHovered] = useState(false);
+  const [confirmDeletion, setConfirmDeletion] = useState(false);
   const addToolbarHovered = useRef(false);
   const dropdownOpened = useRef(false);
 
@@ -65,6 +65,19 @@ function CellWrapper(props: CellWrapperProps) {
 
   return (
     <>
+      <Modal show={confirmDeletion} onHide={() => setConfirmDeletion(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Zmazanie bunky</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Naozaj chcete zmazať bunku?</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setConfirmDeletion(false)}>Zrušiť</Button>
+          <Button variant="danger" onClick={() => dispatch(sheetActions.removeCell({ cellId, cellIndex }))}>Zmazať</Button>
+        </Modal.Footer>
+      </Modal>
+
       <div style={{ display: 'flex' }}
         onMouseEnter={() => setCellHovered(true)}
         onMouseLeave={() => setCellHovered(false)}
@@ -82,7 +95,7 @@ function CellWrapper(props: CellWrapperProps) {
             isEdited={isEdited}
             onToggleEditClick={(isEdited) => dispatch(sheetActions.setCellEdited({ cellId, isEdited }))}
             onCommentClick={() => setAddComment(prev => !prev)}
-            onRemoveClick={() => dispatch(sheetActions.removeCell({ cellId, cellIndex }))}
+            onRemoveClick={() => setConfirmDeletion(true)}
             onMoveUpClick={() => dispatch(sheetActions.moveUpCell(cellIndex))}
             onMoveDownClick={() => dispatch(sheetActions.moveDownCell(cellIndex))}
           />
@@ -99,7 +112,7 @@ function CellWrapper(props: CellWrapperProps) {
                 transform: 'translateX(-50%) translateY(calc(-50% - 1rem))'
               }}
           />
-          <div style={{ overflowY: 'auto' }}>
+          <div className="pt-2" style={{ overflowY: 'auto' }}>
             {createCell(cellId, cells[cellId].type, cells[cellId].data)}
           </div>
         </div>
