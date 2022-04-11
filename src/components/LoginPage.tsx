@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Alert, Button, Spinner } from "react-bootstrap"
+import { Alert, Button, Spinner, Image } from "react-bootstrap"
 import { BsGithub } from "react-icons/bs"
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -33,6 +33,7 @@ export default function LoginPage(props: LoginPageProps) {
   const navigate = useNavigate();
   const params = useParams();
   const authState = useAppSelector(authSelectors.authState);
+  const user = useAppSelector(authSelectors.user);
   const error = useAppSelector(authSelectors.error);
   const path = window.location.href;
 
@@ -68,7 +69,7 @@ export default function LoginPage(props: LoginPageProps) {
         {(error && authState === 'unauthenticated') && err(`Prihlásenie zlyhalo, skúste to znova neskôr (${error})`)}
         {authState === 'authPending' && loading}
         {authState === 'unauthenticated' && loginButton}
-        {authState === 'authenticated' && <p>Ste prihlásený</p>}
+        {authState === 'authenticated' && <><Image className="border mb-5" style={{width: '300px'}} roundedCircle src={user?.avatarUrl}/><h1 className="text-muted text-center">{user?.login}</h1></>}
       </div>
     </div>
   )
