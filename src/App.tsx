@@ -14,10 +14,9 @@ import { useUsersGetAuthenticatedQuery } from './services/githubApi/endpoints/us
 import Err404Page from './components/Err404Page';
 import LoginPage from './components/LoginPage';
 
-function App() {
-  const dispatch = useAppDispatch();
+import config from './config.json';
 
-  const authState = useAppSelector(authSelectors.authState);
+function App() {
   const user = useAppSelector(authSelectors.user);
   const accessToken = useAppSelector(authSelectors.accessToken);
   const tokenState = useAppSelector(authSelectors.tokenState);
@@ -33,7 +32,7 @@ function App() {
   }, [user, tokenState])
 
   return (
-    <BrowserRouter basename="/workbook">
+    <BrowserRouter basename={config.frontend.basePath}>
       <Navigation />
       <Routes>
         <Route path='*' element={<Err404Page />} />
