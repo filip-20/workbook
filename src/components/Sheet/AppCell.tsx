@@ -1,9 +1,7 @@
 import { PrepareResult } from 'fol-graphexplorer';
 import { useState, useEffect, useRef } from 'react';
-import { Fade } from 'react-bootstrap';
 import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch } from '../../store/hooks';
-import { BiLock } from "react-icons/bi";
 import { sheetActions } from '../../store/sheetSlice';
 
 export interface AppCellProps {
@@ -17,7 +15,6 @@ function AppCell(props: AppCellProps) {
   const dispatch = useAppDispatch();
   const { prepare, AppComponent } = getAppInfo(props.type)
   const { cellId, type, initialState, isEdited } = props;
-  const [showLock, setShowLock] = useState(!isEdited);
 
   const prepareResult = useRef<PrepareResult | null>(null);
   if (prepareResult.current === null) {
@@ -48,20 +45,6 @@ function AppCell(props: AppCellProps) {
       style={{ position: 'relative' }}
       onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
-      {!isEdited &&
-        <div
-          onMouseEnter={() => setShowLock(true)}
-          onMouseLeave={() => setShowLock(false)}
-          style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 999 }}
-        >
-          <Fade in={showLock}>
-            <BiLock
-              size={50}
-              style={{ position: 'relative', left: '50%', transform: 'translateX(-50%) translateY(-50%)' }}
-            />
-          </Fade>
-        </div>
-      }
       <AppComponent isEdited={isEdited} instance={instance} onStateChange={onAppStateChanged} />
     </div>
   )

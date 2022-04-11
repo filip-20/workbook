@@ -11,6 +11,7 @@ import TextCell from './TextCell';
 import styles from './CellWrapper.module.css';
 import AddComment from './AddComment';
 import Comments from './Comments';
+import { BiLock } from 'react-icons/bi';
 
 type CellWrapperProps = {
   key: number,
@@ -85,7 +86,20 @@ function CellWrapper(props: CellWrapperProps) {
             onMoveUpClick={() => dispatch(sheetActions.moveUpCell(cellIndex))}
             onMoveDownClick={() => dispatch(sheetActions.moveDownCell(cellIndex))}
           />
-          <div style={{overflowY: 'auto'}}>
+          <BiLock
+            className='bg-primary text-white'
+            size={35}
+            style={
+              {
+                display: cellHovered && !isEdited ? 'initial' : 'none',
+                position: 'absolute',
+                padding: '0.25rem',
+                borderRadius: '50%',
+                left: '50%',
+                transform: 'translateX(-50%) translateY(calc(-50% - 1rem))'
+              }}
+          />
+          <div style={{ overflowY: 'auto' }}>
             {createCell(cellId, cells[cellId].type, cells[cellId].data)}
           </div>
         </div>
