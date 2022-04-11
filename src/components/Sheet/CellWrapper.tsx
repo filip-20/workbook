@@ -73,7 +73,6 @@ function CellWrapper(props: CellWrapperProps) {
           className={`${styles.cellWrapper} border`}
           style={{ position: 'relative' }}
         >
-          {/*<Fade in={cellHovered}>*/}
           <EditToolbar
             className={styles.editToolbar}
             style={cellHovered ? { display: 'initial' } : { display: 'none' }}
@@ -86,8 +85,9 @@ function CellWrapper(props: CellWrapperProps) {
             onMoveUpClick={() => dispatch(sheetActions.moveUpCell(cellIndex))}
             onMoveDownClick={() => dispatch(sheetActions.moveDownCell(cellIndex))}
           />
-          {/*</Fade>*/}
-          {createCell(cellId, cells[cellId].type, cells[cellId].data)}
+          <div style={{overflowY: 'auto'}}>
+            {createCell(cellId, cells[cellId].type, cells[cellId].data)}
+          </div>
         </div>
         <div>
           <Comments className='ms-2 mb-2' style={{ width: '20rem' }} cellId={cellId} />
@@ -99,14 +99,12 @@ function CellWrapper(props: CellWrapperProps) {
         onMouseLeave={() => toggleVisibility(false, dropdownOpened.current)}
         style={{ height: '20px', display: 'flex' }}
       >
-        {/*<Fade in={cellHovered || addToolbarVisible}>*/}
         <AddToolbar
           className={styles.addToolbar}
           style={cellHovered || addToolbarVisible ? { display: 'initial' } : { display: 'none' }}
           onAddCellClick={addCellHandler}
           onDropdownToggled={(isOpen) => toggleVisibility(addToolbarHovered.current, isOpen)}
         />
-        {/*</Fade>*/}
       </div>
     </>
   )
