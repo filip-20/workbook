@@ -7,6 +7,7 @@ function LogoutPage() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    console.log('logout');
     dispatch(logout())
   }, [])
 

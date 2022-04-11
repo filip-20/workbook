@@ -108,7 +108,7 @@ function getSavedUser(): User | undefined {
 
 export const logout = () => {
   return (dispatch: AppDispatch) => {
-    dispatch(authActions.logout);
+    dispatch(authActions.logout());
     clearSavedAuthState();
   }
 }
