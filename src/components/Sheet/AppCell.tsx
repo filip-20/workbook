@@ -1,4 +1,5 @@
-import { PrepareResult } from 'fol-graphexplorer';
+// TODO put interface into separate package
+import { PrepareResult } from '@fmfi-uk-1-ain-412/fol-graphexplorer';
 import { useState, useEffect, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch } from '../../store/hooks';
@@ -45,6 +46,7 @@ function AppCell(props: AppCellProps) {
       style={{ position: 'relative' }}
       onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
+      {!isEdited && <div style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 999 }}></div>}
       <AppComponent isEdited={isEdited} instance={instance} onStateChange={onAppStateChanged} />
     </div>
   )
