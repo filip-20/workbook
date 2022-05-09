@@ -22,7 +22,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-/src/config-local.json
-
-/src/config.json
+src/config-local.json.template
+src/config-local.json
+src/config.json
 backend-config.env
+backend-config.env.template
