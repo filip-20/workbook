@@ -15,7 +15,7 @@ function isType<T>(val: any) {
   }
 }
 
-function isFetchBaseQueryError(obj: any): obj is FetchBaseQueryError {
+export function isFetchBaseQueryError(obj: any): obj is FetchBaseQueryError {
   return (
     (obj !== null &&
       typeof obj === "object" ||
@@ -39,11 +39,11 @@ function isFetchBaseQueryError(obj: any): obj is FetchBaseQueryError {
   )
 }
 
-function isSerializedError(error: FetchBaseQueryError | SerializedError): error is SerializedError {
+export function isSerializedError(error: FetchBaseQueryError | SerializedError): error is SerializedError {
   return !isFetchBaseQueryError(error);
 }
 
-function isGithubErrorResponse(obj: any): obj is GithubErrorResponse {
+export function isGithubErrorResponse(obj: any): obj is GithubErrorResponse {
   return (
       (obj !== null &&
           typeof obj === "object" ||
@@ -70,6 +70,8 @@ export function githubApiErrorMessage(error: FetchBaseQueryError | SerializedErr
       } else {
         return `${err.status}: Unknown error`
       }
+    } else {
+      return `${err.status}: Unknown error`
     }
   } else if (isSerializedError(error)) {
     return 'Serialized error'
