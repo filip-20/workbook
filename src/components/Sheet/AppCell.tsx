@@ -17,6 +17,7 @@ function AppCell(props: AppCellProps) {
   const { prepare, AppComponent } = getAppInfo(props.type)
   const { cellId, type, initialState, isEdited } = props;
 
+  const lastState = useRef<any | null>(null);
   const prepareResult = useRef<PrepareResult | null>(null);
   if (prepareResult.current === null) {
     prepareResult.current = prepare(initialState)
@@ -34,7 +35,11 @@ function AppCell(props: AppCellProps) {
     const interval = setInterval(() => {
       if (stateChanged.current) {
         console.log('saving state of ' + type + ' in cell ' + cellId);
-        dispatch(sheetActions.updateCellData({ cellId: cellId, data: getState(instance) }));
+        const newState = getState(instance);
+        if (lastState.current == null || (lastState.current !== null && JSON.stringify(newState) !== JSON.stringify(lastState.current))) {
+          lastState.current = newState;
+          dispatch(sheetActions.updateCellData({ cellId: cellId, data: newState }));
+        }
         stateChanged.current = false
       }
     }, 5000);
