@@ -1,16 +1,21 @@
-import { Alert, Container, Spinner } from "react-bootstrap";
+import { Alert, Button, Container, Modal, Spinner } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import CellWrapper from "./CellWrapper";
 import AddToolbar from "./AddToolbar";
 import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
+import { useMemo, useState } from "react";
+
+import styles from "./Sheet.module.css";
+import FileErrorModal from "./FileErrorModal";
 
 function Sheet() {
   const dispatch = useAppDispatch();
-  const loadState = useAppSelector(sheetSelectors.loadState);
+  const loadState = useAppSelector(sheetSelectors.state);
   const sheetError = useAppSelector(sheetSelectors.error);
   const cellsOrder = useAppSelector(sheetSelectors.cellsOrder);
 
-  //console.log(cellsOrder);
+  const [confirmDeletion, setConfirmDeletion] = useState<{ cellId: number, cellIndex: number } | undefined>(undefined);
+  const [fullscreenCellId, setFullscreenCellId] = useState<number | undefined>(undefined);
 
   const addCellHandler = (typeName: string) => {
     if (typeName.startsWith('app/')) {
@@ -22,7 +27,7 @@ function Sheet() {
 
   const displayToolbar = () => {
     return (
-      <AddToolbar 
+      <AddToolbar
         className="justify-content-center"
         onAddCellClick={addCellHandler}
       />
@@ -36,7 +41,30 @@ function Sheet() {
   } else {
     return (
       <>
-        {cellsOrder.map((cellId, index) => <CellWrapper key={cellId} cellId={cellId} cellIndex={index} />)}
+        <Modal show={confirmDeletion !== undefined} onHide={() => setConfirmDeletion(undefined)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Zmazanie bunky</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>Naozaj chcete zmazať bunku?</p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setConfirmDeletion(undefined)}>Zrušiť</Button>
+            <Button variant="danger" onClick={() => { dispatch(sheetActions.removeCell(confirmDeletion!)); setConfirmDeletion(undefined) }}>Zmazať</Button>
+          </Modal.Footer>
+        </Modal>
+
+        <FileErrorModal />
+
+        {
+          cellsOrder.map((cellId, index) => (
+            <CellWrapper key={cellId} cellId={cellId} cellIndex={index}
+              className={fullscreenCellId !== undefined ? (cellId === fullscreenCellId ? styles.fullscreenCell : 'd-none') : undefined}
+              onFullscreenToggleClick={isFullscreen => { console.log('fullscreen: ' + isFullscreen); setFullscreenCellId(isFullscreen ? cellId : undefined) }}
+              onDeleteClick={cell => setConfirmDeletion(cell)}
+            />
+          ))
+        }
         {cellsOrder.length === 0 ? displayToolbar() : ''}
       </>
     )

@@ -5,21 +5,24 @@ import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
 import AppCell from './AppCell';
 import TextCell from './TextCell';
-
 import styles from './CellWrapper.module.css';
 import AddComment from './AddComment';
 import Comments from './Comments';
 import { BiLock } from 'react-icons/bi';
-import { Button, Modal } from 'react-bootstrap';
 
 type CellWrapperProps = {
+  className?: string,
   key: number,
   cellId: number,
   cellIndex: number,
+  onDeleteClick: (cell: { cellId: number, cellIndex: number }) => void,
+  onFullscreenToggleClick: (isFullscreen: boolean) => void,
 };
 
 function CellWrapper(props: CellWrapperProps) {
-  const { cellId, cellIndex } = props;
+  const { className, cellId, cellIndex } = props;
+  const { onDeleteClick, onFullscreenToggleClick } = props;
+
   const dispatch = useAppDispatch();
 
   const firstCellId = useAppSelector(sheetSelectors.firstCellId)
@@ -30,7 +33,6 @@ function CellWrapper(props: CellWrapperProps) {
   const [addComment, setAddComment] = useState(false);
   const [addToolbarVisible, setAddToolbarVisible] = useState(false);
   const [cellHovered, setCellHovered] = useState(false);
-  const [confirmDeletion, setConfirmDeletion] = useState(false);
   const addToolbarHovered = useRef(false);
   const dropdownOpened = useRef(false);
 
@@ -64,21 +66,8 @@ function CellWrapper(props: CellWrapperProps) {
   }
 
   return (
-    <>
-      <Modal show={confirmDeletion} onHide={() => setConfirmDeletion(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Zmazanie bunky</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Naozaj chcete zmazať bunku?</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setConfirmDeletion(false)}>Zrušiť</Button>
-          <Button variant="danger" onClick={() => dispatch(sheetActions.removeCell({ cellId, cellIndex }))}>Zmazať</Button>
-        </Modal.Footer>
-      </Modal>
-
-      <div style={{ display: 'flex' }}
+    <div className={className}>
+      <div className='d-flex'
         onMouseEnter={() => setCellHovered(true)}
         onMouseLeave={() => setCellHovered(false)}
       >
@@ -87,6 +76,7 @@ function CellWrapper(props: CellWrapperProps) {
           className={`${styles.cellWrapper} border`}
           style={{ position: 'relative' }}
         >
+
           <EditToolbar
             className={styles.editToolbar}
             style={cellHovered ? { display: 'initial' } : { display: 'none' }}
@@ -95,24 +85,18 @@ function CellWrapper(props: CellWrapperProps) {
             isEdited={isEdited}
             onToggleEditClick={(isEdited) => dispatch(sheetActions.setCellEdited({ cellId, isEdited }))}
             onCommentClick={() => setAddComment(prev => !prev)}
-            onRemoveClick={() => setConfirmDeletion(true)}
+            onRemoveClick={() => onDeleteClick({ cellId, cellIndex })}
             onMoveUpClick={() => dispatch(sheetActions.moveUpCell(cellIndex))}
             onMoveDownClick={() => dispatch(sheetActions.moveDownCell(cellIndex))}
+            onToggleFullscreenClick={(isFullscreen) => onFullscreenToggleClick(isFullscreen)}
           />
+
           <BiLock
-            className='bg-primary text-white'
+            className={`bg-secondary text-white ${styles.lockIcon}`}
             size={35}
-            style={
-              {
-                display: cellHovered && !isEdited ? 'initial' : 'none',
-                position: 'absolute',
-                padding: '0.25rem',
-                borderRadius: '50%',
-                left: '50%',
-                transform: 'translateX(-50%) translateY(calc(-50% - 1rem))'
-              }}
+            style={{ display: cellHovered && !isEdited ? 'initial' : 'none' }}
           />
-          <div className="pt-2" style={{ overflowY: 'auto' }}>
+          <div className="pt-3" style={{ overflowY: 'auto' }}>
             {createCell(cellId, cells[cellId].type, cells[cellId].data)}
           </div>
         </div>
@@ -133,7 +117,7 @@ function CellWrapper(props: CellWrapperProps) {
           onDropdownToggled={(isOpen) => toggleVisibility(addToolbarHovered.current, isOpen)}
         />
       </div>
-    </>
+    </div>
   )
 }
 

@@ -2,10 +2,11 @@ import { useReposCreateOrUpdateFileContentsMutation } from "../../services/githu
 import { authSelectors } from "../../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { useEffect, useRef, useState } from "react";
-import { githubApiErrorMessage } from "../../services/githubApi/errorMessage";
+import { githubApiErrorMessage, GithubErrorResponse, isFetchBaseQueryError, isGithubErrorResponse } from "../../services/githubApi/errorMessage";
 import { Base64 } from 'js-base64';
 import { Alert, Button, Spinner } from "react-bootstrap";
 import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
+import { BsExclamationTriangle } from "react-icons/bs";
 
 export interface SheetCommitterProps {
   className?: string,
@@ -16,13 +17,14 @@ function SheetCommitter(props: SheetCommitterProps) {
   const authState = useAppSelector(authSelectors.authState);
   const fileInfo = useAppSelector(sheetSelectors.fileInfo);
   const commit = useAppSelector(sheetSelectors.commitQueueHead);
+  const resumeCommitter = useAppSelector(sheetSelectors.resumeCommitter);
 
   const dispatch = useAppDispatch();
 
   const [updateFile, updateFileResult] = useReposCreateOrUpdateFileContentsMutation();
-  type CommiterState = 'waiting_for_commit' | 'waiting_for_dequeue' | 'error'
-  const commiterState = useRef<CommiterState>('waiting_for_commit');
-  const [ lastCommitId, setLastCommitId ] = useState(-1);
+  type CommitterState = 'waiting_for_commit' | 'waiting_for_dequeue' | 'error'
+  const commiterState = useRef<CommitterState>('waiting_for_commit');
+  const [lastCommitId, setLastCommitId] = useState(-1);
 
   const doUpdate = () => {
     if (commiterState.current === 'waiting_for_dequeue') {
@@ -32,8 +34,14 @@ function SheetCommitter(props: SheetCommitterProps) {
         dispatch(sheetActions.dequeueCommit({ id: lastCommitId, updateSha }))
         commiterState.current = 'waiting_for_commit';
       } else if (updateFileResult.isError) {
+        const { error } = updateFileResult;
         console.log('waiting_for_dequeue: update error');
         commiterState.current = 'error';
+        if (isFetchBaseQueryError(error) && typeof error.status === 'number' && isGithubErrorResponse(error.data)) {
+          dispatch(sheetActions.saveError({ errorCode: error.status, errorMsg: error.data.message }))
+        } else {
+          dispatch(sheetActions.saveError({ errorCode: -1, errorMsg: githubApiErrorMessage(updateFileResult.error) }))
+        }
       }
     } else if (commiterState.current === 'waiting_for_commit') {
       if (updateFileResult.isError) {
@@ -65,18 +73,34 @@ function SheetCommitter(props: SheetCommitterProps) {
     doUpdate();
   }, [updateFileResult, commit, fileInfo]);
 
+  useEffect(() => {
+    if (resumeCommitter === true && commiterState.current === 'error') {
+      commiterState.current = 'waiting_for_commit';
+      updateFileResult.reset();
+      setLastCommitId(-1);
+      dispatch(sheetActions.resumeCommitterAck());
+      doUpdate();
+    }
+  }, [resumeCommitter]);
+
   var body;
   if (updateFileResult.isLoading) {
     body = <>Ukladám...<Spinner size="sm" role="status" animation="grow" /></>
   } else if (updateFileResult.isSuccess || (updateFileResult.isUninitialized && !commit)) {
     body = <></>
   } else if (updateFileResult.isError) {
-    body = <Alert variant="danger">Uloženie zošita zlyhalo. ({githubApiErrorMessage(updateFileResult.error)})</Alert>
+    body = <Alert variant="danger" title={githubApiErrorMessage(updateFileResult.error)}>Uloženie hárku zlyhalo. <BsExclamationTriangle /></Alert>
   } else {
     body = <p>What's going on??</p>
+    console.log('weird updateFileResult');
+    console.log(updateFileResult)
   }
 
-  return <div className={props.className} style={props.style}>{body}</div>;
+  return (
+    <div className={props.className} style={props.style}>
+      {body}
+    </div>
+  );
 }
 
 export default SheetCommitter;

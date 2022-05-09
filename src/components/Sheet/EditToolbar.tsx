@@ -1,5 +1,5 @@
 import { Button, ButtonGroup, ButtonToolbar } from "react-bootstrap";
-import { BiCheck, BiComment, BiEdit, BiTrash } from "react-icons/bi";
+import { BiCheck, BiComment, BiEdit, BiExitFullscreen, BiFullscreen, BiTrash } from "react-icons/bi";
 import { ArrowDown, ArrowUp } from "react-bootstrap-icons";
 import { useEffect, useState } from "react";
 
@@ -14,10 +14,12 @@ export interface EditToolbarProps {
   onMoveUpClick: () => void,
   onCommentClick: () => void,
   onMoveDownClick: () => void,
+  onToggleFullscreenClick: (isFullscreen: boolean) => void,
 }
 
 export default function EditToolbar(props: EditToolbarProps) {
   const [editMode, setEditMode] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     if (props.isEdited !== undefined) {
@@ -25,16 +27,20 @@ export default function EditToolbar(props: EditToolbarProps) {
     }
   }, [props.isEdited])
 
+  useEffect(() => props.onToggleFullscreenClick(fullscreen), [fullscreen]);
+
   return (
     <ButtonToolbar className={props.className} style={props.style}>
-      <ButtonGroup size="sm">
-        <Button onClick={() => setEditMode(prev => { props.onToggleEditClick(!prev); return !prev })}>
-          {editMode ? <BiCheck /> : <BiEdit />}
+      <ButtonGroup>
+        {/*<Button disabled variant="secondary" ><BiEdit /></Button>*/}
+        <Button className="text-nowrap" onClick={() => setEditMode(prev => { props.onToggleEditClick(!prev); return !prev })}>
+          {editMode ? <><BiCheck /> Zamknúť</> : <><BiEdit /> Upraviť</>}
         </Button>
-        <Button onClick={props.onRemoveClick}><BiTrash /></Button>
-        <Button onClick={props.onCommentClick}><BiComment /></Button>
-        {props.showUp && <Button onClick={props.onMoveUpClick}><ArrowUp /></Button>}
-        {props.showDown && <Button onClick={props.onMoveDownClick}><ArrowDown /></Button>}
+        <Button title="Odstrániť bunku" onClick={props.onRemoveClick}><BiTrash /></Button>
+        <Button title="Pridať komentár" onClick={props.onCommentClick}><BiComment /></Button>
+        {props.showUp && <Button title="Presunúť vyššie" onClick={props.onMoveUpClick}><ArrowUp /></Button>}
+        {props.showDown && <Button title="Presunúť nižšie" onClick={props.onMoveDownClick}><ArrowDown /></Button>}
+        <Button title="Zväčšiť bunku" onClick={() => setFullscreen(prev => !prev )}>{fullscreen ? <BiExitFullscreen /> : <BiFullscreen />}</Button>
       </ButtonGroup>
     </ButtonToolbar>
   )

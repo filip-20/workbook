@@ -1,5 +1,6 @@
 import { createEntityAdapter, createSlice, EntityAdapter, EntityState, PayloadAction } from "@reduxjs/toolkit";
 import { fakeBaseQuery } from "@reduxjs/toolkit/dist/query";
+import { stringify } from "querystring";
 import { AppDispatch, RootState } from './store'
 
 interface Comment {
@@ -30,7 +31,7 @@ export interface FileInfo {
   sha: string,
 }
 
-export interface SheetState {
+export interface Sheet {
   idCounter: number,
   cells: { [key: number]: Cell },
   cellsOrder: Array<number>,
@@ -45,18 +46,21 @@ interface CommitInfo {
   json: string,
 }
 
+export type SheetState = 'loaded' | 'not_loaded' | 'load_error' | 'save_error' | 'update_detected';
+
 export interface SheetSliceData {
-  loadState: 'loaded' | 'not_loaded' | 'load_error'
-  sheet: SheetState
-  saveState: 'modified' | 'saved'
+  state: SheetState,
+  sheet: Sheet,
   commitIdCounter: number,
-  commitQueue: Array<CommitInfo>
+  commitQueue: Array<CommitInfo>,
+  resumeCommitter? : boolean,
   queueHead?: CommitInfo
   fileInfo?: FileInfo
+  errorCode?: number,
   error?: string
 }
 
-export const emptySheet: SheetState = {
+export const emptySheet: Sheet = {
   idCounter: 0,
   cells: {},
   cellsOrder: [],
@@ -65,8 +69,7 @@ export const emptySheet: SheetState = {
 };
 
 const initialState: SheetSliceData = {
-  loadState: 'not_loaded',
-  saveState: 'saved',
+  state: 'not_loaded',
   commitIdCounter: 0,
   commitQueue: [],
   sheet: emptySheet,
@@ -83,18 +86,18 @@ export const sheetSlice = createSlice({
         sheet = JSON.parse(json);
       } catch (e) {
         const syntaxErr = e as SyntaxError
-        state.loadState = "load_error"
+        state.state = "load_error"
         state.error = `Súbor zošita je poškodený. (${syntaxErr.message})`
       }
       if (sheet) {
         const { passed, error } = testSheetIntegrity(sheet);
         if (!passed) {
-          state.loadState = "load_error"
+          state.state = "load_error"
           state.error = `Súbor zošita je poškodený. (${error})`;
         } else {
           state.fileInfo = fileInfo;
           state.sheet = sheet;
-          state.loadState = 'loaded';
+          state.state = 'loaded';
         }
       }
     },
@@ -118,6 +121,19 @@ export const sheetSlice = createSlice({
       } else {
         console.log('Commit queue is empty, cannot call dequeueCommit');
       }
+    },
+    saveError: (state, action: PayloadAction<{errorCode: number, errorMsg: string}>) => {
+      const { errorCode, errorMsg } = action.payload;
+      state.state = 'save_error';
+      state.errorCode = errorCode;
+      state.error = errorMsg;
+    },
+    resumeCommitter: (state) => {
+      state.resumeCommitter = true;
+    },
+    resumeCommitterAck: (state) => {
+      state.state = 'loaded';
+      state.resumeCommitter = undefined;
     },
     insertCell: (state, action: PayloadAction<{ afterIndex: number, type: string, data: string }>) => {
       const { afterIndex, type, data } = action.payload;
@@ -163,8 +179,8 @@ export const sheetSlice = createSlice({
       const { sheet } = state;
       if (sheet.cells[cellId] !== undefined) {
         sheet.cells[cellId].data = data;
-        console.log('updating cell data to')
-        console.log(data);
+        console.log(`updating cell ${cellId} data`)
+        //console.log(data);
         enqueUpdate(state, `Updated cell ${cellId}`)
       } else {
         console.log('Invalid cellId parameters for updateCellData action. ' + action.payload);
@@ -217,14 +233,13 @@ export const sheetSlice = createSlice({
         sheet.cellsOrder.splice(cellIndex + 1, 0, cellId)
         updateFirstLastCellId(sheet);
         enqueUpdate(state, `Moved down cell ${cellId}`)
-        state.saveState = 'modified';
       } else {
         console.log('Invalid cellIndex parameters for moveDownCell action. ' + action.payload);
       }
     },
     setCellEdited: (state, action: PayloadAction<{ cellId: number, isEdited: boolean }>) => {
       const { cellId, isEdited } = action.payload;
-      if (isEdited && state.sheet.editedCellId) {
+      if (isEdited && state.sheet.editedCellId !== undefined) {
         state.sheet.cells[state.sheet.editedCellId].isEdited = false
       }
       if (cellId in state.sheet.cells) {
@@ -245,7 +260,7 @@ function enqueUpdate(data: SheetSliceData, message: string) {
   }
 }
 
-function updateFirstLastCellId(state: SheetState) {
+function updateFirstLastCellId(state: Sheet) {
   if (state.cellsOrder.length === 0) {
     state.firstCellId = -1;
     state.lastCellId = -1;
@@ -255,7 +270,7 @@ function updateFirstLastCellId(state: SheetState) {
   }
 }
 
-function testSheetIntegrity(sheet: SheetState): { passed: boolean, error?: string } {
+function testSheetIntegrity(sheet: Sheet): { passed: boolean, error?: string } {
   let passed = false, error = undefined;
 
   /* test keys and types of sheet object */
@@ -343,9 +358,12 @@ const insertAppCell = (type: string, state: any, afterIndex: number) => sheetAct
 export const sheetActions = { ...sheetSlice.actions, addCellComment, remmoveCellComment, insertTextCell, insertAppCell };
 /* Selectors */
 export const sheetSelectors = {
-  loadState: (state: RootState) => state.sheet.loadState,
+  state: (state: RootState) => state.sheet.state,
   error: (state: RootState) => state.sheet.error,
+  errorCode: (state: RootState) => state.sheet.errorCode,
   commitQueueHead: (state: RootState) => state.sheet.queueHead,
+  commitQueue: (state: RootState) => state.sheet.commitQueue,
+  resumeCommitter: (state: RootState) => state.sheet.resumeCommitter,
   fileInfo: (state: RootState) => state.sheet.fileInfo,
   cellsOrder: (state: RootState) => state.sheet.sheet.cellsOrder,
   cells: (state: RootState) => state.sheet.sheet.cells,

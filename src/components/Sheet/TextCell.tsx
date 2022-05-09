@@ -37,6 +37,7 @@ function TextCell(props: TextCellProps) {
       if (timeoutId !== null) {
         console.log('canceling delayed update');
         clearTimeout(timeoutId);
+        updateTimeout.current = null;
       } 
     }
   }, [isEdited]);

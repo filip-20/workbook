@@ -14,6 +14,12 @@
   vertical-align: top;
 }
 
+.cmMinHeight :global .cm-content { min-height: 5em; }
+.cmMinHeight :global .cm-gutter  { min-height: 5em; }
+.cmMinHeight :global .cm-gutters { margin: 1px; }
+.cmMinHeight :global .cm-scroller { overflow: auto; }
+.cmMinHeight :global .cm-wrap { border: 1px solid silver }
+
 @media screen and (max-width: 40rem) {
   .textEdit {
     display: block;
