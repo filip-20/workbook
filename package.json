@@ -5,7 +5,7 @@
   "homepage": "https://fmfi-uk-1-ain-412.github.io/workbook/",
   "dependencies": {
     "@codemirror/lang-markdown": "^0.19.6",
-    "@fmfi-uk-1-ain-412/fol-graphexplorer": "^5.6.4",
+    "@fmfi-uk-1-ain-412/fol-graphexplorer": "^5.6.5",
     "@fmfi-uk-1-ain-412/resolution-editor": "^1.0.1",
     "@fmfi-uk-1-ain-412/tableaueditor": "^1.0.0",
     "@reduxjs/toolkit": "^1.8.0",
