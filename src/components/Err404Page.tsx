@@ -2,9 +2,11 @@ import { Alert, Container } from "react-bootstrap";
 
 export default function Err404Page() {
   return (
-    <Alert variant="danger" className="m-3" style={{display: 'inline-block', position: 'relative', left: '50%', transform: 'translateX(-50%)'}}>
-      <Alert.Heading>404</Alert.Heading>
-      Stránka sa nenašla
-    </Alert>
+    <Container className="d-flex" style={{ height: 'calc(100vh - var(--workbook-nav-height))' }}>
+      <div className="mx-auto mt-5 text-muted">
+        <h1 className="display-1">404</h1>
+        <p>Stránka sa nenašla</p>
+      </div>
+    </Container>
   );
 }
