@@ -44,17 +44,22 @@ export function parseGithubUrlPath(urlPath: string): {branch?: string, type: 'fi
   }
 }
 
-export function makeLink(filepath: string, fileType: 'file' | 'dir', repo: string, branch?: string): string {
+export function makeRepoLink(filepath: string, fileType: 'file' | 'dir', owner: string, repo: string, branch?: string): string {
   const type = fileType === 'file' ? 'blob' : 'tree';
+  
+  if (filepath === '/' && !branch) {
+    return `/repo/${owner}/${repo}`
+  }
+  
   let bPart = '';
   if (branch) {
     bPart = branch.includes('/') ? `:${branch}:/` : `${branch}/`;
   }
   const { extension } = parseFilepath(filepath);
   if (extension === 'workbook') {
-    return `/sheet/${repo}/${type}/${bPart}${filepath}`;
+    return `/sheet/${owner}/${repo}/${type}/${bPart}${filepath}`;
   } else {
-    return `/repo/${repo}/${type}/${bPart}${filepath}`;
+    return `/repo/${owner}/${repo}/${type}/${bPart}${filepath}`;
   }
 }
 
@@ -84,15 +89,15 @@ function RepoPage() {
   let body;
   if (!user) {
     return <LoginPage msg="Pre pokračovanie sa musíte prihlásiť" readirectTo={location.pathname} />
-  } else if ('error' in parsed || !params.repo) {
+  } else if ('error' in parsed || !params.repo || !params.owner) {
     return <Err404Page />
   } else {
-    const username = user.login;
+    const username = params.owner;
     const { branch, path } = parsed;
     body = (
       <RepoExplorer
         owner={username} repo={params.repo} branch={branch} path={path}
-        makeLink={makeLink}
+        makeLink={makeRepoLink}
         transformFileItem={transformFileItem}
       />
     )

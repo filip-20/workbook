@@ -4,10 +4,20 @@ import Moment from "react-moment";
 import 'moment/locale/sk';
 import { MinimalRepository } from "../../services/githubApi/endpoints/repos";
 
+export interface RepoInfo {
+  id: number,
+  owner: {login: string},
+  name: string,
+  description: string | null,
+  private: boolean,
+  pushed_at?: string | null | undefined,
+  updated_at?: string | null | undefined
+}
+
 export interface RepoListProps {
-  item: MinimalRepository,
+  item: RepoInfo,
   placeholder?: boolean,
-  makeRepoLink: (repoName: string) => string
+  makeRepoLink: (path: string, fileType: 'file' | 'dir', owner: string, repo: string, branch?: string) => string,
 }
 
 function RepoListItem(props: RepoListProps) {
@@ -19,7 +29,7 @@ function RepoListItem(props: RepoListProps) {
           {
             placeholder ?
               <Placeholder xs={2} bg="primary" />
-              : <Link to={props.makeRepoLink(item.name)}>{item.name}</Link>
+              : <Link to={props.makeRepoLink('/', 'dir', item.owner.login, item.name)}>{item.name}</Link>
           }
         </Card.Title>
         <Card.Text>
@@ -34,7 +44,7 @@ function RepoListItem(props: RepoListProps) {
         {
           placeholder ? 
           <Placeholder xs={1} bg="secondary" />
-          : <Badge pill bg="secondary">{item.private ? 'Private' : 'Public'}</Badge>
+          : <Badge pill bg="secondary">{item.private ? 'Súkromný' : 'Verejný'}</Badge>
         }
         {
           placeholder ? 

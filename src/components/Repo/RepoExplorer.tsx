@@ -1,4 +1,4 @@
-import { Alert, Card, ListGroup, Spinner } from "react-bootstrap";
+import { Alert, Card, ListGroup, Placeholder, Spinner } from "react-bootstrap";
 import { File, FolderFill } from 'react-bootstrap-icons';
 import { Link } from "react-router-dom";
 import Pathbar from "./Pathbar";
@@ -12,7 +12,7 @@ import { FetchBaseQueryError } from "@reduxjs/toolkit/dist/query";
 import { BsSlashCircle } from "react-icons/bs";
 import { HiDocumentAdd } from 'react-icons/hi'
 import CreateFileButton from "./CreateFileButton";
-import { useCallback, useRef, useState } from "react";
+import { useRef } from "react";
 import { emptySheet } from "../../store/sheetSlice";
 
 export interface RepoExplorerProps {
@@ -20,7 +20,7 @@ export interface RepoExplorerProps {
   repo: string,
   branch?: string,
   path: string,
-  makeLink: (path: string, fileType: 'file' | 'dir', repo: string, branch?: string) => string
+  makeLink: (path: string, fileType: 'file' | 'dir', owner: string, repo: string, branch?: string) => string
   transformFileItem?: (path: string, fileType: 'file' | 'dir') => { changeIcon?: JSX.Element }
 }
 
@@ -58,6 +58,9 @@ function RepoExplorer(props: RepoExplorerProps) {
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
   const content = useReposGetContentQuery({ owner, repo, ref: branch, path }, { skip: branch === undefined && !repoInfo.isSuccess });
 
+  console.log('repo explorer');
+  console.log(content)
+
   const existingFilenames = useRef<Set<string>>(new Set());
   
   if (repoInfo.isSuccess && !branch) {
@@ -87,14 +90,14 @@ function RepoExplorer(props: RepoExplorerProps) {
   const renderFileItem = (file: FileItem) => {
     let linkUrl: string;
     let filePath: string;
-    
+
     if (file.name === '..') {
       const reducer = (prev: string, current: string) => (prev === '' ? '' : prev + '/') + current;
       filePath = path.split('/').slice(0, -1).reduce(reducer, '');
     } else {
       filePath = path === '' ? file.name : `${path}/${file.name}`;
     }
-    const link = makeLink(filePath, file.type, repo, branch);
+    const link = makeLink(filePath, file.type, owner, repo, branch);
     let icon = file.type === 'file' ? fileIcon : folderIcon
 
     if (transformFileItem) {
@@ -102,6 +105,15 @@ function RepoExplorer(props: RepoExplorerProps) {
       if (changeIcon) {
         icon = changeIcon;
       }
+    }
+
+    if (content.isFetching) {
+      return (
+        <ListGroup.Item className={styles.fileItem} key={file.name}>
+        <span className={styles.itemIcon}>{icon}</span>
+        <Placeholder xs={1} bg="secondary" />
+      </ListGroup.Item>
+      )
     }
 
     return (
@@ -144,7 +156,7 @@ function RepoExplorer(props: RepoExplorerProps) {
     <Card>
       <Card.Header className="h5">
         <BranchSelect owner={owner} repo={repo} path={path} branch={branch} makeLink={makeLink} />
-        <Pathbar style={{ marginLeft: '1rem' }} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
+        <Pathbar style={{ marginLeft: '1rem' }} owner={owner} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
         <div style={{ float: 'right' }}>
           <CreateFileButton
             owner={owner} repo={repo} path={path} branch={branch}

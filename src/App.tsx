@@ -40,9 +40,9 @@ function App() {
         <Route path="/login/*" element={<LoginPage />} />
         <Route path="/repos" element={<RepoListPage />} />
         <Route path="/repos/:page" element={<RepoListPage />} />
-        <Route path="/repo/:repo" element={<RepoPage />} />
-        <Route path="/repo/:repo/*" element={<RepoPage />} />
-        <Route path="/sheet/:repo/*" element={<SheetPage />} />
+        <Route path="/repo/:owner/:repo" element={<RepoPage />} />
+        <Route path="/repo/:owner/:repo/*" element={<RepoPage />} />
+        <Route path="/sheet/:owner/:repo/*" element={<SheetPage />} />
         <Route path="/logout" element={<LogoutPage />} />
       </Routes>
     </BrowserRouter>

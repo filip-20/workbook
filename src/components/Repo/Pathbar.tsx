@@ -5,17 +5,18 @@ import styles from './styles.module.css';
 
 export interface PathbarProps {
   style?: React.CSSProperties,
+  owner: string,
   repoName: string,
   branch?: string,
   path: string,
-  makeLink: (path: string, fileType: 'file' | 'dir', repo: string, branch?: string) => string
+  makeLink: (path: string, fileType: 'file' | 'dir', owner: string, repo: string, branch?: string) => string
 }
 
 function Pathbar(props: PathbarProps) {
   const items = [{
     name: props.repoName,
     path: '',
-    link: props.makeLink('', 'dir', props.repoName, props.branch),
+    link: props.makeLink('', 'dir', props.owner, props.repoName, props.branch),
     active: '' === props.path
   }];
   if (props.path !== '') {
@@ -26,7 +27,7 @@ function Pathbar(props: PathbarProps) {
       items.push({
         name: item,
         path: p,
-        link: props.makeLink(path, 'dir', props.repoName, props.branch),
+        link: props.makeLink(path, 'dir', props.owner, props.repoName, props.branch),
         active: p === props.path,
       });
     });

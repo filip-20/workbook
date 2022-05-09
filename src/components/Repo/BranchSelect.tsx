@@ -14,13 +14,12 @@ export interface BranchSelectProps {
   repo: string,
   branch?: string,
   path: string,
-  makeLink: (path: string, fileType: 'file' | 'dir', repo: string, branch?: string) => string
+  makeLink: (path: string, fileType: 'file' | 'dir', owner: string, repo: string, branch?: string) => string
 }
 
 const UpdatingPopover = React.forwardRef<HTMLDivElement, PopoverProps>(
   ({ popper, children, show: _, ...props }, ref) => {
     useEffect(() => {
-      console.log('updating!');
       popper.scheduleUpdate();
     }, [popper, children]);
     return (
@@ -39,7 +38,7 @@ function BranchSelect(props: BranchSelectProps) {
 
   // load default branch if branch is undefined in props
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
-  const branches = useReposListBranchesQuery({ owner, repo }, { skip });
+  const branches = useReposListBranchesQuery({ owner, repo, perPage: 100 }, { skip });
 
   const loading = <Spinner animation="border" role="status" />
   const loadingSmall = <Spinner animation="border" size="sm" role="status" />
@@ -59,7 +58,7 @@ function BranchSelect(props: BranchSelectProps) {
     return (
       <ListGroup variant="flush">
         {data.map(b => {
-          const linkTo = makeLink(path, 'dir', repo, b.name);
+          const linkTo = makeLink(path, 'dir', owner, repo, b.name);
           const active = b.name === branch;
           return (
             <ListGroup.Item action key={b.name}>
@@ -71,9 +70,9 @@ function BranchSelect(props: BranchSelectProps) {
     )
   }
 
-  /* using memo prevents rerender loop */
+  /* using memo prevents render loop */
   const memoizedContent = useMemo(() => {
-    return displayLoadable(branches, loading, renderList, () => err('Načítanie vetiev zlyhalo'))
+    return displayLoadable(branches, loadingSmall, renderList, () => err('Načítanie vetiev zlyhalo'))
   }, [branches, branch]);
 
   const renderBranchName = (name: string) => <><BiGitBranch />{name}<BsCaretDownFill /></>
