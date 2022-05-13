@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Container } from "react-bootstrap";
 import ReactMarkdown from "react-markdown"
 import RemarkMathPlugin from 'remark-math';
+import remarkGfm from 'remark-gfm'
 import rehypeKatex from "rehype-katex";
 import 'katex/dist/katex.min.css';
 import styles from './TextCell.module.css'
@@ -74,7 +74,7 @@ function TextCell(props: TextCellProps) {
     <ReactMarkdown
       className={styles.textCell}
       children={content}
-      remarkPlugins={[RemarkMathPlugin]}
+      remarkPlugins={[RemarkMathPlugin, remarkGfm]}
       rehypePlugins={[rehypeKatex]}
     />
   )
