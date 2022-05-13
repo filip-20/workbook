@@ -5,12 +5,12 @@ import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
 import AppCell from './AppCell';
 import TextCell from './TextCell';
-import styles from './CellWrapper.module.css';
+import styles from './CellContainer.module.css';
 import AddComment from './AddComment';
 import Comments from './Comments';
 import { BiLock } from 'react-icons/bi';
 
-type CellWrapperProps = {
+export type CellContainerProps = {
   className?: string,
   key: number,
   cellId: number,
@@ -19,7 +19,7 @@ type CellWrapperProps = {
   onFullscreenToggleClick: (isFullscreen: boolean) => void,
 };
 
-function CellWrapper(props: CellWrapperProps) {
+export default function CellContainer(props: CellContainerProps) {
   const { className, cellId, cellIndex } = props;
   const { onDeleteClick, onFullscreenToggleClick } = props;
 
@@ -120,5 +120,3 @@ function CellWrapper(props: CellWrapperProps) {
     </div>
   )
 }
-
-export default CellWrapper;

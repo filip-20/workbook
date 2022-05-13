@@ -1,9 +1,9 @@
 import { Alert, Button, Container, Modal, Spinner } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import CellWrapper from "./CellWrapper";
+import CellContainer from "./CellContainer";
 import AddToolbar from "./AddToolbar";
 import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import styles from "./Sheet.module.css";
 import FileErrorModal from "./FileErrorModal";
@@ -58,7 +58,7 @@ function Sheet() {
 
         {
           cellsOrder.map((cellId, index) => (
-            <CellWrapper key={cellId} cellId={cellId} cellIndex={index}
+            <CellContainer key={cellId} cellId={cellId} cellIndex={index}
               className={fullscreenCellId !== undefined ? (cellId === fullscreenCellId ? styles.fullscreenCell : 'd-none') : undefined}
               onFullscreenToggleClick={isFullscreen => { console.log('fullscreen: ' + isFullscreen); setFullscreenCellId(isFullscreen ? cellId : undefined) }}
               onDeleteClick={cell => setConfirmDeletion(cell)}
