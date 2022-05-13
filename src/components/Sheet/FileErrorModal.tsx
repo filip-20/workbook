@@ -92,7 +92,7 @@ function SaveError() {
             Zmeny ktoré ste vykonali boli ale spravené na neaktuálnom hárku.
             {json !== undefined && 'Hárok zo zmenami urobenými v tomto okne si môžete stiahnuť.'}
           </p>
-          <p className="text-danger">Ak <strong>aktualizujete</strong> stránku alebo <strong>zavriete</strong> toto okno, neuložené zmeny vykonané v tomto okne budú <strong>stratené</strong>.</p>
+          <p className="text-danger">Ak <strong>obnovíte</strong> stránku alebo <strong>zavriete</strong> toto okno, neuložené zmeny vykonané v tomto okne budú <strong>stratené</strong>.</p>
           <p>Čo chcete urobiť?</p>
         </Modal.Body>
         <Modal.Footer>
@@ -118,7 +118,7 @@ function SaveError() {
             {json !== undefined && 'Hárok zo zmenami urobenými v tomto okne si môžete stiahnuť.&nbsp;'}
             Môžete skúsiť zopakovať uloženie zmien do repozitára.
           </p>
-          <p className="text-danger">Ak <strong>aktualizujete</strong> stránku alebo <strong>zavriete</strong> toto okno, neuložené zmeny vykonané v tomto okne budú <strong>stratené</strong>.</p>
+          <p className="text-danger">Ak <strong>obnovíte</strong> stránku alebo <strong>zavriete</strong> toto okno, neuložené zmeny vykonané v tomto okne budú <strong>stratené</strong>.</p>
           <p>Čo chcete urobiť?</p>
         </Modal.Body>
         <Modal.Footer>
