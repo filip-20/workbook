@@ -16,6 +16,7 @@ import { sheetActions } from "../store/sheetSlice";
 import Err404Page from "./Err404Page";
 import BranchLabel from "./Repo/BranchLabel";
 import LoginPage from "./LoginPage";
+import { pathURIEncode } from "./Repo/RepoExplorer";
 
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
@@ -70,7 +71,7 @@ function SheetPage() {
     if (type !== 'file' || extension !== 'workbook' || !owner || !repo || !branch) {
       return (<Err404Page />);
     } else {
-      const loadArgs = { owner, repo, path, ref: branch };
+      const loadArgs = { owner, repo, path: pathURIEncode(path), ref: branch };
       if (JSON.stringify(lastPromiseInfo.lastArg) !== JSON.stringify(loadArgs)) {
         console.log('loading workbook');
         loadTrigger(loadArgs);

@@ -5,7 +5,7 @@ import { authSelectors } from "../store/authSlice";
 import { useAppSelector } from "../store/hooks";
 import Err404Page from "./Err404Page";
 import LoginPage from "./LoginPage";
-import RepoExplorer from "./Repo/RepoExplorer";
+import RepoExplorer, { pathURIEncode } from "./Repo/RepoExplorer";
 
 
 /**
@@ -56,15 +56,17 @@ export function makeRepoLink(filepath: string, fileType: 'file' | 'dir', owner: 
     bPart = branch.includes('/') ? `:${branch}:/` : `${branch}/`;
   }
   const { extension } = parseFilepath(filepath);
+  const ePath = pathURIEncode(filepath);
   if (extension === 'workbook') {
-    return `/sheet/${owner}/${repo}/${type}/${bPart}${filepath}`;
+    return `/sheet/${owner}/${repo}/${type}/${bPart}${ePath}`;
   } else {
-    return `/repo/${owner}/${repo}/${type}/${bPart}${filepath}`;
+    return `/repo/${owner}/${repo}/${type}/${bPart}${ePath}`;
   }
 }
 
 export function parseFilepath(filepath: string): {filename: string, extension: string} {
-  const a = filepath.split('/');
+  const dPath = filepath.split('/').map(p => decodeURIComponent(p)).reduce((p, c) => `${p}/${c}`);
+  const a = dPath.split('/');
   const filename = a[a.length-1];
   const b = filename.split('.');
   const extension = b[b.length-1];
@@ -85,6 +87,7 @@ function RepoPage() {
   }
 
   const urlPath = params['*'] || '';
+  console.log('URL path: ' + urlPath);
   const parsed = parseGithubUrlPath(urlPath);
   let body;
   if (!user) {
@@ -94,6 +97,7 @@ function RepoPage() {
   } else {
     const username = params.owner;
     const { branch, path } = parsed;
+    console.log('Repo path: ' + path);
     body = (
       <RepoExplorer
         owner={username} repo={params.repo} branch={branch} path={path}

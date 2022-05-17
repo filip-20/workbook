@@ -51,12 +51,16 @@ function isEmptyRepoError(error: any) {
   return false;
 }
 
+export function pathURIEncode(path: string) {
+  return path.split('/').map(p => encodeURIComponent(p)).reduce((p, c) => `${p}/${c}`);
+}
+
 function RepoExplorer(props: RepoExplorerProps) {
   const { owner, repo, path, makeLink, transformFileItem } = props;
   let { branch } = props;
 
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
-  const content = useReposGetContentQuery({ owner, repo, ref: branch, path }, { skip: branch === undefined && !repoInfo.isSuccess });
+  const content = useReposGetContentQuery({ owner, repo, ref: branch, path: pathURIEncode(path) }, { skip: branch === undefined && !repoInfo.isSuccess });
 
   console.log('repo explorer');
   console.log(content)
