@@ -12,31 +12,24 @@ import { BiLock } from 'react-icons/bi';
 
 export type CellContainerProps = {
   className?: string,
-  key: number,
   cellId: number,
   cellIndex: number,
-  onDeleteClick: (cell: { cellId: number, cellIndex: number }) => void,
   onFullscreenToggleClick: (isFullscreen: boolean) => void,
 };
 
 export default function CellContainer(props: CellContainerProps) {
   const { className, cellId, cellIndex } = props;
-  const { onDeleteClick, onFullscreenToggleClick } = props;
+  const { onFullscreenToggleClick } = props;
 
   const dispatch = useAppDispatch();
-
-  const firstCellId = useAppSelector(sheetSelectors.firstCellId)
-  const lastCellId = useAppSelector(sheetSelectors.lastCellId)
-  const cells = useAppSelector(sheetSelectors.cells);
-  const isEdited = cells[cellId].isEdited;
+  const cell = useAppSelector(sheetSelectors.cell(cellId));
+  const { isEdited, type } = cell;
 
   const [addComment, setAddComment] = useState(false);
   const [addToolbarVisible, setAddToolbarVisible] = useState(false);
   const [cellHovered, setCellHovered] = useState(false);
   const addToolbarHovered = useRef(false);
   const dropdownOpened = useRef(false);
-
-  console.log('CellWrapper function called')
 
   const toggleVisibility = (toolbarHovered: boolean, dropdownOpened_: boolean) => {
     addToolbarHovered.current = toolbarHovered
@@ -49,19 +42,11 @@ export default function CellContainer(props: CellContainerProps) {
     }
   }
 
-  const addCellHandler = (typeName: string) => {
-    if (typeName.startsWith('app/')) {
-      dispatch(sheetActions.insertAppCell(typeName.slice(4), null, cellIndex))
-    } else {
-      dispatch(sheetActions.insertTextCell('some content', cellIndex))
-    }
-  }
-
-  const createCell = (id: number, type: string, data: any) => {
+  const createCell = (id: number, type: string) => {
     if (type === 'text') {
-      return (<TextCell isEdited={isEdited} cellId={id} text={data} />)
+      return (<TextCell cellId={id} />)
     } else {
-      return (<AppCell isEdited={isEdited} cellId={id} type={type} initialState={data} />)
+      return (<AppCell cellId={id} />)
     }
   }
 
@@ -76,18 +61,11 @@ export default function CellContainer(props: CellContainerProps) {
           className={`${styles.cellWrapper} border`}
           style={{ position: 'relative' }}
         >
-
           <EditToolbar
             className={styles.editToolbar}
             style={cellHovered ? { display: 'initial' } : { display: 'none' }}
-            showUp={cellId !== firstCellId}
-            showDown={cellId !== lastCellId}
-            isEdited={isEdited}
-            onToggleEditClick={(isEdited) => dispatch(sheetActions.setCellEdited({ cellId, isEdited }))}
+            cellId={cellId} cellIndex={cellIndex}
             onCommentClick={() => setAddComment(prev => !prev)}
-            onRemoveClick={() => onDeleteClick({ cellId, cellIndex })}
-            onMoveUpClick={() => dispatch(sheetActions.moveUpCell(cellIndex))}
-            onMoveDownClick={() => dispatch(sheetActions.moveDownCell(cellIndex))}
             onToggleFullscreenClick={(isFullscreen) => onFullscreenToggleClick(isFullscreen)}
           />
 
@@ -97,12 +75,12 @@ export default function CellContainer(props: CellContainerProps) {
             style={{ display: cellHovered && !isEdited ? 'initial' : 'none' }}
           />
           <div className="pt-3" style={{ overflowY: 'auto' }}>
-            {createCell(cellId, cells[cellId].type, cells[cellId].data)}
+            {createCell(cellId, type)}
           </div>
         </div>
         <div>
           <Comments className='ms-2 mb-2' style={{ width: '20rem' }} cellId={cellId} />
-          {addComment && <AddComment className='ms-2' style={{ width: '20rem' }} onCancel={() => setAddComment(false)} onAddComment={(text) => dispatch(sheetActions.addCellComment({ cellId, text }))} />}
+          {addComment && <AddComment className='ms-2' style={{ width: '20rem' }} cellId={cellId} onCancel={() => setAddComment(false)} />}
         </div>
       </div>
       <div
@@ -113,7 +91,7 @@ export default function CellContainer(props: CellContainerProps) {
         <AddToolbar
           className={styles.addToolbar}
           style={cellHovered || addToolbarVisible ? { display: 'initial' } : { display: 'none' }}
-          onAddCellClick={addCellHandler}
+          cellIndex={cellIndex}
           onDropdownToggled={(isOpen) => toggleVisibility(addToolbarHovered.current, isOpen)}
         />
       </div>

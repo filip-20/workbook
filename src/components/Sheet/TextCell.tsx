@@ -6,26 +6,24 @@ import rehypeKatex from "rehype-katex";
 import 'katex/dist/katex.min.css';
 import styles from './TextCell.module.css'
 import CodeMirror from '@uiw/react-codemirror';
-import { useAppDispatch } from "../../store/hooks";
-import { sheetActions } from "../../store/sheetSlice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
 import { markdown } from '@codemirror/lang-markdown';
 
 export interface TextCellProps {
-  cellId: number,
-  text: string,
-  isEdited: boolean,
-}
-
-const defaultProps: { text: string } = {
-  text: '',
+  cellId: number
 }
 
 function TextCell(props: TextCellProps) {
-  const { cellId, isEdited } = props;
+  const { cellId } = props;
   const dispatch = useAppDispatch();
-  const [content, setContent] = useState(props.text);
+
+  const cell = useAppSelector(sheetSelectors.cell(cellId));
+  const { isEdited, data } = cell;
+
+  const [content, setContent] = useState(data);
   const cellChanged = useRef(false);
-  const mutableContent = useRef(props.text);
+  const mutableContent = useRef(data);
   const updateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // this should be triggered after user exits from edit mode
@@ -38,7 +36,7 @@ function TextCell(props: TextCellProps) {
         console.log('canceling delayed update');
         clearTimeout(timeoutId);
         updateTimeout.current = null;
-      } 
+      }
     }
   }, [isEdited]);
 
@@ -86,7 +84,5 @@ function TextCell(props: TextCellProps) {
     </div>
   )
 }
-
-TextCell.defaultProps = defaultProps
 
 export default TextCell;

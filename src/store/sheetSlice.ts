@@ -55,7 +55,8 @@ export interface SheetSliceData {
   commitQueue: Array<CommitInfo>,
   resumeCommitter? : boolean,
   queueHead?: CommitInfo
-  fileInfo?: FileInfo
+  fileInfo?: FileInfo,
+  cellToDelete?: {cellId: number, cellIndex: number},
   errorCode?: number,
   error?: string
 }
@@ -160,18 +161,23 @@ export const sheetSlice = createSlice({
         console.log('Invalid afterIndex parameters for insertCell action. ' + action.payload);
       }
     },
-    removeCell: (state, action: PayloadAction<{ cellIndex: number, cellId: number }>) => {
-      const { cellIndex, cellId } = action.payload;
-      const { sheet } = state;
-      if (cellIndex >= 0 && cellIndex < sheet.cellsOrder.length && sheet.cells[cellId] !== undefined) {
-        delete sheet.cells[cellId];
-        sheet.cellsOrder.splice(cellIndex, 1);
-        if (sheet.editedCellId === cellId) {
-          sheet.editedCellId = undefined;
+    removeCell: (state) => {
+      if (state.cellToDelete !== undefined) {
+        const { cellIndex, cellId } = state.cellToDelete;
+        const { sheet } = state;
+        if (cellIndex >= 0 && cellIndex < sheet.cellsOrder.length && sheet.cells[cellId] !== undefined) {
+          delete sheet.cells[cellId];
+          sheet.cellsOrder.splice(cellIndex, 1);
+          if (sheet.editedCellId === cellId) {
+            sheet.editedCellId = undefined;
+          }
+          state.cellToDelete = undefined;
+          enqueUpdate(state, `Removed cell ${cellId}`);
+        } else {
+          console.log('Invalid arguments for removeCell action. ' + state.cellToDelete);
         }
-        enqueUpdate(state, `Removed cell ${cellId}`);
       } else {
-        console.log('Invalid arguments for removeCell action. ' + action.payload);
+        console.log('Cell to delete is specified with confirmCellDelete action');
       }
     },
     updateCellData: (state, action: PayloadAction<{ cellId: number, data: any }>) => {
@@ -248,6 +254,9 @@ export const sheetSlice = createSlice({
           state.sheet.editedCellId = cellId;
         }
       }
+    },
+    confirmCellDelete: (state, action: PayloadAction<{cellId: number, cellIndex: number} | undefined>) => {
+      state.cellToDelete = action.payload;
     }
   }
 });
@@ -367,9 +376,11 @@ export const sheetSelectors = {
   fileInfo: (state: RootState) => state.sheet.fileInfo,
   cellsOrder: (state: RootState) => state.sheet.sheet.cellsOrder,
   cells: (state: RootState) => state.sheet.sheet.cells,
+  cell: (cellId: number) => { return (state: RootState) => state.sheet.sheet.cells[cellId] },
   firstCellId: (state: RootState) => state.sheet.sheet.firstCellId,
   lastCellId: (state: RootState) => state.sheet.sheet.lastCellId,
-  cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.sheet.cells[cellId].comments) }
+  cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.sheet.cells[cellId].comments) },
+  cellToDelete: (state: RootState) => state.sheet.cellToDelete,
 }
 /*
 export const selectLoadState = (state: RootState) => state.sheet.loadState;

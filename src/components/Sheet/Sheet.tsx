@@ -7,29 +7,20 @@ import { useState } from "react";
 
 import styles from "./Sheet.module.css";
 import FileErrorModal from "./FileErrorModal";
+import ConfirmDeletionModal from "./ConfirmDeletionModal";
 
 function Sheet() {
-  const dispatch = useAppDispatch();
   const loadState = useAppSelector(sheetSelectors.state);
   const sheetError = useAppSelector(sheetSelectors.error);
   const cellsOrder = useAppSelector(sheetSelectors.cellsOrder);
 
-  const [confirmDeletion, setConfirmDeletion] = useState<{ cellId: number, cellIndex: number } | undefined>(undefined);
   const [fullscreenCellId, setFullscreenCellId] = useState<number | undefined>(undefined);
-
-  const addCellHandler = (typeName: string) => {
-    if (typeName.startsWith('app/')) {
-      dispatch(sheetActions.insertAppCell(typeName.slice(4), null, -1))
-    } else {
-      dispatch(sheetActions.insertTextCell('some content', -1))
-    }
-  }
 
   const displayToolbar = () => {
     return (
       <AddToolbar
         className="justify-content-center"
-        onAddCellClick={addCellHandler}
+        cellIndex={-1}
       />
     )
   }
@@ -41,27 +32,13 @@ function Sheet() {
   } else {
     return (
       <>
-        <Modal show={confirmDeletion !== undefined} onHide={() => setConfirmDeletion(undefined)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Zmazanie bunky</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>Naozaj chcete zmazať bunku?</p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setConfirmDeletion(undefined)}>Zrušiť</Button>
-            <Button variant="danger" onClick={() => { dispatch(sheetActions.removeCell(confirmDeletion!)); setConfirmDeletion(undefined) }}>Zmazať</Button>
-          </Modal.Footer>
-        </Modal>
-
+        <ConfirmDeletionModal />
         <FileErrorModal />
-
         {
           cellsOrder.map((cellId, index) => (
             <CellContainer key={cellId} cellId={cellId} cellIndex={index}
               className={fullscreenCellId !== undefined ? (cellId === fullscreenCellId ? styles.fullscreenCell : 'd-none') : undefined}
               onFullscreenToggleClick={isFullscreen => { console.log('fullscreen: ' + isFullscreen); setFullscreenCellId(isFullscreen ? cellId : undefined) }}
-              onDeleteClick={cell => setConfirmDeletion(cell)}
             />
           ))
         }

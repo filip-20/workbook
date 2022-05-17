@@ -2,30 +2,31 @@ import { Button, ButtonGroup, ButtonToolbar } from "react-bootstrap";
 import { BiCheck, BiComment, BiEdit, BiExitFullscreen, BiFullscreen, BiTrash } from "react-icons/bi";
 import { ArrowDown, ArrowUp } from "react-bootstrap-icons";
 import { useEffect, useState } from "react";
+import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 
 export interface EditToolbarProps {
   className?: string,
   style?: React.CSSProperties,
-  showUp?: boolean,
-  showDown?: boolean,
-  isEdited?: boolean,
-  onToggleEditClick: (isEditing: boolean) => void,
-  onRemoveClick: () => void,
-  onMoveUpClick: () => void,
+  cellId: number,
+  cellIndex: number,
   onCommentClick: () => void,
-  onMoveDownClick: () => void,
   onToggleFullscreenClick: (isFullscreen: boolean) => void,
 }
 
 export default function EditToolbar(props: EditToolbarProps) {
-  const [editMode, setEditMode] = useState(false);
+  const { cellId, cellIndex } = props;
   const [fullscreen, setFullscreen] = useState(false);
 
-  useEffect(() => {
-    if (props.isEdited !== undefined) {
-      setEditMode(props.isEdited);
-    }
-  }, [props.isEdited])
+  const firstCellId = useAppSelector(sheetSelectors.firstCellId)
+  const lastCellId = useAppSelector(sheetSelectors.lastCellId)
+  const cells = useAppSelector(sheetSelectors.cells);
+  const isEdited = cells[cellId].isEdited;
+
+  const showUp = cellId !== firstCellId;
+  const showDown = cellId !== lastCellId;
+
+  const dispatch = useAppDispatch();
 
   useEffect(() => props.onToggleFullscreenClick(fullscreen), [fullscreen]);
 
@@ -33,13 +34,13 @@ export default function EditToolbar(props: EditToolbarProps) {
     <ButtonToolbar className={props.className} style={props.style}>
       <ButtonGroup>
         {/*<Button disabled variant="secondary" ><BiEdit /></Button>*/}
-        <Button className="text-nowrap" onClick={() => setEditMode(prev => { props.onToggleEditClick(!prev); return !prev })}>
-          {editMode ? <><BiCheck /> Zamknúť</> : <><BiEdit /> Upraviť</>}
+        <Button className="text-nowrap" onClick={() => dispatch(sheetActions.setCellEdited({ cellId, isEdited: !isEdited }))}>
+          {isEdited ? <><BiCheck /> Zamknúť</> : <><BiEdit /> Upraviť</>}
         </Button>
-        <Button title="Odstrániť bunku" onClick={props.onRemoveClick}><BiTrash /></Button>
+        <Button title="Odstrániť bunku" onClick={() => dispatch(sheetActions.confirmCellDelete({cellId, cellIndex}))}><BiTrash /></Button>
         <Button title="Pridať komentár" onClick={props.onCommentClick}><BiComment /></Button>
-        {props.showUp && <Button title="Presunúť vyššie" onClick={props.onMoveUpClick}><ArrowUp /></Button>}
-        {props.showDown && <Button title="Presunúť nižšie" onClick={props.onMoveDownClick}><ArrowDown /></Button>}
+        {showUp && <Button title="Presunúť vyššie" onClick={() => dispatch(sheetActions.moveUpCell(cellIndex))}><ArrowUp /></Button>}
+        {showDown && <Button title="Presunúť nižšie" onClick={() => dispatch(sheetActions.moveDownCell(cellIndex))}><ArrowDown /></Button>}
         <Button title="Zväčšiť bunku" onClick={() => setFullscreen(prev => !prev )}>{fullscreen ? <BiExitFullscreen /> : <BiFullscreen />}</Button>
       </ButtonGroup>
     </ButtonToolbar>

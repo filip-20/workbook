@@ -1,26 +1,27 @@
 // TODO put interface into separate package
 import { PrepareResult } from '@fmfi-uk-1-ain-412/fol-graphexplorer';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
-import { useAppDispatch } from '../../store/hooks';
-import { sheetActions } from '../../store/sheetSlice';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { sheetActions, sheetSelectors } from '../../store/sheetSlice';
 
 export interface AppCellProps {
-  cellId: number,
-  type: string,
-  initialState: any,
-  isEdited: boolean,
+  cellId: number
 }
 
 function AppCell(props: AppCellProps) {
   const dispatch = useAppDispatch();
-  const { prepare, AppComponent } = getAppInfo(props.type)
-  const { cellId, type, initialState, isEdited } = props;
+  const { cellId } = props;
 
-  const lastState = useRef<any | null>(null);
+  const cell = useAppSelector(sheetSelectors.cell(cellId));
+  const { type, isEdited, data } = cell;
+
+  const { prepare, AppComponent } = getAppInfo(type)
+
+  const lastState = useRef<any | null>(data);
   const prepareResult = useRef<PrepareResult | null>(null);
   if (prepareResult.current === null) {
-    prepareResult.current = prepare(initialState)
+    prepareResult.current = prepare(data)
   }
 
   const { instance, getState } = prepareResult.current;
@@ -34,10 +35,10 @@ function AppCell(props: AppCellProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       if (stateChanged.current) {
-        console.log('saving state of ' + type + ' in cell ' + cellId);
         const newState = getState(instance);
         if (lastState.current == null || (lastState.current !== null && JSON.stringify(newState) !== JSON.stringify(lastState.current))) {
           lastState.current = newState;
+          console.log('saving state of ' + type + ' in cell ' + cellId);
           dispatch(sheetActions.updateCellData({ cellId: cellId, data: newState }));
         }
         stateChanged.current = false
