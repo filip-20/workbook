@@ -9,11 +9,6 @@ export interface CreateFileButtonProps {
   repo: string,
   branch?: string,
   path: string,
-  dialogTitle: string,
-  confirmText: string,
-  closeText: string,
-  errEmptyText: string,
-  errExistsText?: string,
   existingFilenames?: Set<string>,
   transformFilename?: (filename: string) => string,
   commitMessage: string,
@@ -24,8 +19,13 @@ export interface CreateFileButtonProps {
 function CreateFileButton(props: CreateFileButtonProps) {
   const { owner, repo, branch, path, existingFilenames, children } = props;
   const { transformFilename, commitMessage, withContent } = props;
-  const { dialogTitle, confirmText, closeText, errEmptyText, errExistsText } = props;
   const { onFileCreated } = props;
+
+  const dialogTitle="Názov zošita"
+  const closeText="Zrušiť"
+  const confirmText="Vytvoriť"
+  const errEmptyText="Prázdny názov"
+  const errExistsText="Zošit s týmto názvom už existuje"
 
   const [show, setShow] = useState(false);
   const [validationMsg, setValidationMsg] = useState('');

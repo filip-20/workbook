@@ -2,7 +2,7 @@ import { Alert, Card, ListGroup, Placeholder, Spinner } from "react-bootstrap";
 import { File, FolderFill } from 'react-bootstrap-icons';
 import { Link } from "react-router-dom";
 import Pathbar from "./Pathbar";
-import { ContentDirectory, ReposGetContentApiResponse, useReposCreateOrUpdateFileContentsMutation, useReposGetContentQuery, useReposGetQuery } from "../../services/githubApi/endpoints/repos";
+import { ContentDirectory, ReposGetContentApiResponse, useReposGetContentQuery, useReposGetQuery } from "../../services/githubApi/endpoints/repos";
 import BranchSelect from "./BranchSelect";
 import { displayLoadable } from "./displayLoadable";
 
@@ -92,7 +92,6 @@ function RepoExplorer(props: RepoExplorerProps) {
   }
 
   const renderFileItem = (file: FileItem) => {
-    let linkUrl: string;
     let filePath: string;
 
     if (file.name === '..') {
@@ -165,11 +164,6 @@ function RepoExplorer(props: RepoExplorerProps) {
           <CreateFileButton
             owner={owner} repo={repo} path={path} branch={branch}
             existingFilenames={existingFilenames.current}
-            dialogTitle="Názov zošita"
-            closeText="Zrušiť"
-            confirmText="Vytvoriť"
-            errEmptyText="Prázdny názov"
-            errExistsText="Zošit s týmto názvom už existuje"
             transformFilename={(filename: string) => `${filename}.workbook`}
             commitMessage="new workbook"
             withContent={JSON.stringify(emptySheet)}
