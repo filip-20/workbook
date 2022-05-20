@@ -1,7 +1,6 @@
-import { ReactChild, ReactChildren, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ListGroup } from "react-bootstrap";
-import { BsCheckCircle, BsCheckSquare, BsCircle, BsSquare } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { BsCheckCircle, BsCircle } from "react-icons/bs";
 
 export interface OptionsListProps {
   children: React.ReactElement<OptionsListItemProps>[],

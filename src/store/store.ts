@@ -5,7 +5,7 @@ import authReducer from './authSlice';
 import { setupListeners } from '@reduxjs/toolkit/dist/query';
 
 const jsonState = localStorage.getItem('reduxState')
-const preloadedState = jsonState === null ? undefined : {sheet: JSON.parse(jsonState)}
+//const preloadedState = jsonState === null ? undefined : {sheet: JSON.parse(jsonState)}
 
 export const store = configureStore({
   reducer: {

@@ -1,8 +1,8 @@
-import { Alert, Button, Container, Modal, Spinner } from "react-bootstrap";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { Alert, Container, Spinner } from "react-bootstrap";
+import { useAppSelector } from "../../store/hooks";
 import CellContainer from "./CellContainer";
 import AddToolbar from "./AddToolbar";
-import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
+import { sheetSelectors } from "../../store/sheetSlice";
 import { useState } from "react";
 
 import styles from "./Sheet.module.css";

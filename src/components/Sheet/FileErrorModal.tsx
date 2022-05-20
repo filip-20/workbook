@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { BiDownload, BiRefresh } from "react-icons/bi";
-import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { sheetActions, sheetSelectors, SheetState } from "../../store/sheetSlice";
+import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
 
 export default function FileErrorModal() {
   const sheetState = useAppSelector(sheetSelectors.state);
-  const [closed, setClosed] = useState(false);
+  //const [closed, setClosed] = useState(false);
 
   const show = (sheetState === 'save_error' || sheetState === 'update_detected') /*&& (!closed)*/;
 
@@ -23,7 +22,7 @@ export default function FileErrorModal() {
       size="lg"
       aria-labelledby="contained-modal-title-vcenter"
       show={show}
-      onHide={() => setClosed(true)}
+      /*onHide={() => setClosed(true)}*/
       centered
     >
       {sheetState === 'save_error' && <SaveError />}
@@ -71,7 +70,7 @@ function SaveError() {
   }
 
   const json: string | undefined = (() => {
-    if (commitQueue.length === 0 && commitQueueHead != undefined) {
+    if (commitQueue.length === 0 && commitQueueHead !== undefined) {
       return commitQueueHead.json;
     } else if (commitQueue.length > 0) {
       return commitQueue[commitQueue.length - 1].json;

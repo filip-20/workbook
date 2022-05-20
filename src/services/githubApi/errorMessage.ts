@@ -6,15 +6,6 @@ export interface GithubErrorResponse {
   documentation_url: string,
 }
 
-function isType<T>(val: any) {
-  try {
-    const tmp = val as T
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
 export function isFetchBaseQueryError(obj: any): obj is FetchBaseQueryError {
   return (
     (obj !== null &&

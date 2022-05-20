@@ -1,7 +1,6 @@
-import { ReactChild, ReactChildren, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ListGroup } from "react-bootstrap";
 import { BsCheckSquare, BsSquare } from "react-icons/bs";
-import { Link } from "react-router-dom";
 
 export interface CheckListProps {
   children: React.ReactElement<CheckListItemProps>[],

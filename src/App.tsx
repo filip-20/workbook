@@ -7,7 +7,7 @@ import Navigation from './components/Navigation';
 import SheetPage from './components/SheetPage';
 import RepoPage from './components/RepoPage';
 import RepoListPage from './components/RepoListPage';
-import { useAppDispatch, useAppSelector } from './store/hooks';
+import { useAppSelector } from './store/hooks';
 import { authSelectors, saveAuthState } from './store/authSlice';
 import LogoutPage from './components/LogoutPage';
 import { useUsersGetAuthenticatedQuery } from './services/githubApi/endpoints/users';

@@ -1,4 +1,4 @@
-import { Container, Image, Nav, Navbar, NavDropdown } from "react-bootstrap";
+import { Image, Nav, Navbar } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { authSelectors } from "../store/authSlice";
 import { useAppSelector } from "../store/hooks";

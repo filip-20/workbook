@@ -2,7 +2,6 @@ import { Badge, Card, Placeholder } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Moment from "react-moment";
 import 'moment/locale/sk';
-import { MinimalRepository } from "../../services/githubApi/endpoints/repos";
 
 export interface RepoInfo {
   id: number,

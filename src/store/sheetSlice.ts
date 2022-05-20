@@ -1,6 +1,4 @@
-import { createEntityAdapter, createSlice, EntityAdapter, EntityState, PayloadAction } from "@reduxjs/toolkit";
-import { fakeBaseQuery } from "@reduxjs/toolkit/dist/query";
-import { stringify } from "querystring";
+import { createEntityAdapter, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
 import { AppDispatch, RootState } from './store'
 
 interface Comment {
@@ -280,7 +278,7 @@ function updateFirstLastCellId(state: Sheet) {
 }
 
 function testSheetIntegrity(sheet: Sheet): { passed: boolean, error?: string } {
-  let passed = false, error = undefined;
+  let error = undefined;
 
   /* test keys and types of sheet object */
   const reqKeys: { [key: string]: string } = {
@@ -359,9 +357,6 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
 }
 
 /* Actions */
-//const {['addCellComment', 'removeCellComment']: remove, ...sheetActions} = sheetSlice.actions
-//export const sheetActions = { [addCellComment]: remove, ...sheetSlice.actions}
-/*export const { loadSheet, clearSheet, dequeueCommit, insertCell, removeCell, updateCellData, moveUpCell, moveDownCell, setCellEdited } = sheetSlice.actions;*/
 const insertTextCell = (text: string, afterIndex: number) => sheetActions.insertCell({ afterIndex, type: 'text', data: text })
 const insertAppCell = (type: string, state: any, afterIndex: number) => sheetActions.insertCell({ afterIndex, type, data: state })
 export const sheetActions = { ...sheetSlice.actions, addCellComment, remmoveCellComment, insertTextCell, insertAppCell };
@@ -382,14 +377,5 @@ export const sheetSelectors = {
   cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.sheet.cells[cellId].comments) },
   cellToDelete: (state: RootState) => state.sheet.cellToDelete,
 }
-/*
-export const selectLoadState = (state: RootState) => state.sheet.loadState;
-export const selectSheetError = (state: RootState) => state.sheet.error;
-export const selectCommitQueueHead = (state: RootState) => state.sheet.queueHead;
-export const selectSheetFileInfo = (state: RootState) => state.sheet.fileInfo;
-export const selectCellsOrder = (state: RootState) => state.sheet.sheet.cellsOrder;
-export const selectCells = (state: RootState) => state.sheet.sheet.cells;
-export const selectFirstCellId = (state: RootState) => state.sheet.sheet.firstCellId;
-export const selectLastCellId = (state: RootState) => state.sheet.sheet.lastCellId;*/
 
 export default sheetSlice.reducer;

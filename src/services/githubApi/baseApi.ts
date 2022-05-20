@@ -1,7 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import githubBaseQuery from "./baseQuery";
 import { ReposListForAuthenticatedUserApiArg, ReposListForUserApiArg } from "./endpoints/repos";
-import { SearchReposApiArg, SearchReposApiResponse } from "./endpoints/search";
+import { SearchReposApiArg } from "./endpoints/search";
 
 export const githubApi = createApi({
   reducerPath: "githubApi",

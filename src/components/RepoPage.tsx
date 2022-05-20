@@ -1,4 +1,4 @@
-import { Alert, Container } from "react-bootstrap";
+import { Container } from "react-bootstrap";
 import { BsFillStarFill } from "react-icons/bs";
 import { useLocation, useParams } from "react-router-dom";
 import { authSelectors } from "../store/authSlice";
@@ -79,7 +79,7 @@ function RepoPage() {
   const params = useParams();
 
   const transformFileItem = (filepath: string, type: 'file' | 'dir') => {
-    const {filename, extension} = parseFilepath(filepath);
+    const { extension } = parseFilepath(filepath);
     if (extension === 'workbook') {
       return {changeIcon: <BsFillStarFill style={{strokeWidth: '1px', fill: 'yellow'}} />}
     }

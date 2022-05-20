@@ -1,10 +1,9 @@
 import { useReposCreateOrUpdateFileContentsMutation } from "../../services/githubApi/endpoints/repos";
-import { authSelectors } from "../../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { useEffect, useRef, useState } from "react";
-import { githubApiErrorMessage, GithubErrorResponse, isFetchBaseQueryError, isGithubErrorResponse } from "../../services/githubApi/errorMessage";
+import { githubApiErrorMessage, isFetchBaseQueryError, isGithubErrorResponse } from "../../services/githubApi/errorMessage";
 import { Base64 } from 'js-base64';
-import { Alert, Button, Spinner } from "react-bootstrap";
+import { Alert, Spinner } from "react-bootstrap";
 import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
 import { BsExclamationTriangle } from "react-icons/bs";
 
@@ -14,7 +13,6 @@ export interface SheetCommitterProps {
 }
 
 function SheetCommitter(props: SheetCommitterProps) {
-  const authState = useAppSelector(authSelectors.authState);
   const fileInfo = useAppSelector(sheetSelectors.fileInfo);
   const commit = useAppSelector(sheetSelectors.commitQueueHead);
   const resumeCommitter = useAppSelector(sheetSelectors.resumeCommitter);

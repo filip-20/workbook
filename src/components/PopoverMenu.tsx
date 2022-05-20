@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { Button, OverlayTrigger, Popover, PopoverProps } from "react-bootstrap";
 import { Placement } from "react-bootstrap/esm/types";
-import { BsCaretDownFill } from "react-icons/bs";
 
 export interface PopoverMenuBaseProps {
   children: JSX.Element,
@@ -48,7 +47,7 @@ function PopoverMenu(props: PopoverMenuBaseProps) {
 export function PopoverButton(props: PopoverMenuProps & { variant?: string, className? : string }) {
   const { children, title, placement, onToggle, variant, className } = props;
   return (
-    <PopoverMenu menuContent={children}>
+    <PopoverMenu menuContent={children} placement={placement} onToggle={onToggle}>
       <Button variant={variant} className={`${className || ''} dropdown-toggle`}>{title}</Button>
     </PopoverMenu>
   )
@@ -57,7 +56,7 @@ export function PopoverButton(props: PopoverMenuProps & { variant?: string, clas
 export function PopoverNavLink(props: PopoverMenuProps & {className?: string}) {
   const { children, title, placement, onToggle, className } = props;
   return (
-      <PopoverMenu menuContent={children}>
+      <PopoverMenu menuContent={children} placement={placement} onToggle={onToggle}>
         <a className={`dropdown-toggle nav-link ${className || ''}`} role="button" href="#">{title}</a>
       </PopoverMenu>
   )

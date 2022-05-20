@@ -40,7 +40,6 @@ function BranchSelect(props: BranchSelectProps) {
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
   const branches = useReposListBranchesQuery({ owner, repo, perPage: 100 }, { skip });
 
-  const loading = <Spinner animation="border" role="status" />
   const loadingSmall = <Spinner animation="border" size="sm" role="status" />
   const err = (message: string) => {
     return <Alert variant="danger">{message}</Alert>

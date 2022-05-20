@@ -3,9 +3,8 @@ import { Alert, Col, Container, Row, Spinner } from "react-bootstrap";
 import Paginate from "../Paginate";
 import RepoListItem, { RepoInfo } from "./RepoListItem";
 import { useReposListForAuthenticatedUserHeadersQuery, useSearchReposHeadersQuery } from "../../services/githubApi/baseApi";
-import { MinimalRepository, useReposListForAuthenticatedUserQuery } from "../../services/githubApi/endpoints/repos";
+import { useReposListForAuthenticatedUserQuery } from "../../services/githubApi/endpoints/repos";
 import { displayLoadable } from "./displayLoadable";
-import Err404Page from "../Err404Page";
 import { useSearchReposQuery } from "../../services/githubApi/endpoints/search";
 import { BsSlashCircle } from "react-icons/bs";
 

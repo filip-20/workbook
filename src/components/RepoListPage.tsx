@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Button, Col, Container, Form, FormControl, ListGroup, Row } from "react-bootstrap";
+import { Col, Container, FormControl, Row } from "react-bootstrap";
 import { useLocation, useParams } from "react-router-dom";
 import { authSelectors } from "../store/authSlice";
 import { useAppSelector } from "../store/hooks";
@@ -49,16 +49,6 @@ function RepoListPage() {
             }
             } />
           </Col>
-          {/*
-        <PopoverButton className="mx-2" title="Typ">
-          <OptionList selected="all">
-            <OptionList.Item name="all">Všetky</OptionList.Item>
-            <OptionList.Item name="owner">Vlastné</OptionList.Item>
-            <OptionList.Item name="public">Verejné</OptionList.Item>
-            <OptionList.Item name="private">Súkromné</OptionList.Item>
-          </OptionList>
-        </PopoverButton>
-        */}
           <Col className="text-center my-1" md="auto" xs={6}>
             <PopoverButton className="" title="Zoradenie">
               <OptionList selected={sortBy} onSelectedChange={selected => setSortBy(selected)}>
