@@ -31,6 +31,7 @@ function TextCell(props: TextCellProps) {
     if (!isEdited && cellChanged.current === true) {
       console.log('after close text cell update');
       dispatch(sheetActions.updateCellData({cellId: cellId, data: content}));
+      cellChanged.current = false;
       const timeoutId = updateTimeout.current;
       if (timeoutId !== null) {
         console.log('canceling delayed update');
@@ -46,6 +47,7 @@ function TextCell(props: TextCellProps) {
       updateTimeout.current = setTimeout(() => {
         console.log('delayed text cell update');
         dispatch(sheetActions.updateCellData({cellId: cellId, data: mutableContent.current}));
+        cellChanged.current = false;
         updateTimeout.current = null;
       }, 10000)
     }
