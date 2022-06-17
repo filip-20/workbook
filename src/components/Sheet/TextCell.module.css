@@ -2,16 +2,21 @@
   display: inline-block;
   width: calc(100% - 45rem);
   vertical-align: top;
-  margin-right: 1rem;
-  padding-right: 1rem;
   border-right-style: solid;
   border-right-width: 1px;
+  padding-right: 0.5rem;
+  
+  padding-bottom: initial;
+  border-bottom-style: initial;
+  border-bottom-width: initial;
 }
 
 .textCell {
   display: inline-block;
   max-width: 40rem;
   vertical-align: top;
+  padding-left: 0.5rem;
+  padding-top: initial;
 }
 
 .cmMinHeight :global .cm-content { min-height: 5em; }
@@ -20,14 +25,23 @@
 .cmMinHeight :global .cm-scroller { overflow: auto; }
 .cmMinHeight :global .cm-wrap { border: 1px solid silver }
 
-@media screen and (max-width: 40rem) {
+@media only screen and (max-width: 80rem) {
   .textEdit {
     display: block;
     width: 100%;
     margin-right: 2rem;
+    padding-bottom: 0.5rem;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+
+    padding-right: initial;
+    border-right-style: initial;
+    border-right-width: initial;
   }
   .textCell {
     display: block;
     max-width: 40rem;
+    padding-top: 0.5rem;
+    padding-left: initial;
   }
 }
