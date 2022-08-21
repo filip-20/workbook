@@ -45,16 +45,23 @@ interface CommitInfo {
 }
 
 export type SheetState = 'loaded' | 'not_loaded' | 'load_error' | 'save_error' | 'update_detected';
+export type DeleteRequest = 'cell' | 'comment';
+type CellDeletePayload = { cellId: number, cellIndex: number };
+type CommentDeletePayload = { cellId: number, commentId: number };
+export type DeletePayload = CellDeletePayload | CommentDeletePayload;
 
 export interface SheetSliceData {
   state: SheetState,
   sheet: Sheet,
   commitIdCounter: number,
   commitQueue: Array<CommitInfo>,
-  resumeCommitter? : boolean,
+  resumeCommitter?: boolean,
   queueHead?: CommitInfo
   fileInfo?: FileInfo,
-  cellToDelete?: {cellId: number, cellIndex: number},
+
+  deleteRequest?: DeleteRequest,
+  deletePayload?: DeletePayload,
+
   errorCode?: number,
   error?: string
 }
@@ -121,7 +128,7 @@ export const sheetSlice = createSlice({
         console.log('Commit queue is empty, cannot call dequeueCommit');
       }
     },
-    saveError: (state, action: PayloadAction<{errorCode: number, errorMsg: string}>) => {
+    saveError: (state, action: PayloadAction<{ errorCode: number, errorMsg: string }>) => {
       const { errorCode, errorMsg } = action.payload;
       state.state = 'save_error';
       state.errorCode = errorCode;
@@ -159,25 +166,6 @@ export const sheetSlice = createSlice({
         console.log('Invalid afterIndex parameters for insertCell action. ' + action.payload);
       }
     },
-    removeCell: (state) => {
-      if (state.cellToDelete !== undefined) {
-        const { cellIndex, cellId } = state.cellToDelete;
-        const { sheet } = state;
-        if (cellIndex >= 0 && cellIndex < sheet.cellsOrder.length && sheet.cells[cellId] !== undefined) {
-          delete sheet.cells[cellId];
-          sheet.cellsOrder.splice(cellIndex, 1);
-          if (sheet.editedCellId === cellId) {
-            sheet.editedCellId = undefined;
-          }
-          state.cellToDelete = undefined;
-          enqueUpdate(state, `Removed cell ${cellId}`);
-        } else {
-          console.log('Invalid arguments for removeCell action. ' + state.cellToDelete);
-        }
-      } else {
-        console.log('Cell to delete is specified with confirmCellDelete action');
-      }
-    },
     updateCellData: (state, action: PayloadAction<{ cellId: number, data: any }>) => {
       const { cellId, data } = action.payload;
       const { sheet } = state;
@@ -202,17 +190,6 @@ export const sheetSlice = createSlice({
         enqueUpdate(state, `Added comment to cell ${cellId}`);
       } else {
         console.log('Invalid cellId parameters for addCellComment action. ' + action.payload);
-      }
-    },
-    removeCellComment: (state, action: PayloadAction<{ cellId: number, commentId: number }>) => {
-      const { cellId, commentId } = action.payload;
-      const { sheet } = state;
-      if (sheet.cells[cellId] !== undefined) {
-        const cell = sheet.cells[cellId];
-        commentsAdapter.removeOne(cell.comments, commentId);
-        enqueUpdate(state, `Removed comment of cell ${cellId}`);
-      } else {
-        console.log('Invalid cellId parameters for removeCellComment action. ' + action.payload);
       }
     },
     moveUpCell: (state, action: PayloadAction<number>) => {
@@ -253,11 +230,74 @@ export const sheetSlice = createSlice({
         }
       }
     },
-    confirmCellDelete: (state, action: PayloadAction<{cellId: number, cellIndex: number} | undefined>) => {
-      state.cellToDelete = action.payload;
+    deleteRequest: (state, action: PayloadAction<{ request: DeleteRequest, payload: DeletePayload } | undefined>) => {
+      if (action.payload === undefined) {
+        state.deleteRequest = state.deletePayload = undefined;
+      } else {
+        const { request, payload } = action.payload;
+        if (!isCellDeletePayload(request, payload) && !isCommentDeletePayload(request, payload)) {
+          console.log(`Invalid deletion request or payload. ( ${JSON.stringify(action.payload)} )`)
+        } else {
+          state.deleteRequest = request;
+          state.deletePayload = payload;
+        }
+      }
+    },
+    confirmDeletion: (state) => {
+      const request = state.deleteRequest;
+      const payload = state.deletePayload;
+
+      if (request === 'cell') {
+        if (isCellDeletePayload(request, payload)) {
+          const { cellId, cellIndex } = payload;
+
+          const { sheet } = state;
+          if (cellIndex >= 0 && cellIndex < sheet.cellsOrder.length && sheet.cells[cellId] !== undefined) {
+            delete sheet.cells[cellId];
+            sheet.cellsOrder.splice(cellIndex, 1);
+            if (sheet.editedCellId === cellId) {
+              sheet.editedCellId = undefined;
+            }
+            state.deleteRequest = state.deletePayload = undefined;
+            enqueUpdate(state, `Removed cell ${cellId}`);
+          } else {
+            console.log(`Invalid payload values for cell deletion. (payload: ${payload})`);
+          }
+        } else {
+          console.log(`Invalid payload for cell deletion request (payload: ${payload})`)
+        }
+      } else if (request === 'comment') {
+        if (isCommentDeletePayload(request, payload)) {
+          const { cellId, commentId } = payload;
+
+          const { sheet } = state;
+          if (sheet.cells[cellId] !== undefined) {
+            const cell = sheet.cells[cellId];
+            commentsAdapter.removeOne(cell.comments, commentId);
+            state.deleteRequest = state.deletePayload = undefined;
+            enqueUpdate(state, `Removed comment of cell ${cellId}`);
+          } else {
+            console.log(`Invalid cellId parameter for comment deletion. (payload: ${payload})`);
+          }
+        } else {
+          console.log(`Invalid payload for comment deletion request (payload: ${payload})`)
+        }
+      } else {
+        console.log(`Invalid deletion confirmation (deleteRequest: ${state.deleteRequest})`);
+      }
     }
   }
 });
+
+function isCellDeletePayload(request: DeleteRequest, payload: any): payload is CellDeletePayload {
+  const p = payload as CellDeletePayload;
+  return request === 'cell' && p.cellId !== undefined && p.cellIndex !== undefined;
+}
+
+function isCommentDeletePayload(request: DeleteRequest, payload: any): payload is CommentDeletePayload {
+  const p = payload as CommentDeletePayload;
+  return request === 'comment' && p.cellId !== undefined && p.commentId !== undefined;
+}
 
 function enqueUpdate(data: SheetSliceData, message: string) {
   const commit = { id: data.commitIdCounter++, message, json: JSON.stringify(data.sheet, null, 2) };
@@ -340,7 +380,7 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
         const comment = commentsAdapter.getSelectors().selectById(cell.comments, commentId);
         if (comment) {
           if (comment.author === user) {
-            dispatch(sheetSlice.actions.removeCellComment({cellId, commentId}));
+            dispatch(sheetSlice.actions.deleteRequest({request: 'comment', payload: { cellId, commentId }}));
           } else {
             console.log('You can delete only your own comments. ' + payload);
           }
@@ -375,7 +415,7 @@ export const sheetSelectors = {
   firstCellId: (state: RootState) => state.sheet.sheet.firstCellId,
   lastCellId: (state: RootState) => state.sheet.sheet.lastCellId,
   cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.sheet.cells[cellId].comments) },
-  cellToDelete: (state: RootState) => state.sheet.cellToDelete,
+  deleteRequest: (state: RootState) => state.sheet.deleteRequest,
 }
 
 export default sheetSlice.reducer;
