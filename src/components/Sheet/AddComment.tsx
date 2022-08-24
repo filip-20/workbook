@@ -22,28 +22,30 @@ export default function AddComment(props: AddCommentProps) {
   const dispatch = useAppDispatch();
 
   return (
-    <Card className={className} style={style}>
-      <Card.Header>
-        Pridať komentár
-        <Form.Check className="d-inline-block float-end" onChange={(e) => setPreview(e.target.checked)} type="switch" label="Náhľad" />
-      </Card.Header>
-      <Card.Body>
-        <CodeMirror
-          onChange={(value, viewUpdate) => {
-            setText(value);
-          }}
-        />
-        {preview && <ReactMarkdown
-          className={"border"}
-          children={text}
-          remarkPlugins={[RemarkMathPlugin]}
-          rehypePlugins={[rehypeKatex]}
-        />}
-      </Card.Body>
-      <Card.Body className="text-end">
-        <Button className="me-1 my-0" onClick={() => onCancel()} variant="secondary">Zrušiť</Button>
-        <Button className="me-1 my-0" onClick={() => dispatch(sheetActions.addCellComment({ cellId, text }))} variant="primary">Pridať</Button>
-      </Card.Body>
-    </Card>
+    <div className={className} style={style}>
+      <div className="border p-2">
+        <div>
+          Pridať komentár
+          <Form.Check className="d-inline-block float-end" onChange={(e) => setPreview(e.target.checked)} type="switch" label="Náhľad" />
+        </div>
+        <div className="my-2">
+          <CodeMirror
+            onChange={(value, viewUpdate) => {
+              setText(value);
+            }}
+          />
+          {preview && <ReactMarkdown
+            className={"border"}
+            children={text}
+            remarkPlugins={[RemarkMathPlugin]}
+            rehypePlugins={[rehypeKatex]}
+          />}
+        </div>
+        <div className="text-end">
+          <Button className="me-1 my-0" size="sm" onClick={() => onCancel()} variant="secondary">Zrušiť</Button>
+          <Button className="me-1 my-0" size="sm" onClick={() => dispatch(sheetActions.addCellComment({ cellId, text }))} variant="primary">Pridať</Button>
+        </div>
+      </div>
+    </div>
   )
 }

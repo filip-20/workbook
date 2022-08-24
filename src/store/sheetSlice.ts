@@ -1,7 +1,7 @@
 import { createEntityAdapter, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
 import { AppDispatch, RootState } from './store'
 
-interface Comment {
+export interface CellComment {
   id: number,
   author: string,
   timestamp: number,
@@ -9,14 +9,14 @@ interface Comment {
 }
 
 const commentsAdapter = createEntityAdapter({
-  sortComparer: (a: Comment, b: Comment) => a.timestamp - b.timestamp
+  sortComparer: (a: CellComment, b: CellComment) => a.timestamp - b.timestamp
 });
 
 export interface Cell {
   id: number,
   type: string,
   idCounter: number,
-  comments: EntityState<Comment>,
+  comments: EntityState<CellComment>,
   isEdited: boolean,
   data: any,
 }
@@ -183,7 +183,7 @@ export const sheetSlice = createSlice({
       const { sheet } = state;
       if (sheet.cells[cellId] !== undefined) {
         const cell = sheet.cells[cellId];
-        const comment: Comment = {
+        const comment: CellComment = {
           author, text, timestamp: new Date().getTime(), id: cell.idCounter++
         }
         commentsAdapter.addOne(cell.comments, comment);
