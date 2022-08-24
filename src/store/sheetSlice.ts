@@ -192,6 +192,18 @@ export const sheetSlice = createSlice({
         console.log('Invalid cellId parameters for addCellComment action. ' + action.payload);
       }
     },
+    updateCellComment: (state, action: PayloadAction<{ cellId: number, commentId: number, text: string }>) => {
+      const { cellId, commentId, text } = action.payload;
+      const { sheet } = state;
+      if (sheet.cells[cellId] !== undefined) {
+        const cell = sheet.cells[cellId];
+
+        commentsAdapter.updateOne(cell.comments, {id: commentId, changes: {text, timestamp: new Date().getTime()}})
+        enqueUpdate(state, `Updated comment ${commentId} in cell ${cellId}`);
+      } else {
+        console.log('Invalid cellId parameters for updateCellComment action. ' + action.payload);
+      }
+    },
     moveUpCell: (state, action: PayloadAction<number>) => {
       const cellIndex = action.payload;
       const { sheet } = state;

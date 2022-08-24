@@ -79,7 +79,7 @@ export default function CellContainer(props: CellContainerProps) {
           </div>
         </div>
         <div>
-          <Comments className='ms-2 mb-2' style={{ width: '20rem' }} cellId={cellId} />
+          <Comments className='ms-2' style={{ width: '20rem' }} cellId={cellId} />
           {addComment && <AddComment className='ms-2' style={{ width: '20rem' }} cellId={cellId} onCancel={() => setAddComment(false)} />}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { Button } from "react-bootstrap";
+import { Button, ButtonProps, Dropdown } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from "../../store/hooks"
 import { CellComment, sheetActions, sheetSelectors } from "../../store/sheetSlice"
 import ReactMarkdown from "react-markdown";
@@ -9,23 +9,61 @@ import 'moment/locale/sk';
 import { authSelectors } from "../../store/authSlice";
 import { BiTrash } from "react-icons/bi";
 import UserAvatar from "../UserAvatar";
+import { BsThreeDots } from "react-icons/bs";
+import React, { useState } from "react";
+import { CommentEditor } from "./AddComment";
 
-export interface CommentProps {
+function EditCommentMenu(props: { onDelete: () => void, onEdit: () => void }) {
+  const MenuButton = React.forwardRef<HTMLButtonElement, ButtonProps>(({ children, onClick }, ref) => (
+    <Button variant="secondary" size="sm"
+      ref={ref}
+      onClick={e => {
+        e.preventDefault();
+        onClick !== undefined && onClick(e)
+      }}
+    >
+      {children}
+    </Button>
+  ));
+
+  return (
+    <Dropdown>
+      <Dropdown.Toggle as={MenuButton}>
+        <BsThreeDots />
+      </Dropdown.Toggle>
+
+      <Dropdown.Menu>
+        <Dropdown.Item onClick={props.onEdit}>Upraviť</Dropdown.Item>
+        <Dropdown.Item onClick={props.onDelete}>Zmazať</Dropdown.Item>
+      </Dropdown.Menu>
+    </Dropdown>
+  )
+}
+
+interface CommentProps {
   cellId: number,
   comment: CellComment
 }
 
-export function Comment(props: CommentProps) {
+function Comment(props: CommentProps) {
   const { cellId, comment } = props;
 
-  const user = useAppSelector(authSelectors.user)
+  const [isEdited, setIsEdited] = useState(false);
+
+  const user = useAppSelector(authSelectors.user);
 
   const dispatch = useAppDispatch();
-  const canDelete = (author: string) => user ? user.login : false;
-  const handleDelete = (commentId: number) => dispatch(sheetActions.remmoveCellComment({ cellId, commentId }));
+  const canEdit = user ? user.login === comment.author : false;
+  const handleDelete = () => dispatch(sheetActions.remmoveCellComment({ cellId, commentId: comment.id }));
+  const handleCommentUpdate = (text:string) => {
+    if (JSON.stringify(text) !== JSON.stringify(comment.text)) {
+      dispatch(sheetActions.updateCellComment({ cellId, commentId: comment.id, text }));  
+    }
+    setIsEdited(false);
+  }
 
   return (
-    <div key={comment.id} className="border p-2">
+    <div key={comment.id} className="border p-2 mb-1">
       <div className="small" style={{ display: 'flex', alignItems: 'center' }}>
         <UserAvatar username={comment.author} className="border border-secondary" style={{ height: '2rem' }} />
         <div className="ms-2" style={{ flexGrow: '1' }}>
@@ -33,16 +71,29 @@ export function Comment(props: CommentProps) {
           <Moment className="small" date={new Date(comment.timestamp)} locale='sk' fromNow />
         </div>
         <div style={{ float: 'right' }}>
-          {canDelete(comment.author) && <Button className="ms-1" size="sm" variant="danger" onClick={() => handleDelete(comment.id)}><BiTrash /></Button>}
+          {canEdit && <EditCommentMenu onEdit={() => setIsEdited(true)} onDelete={handleDelete} />}
         </div>
       </div>
       <div style={{ marginTop: '1rem' }}>
-        <ReactMarkdown
-          className="small pb-0 mb-0"
-          children={comment.text}
-          remarkPlugins={[RemarkMathPlugin]}
-          rehypePlugins={[rehypeKatex]}
-        />
+        {
+          isEdited ?
+            <CommentEditor
+              content={comment.text}
+              title=""
+              saveText="Uložiť"
+              hideCancel
+              onCancel={() => setIsEdited(false)}
+              onSave={handleCommentUpdate}
+            />
+            :
+            <ReactMarkdown
+              className="small pb-0 mb-0"
+              children={comment.text}
+              remarkPlugins={[RemarkMathPlugin]}
+              rehypePlugins={[rehypeKatex]}
+            />
+        }
+
       </div>
     </div >
   )
