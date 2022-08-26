@@ -35,7 +35,6 @@ export interface Sheet {
   cellsOrder: Array<number>,
   firstCellId: number,
   lastCellId: number,
-  editedCellId?: number,
 }
 
 interface CommitInfo {
@@ -232,14 +231,10 @@ export const sheetSlice = createSlice({
     },
     setCellEdited: (state, action: PayloadAction<{ cellId: number, isEdited: boolean }>) => {
       const { cellId, isEdited } = action.payload;
-      if (isEdited && state.sheet.editedCellId !== undefined) {
-        state.sheet.cells[state.sheet.editedCellId].isEdited = false
-      }
       if (cellId in state.sheet.cells) {
         state.sheet.cells[cellId].isEdited = isEdited
-        if (isEdited) {
-          state.sheet.editedCellId = cellId;
-        }
+      } else {
+        console.log('Invalid cellId parameters for setCellEdited action. ' + action.payload);
       }
     },
     deleteRequest: (state, action: PayloadAction<{ request: DeleteRequest, payload: DeletePayload } | undefined>) => {
@@ -267,9 +262,6 @@ export const sheetSlice = createSlice({
           if (cellIndex >= 0 && cellIndex < sheet.cellsOrder.length && sheet.cells[cellId] !== undefined) {
             delete sheet.cells[cellId];
             sheet.cellsOrder.splice(cellIndex, 1);
-            if (sheet.editedCellId === cellId) {
-              sheet.editedCellId = undefined;
-            }
             state.deleteRequest = state.deletePayload = undefined;
             enqueUpdate(state, `Removed cell ${cellId}`);
           } else {
@@ -339,19 +331,37 @@ function testSheetIntegrity(sheet: Sheet): { passed: boolean, error?: string } {
     'cellsOrder': 'object',
     'firstCellId': 'number',
     'lastCellId': 'number',
+  }
+  /* optional keys */
+  const optKeys: { [key: string]: string } = {
     'editedCellId': 'number',
   }
-  for (const [key, value] of Object.entries(sheet)) {
+
+  /* check for presence of required keys */
+  for (const [key, value] of Object.entries(reqKeys)) {
     if (!(key in sheet)) {
       error = `Chýba kľúč '${key}'`;
       break;
     }
-    if (typeof value !== reqKeys[key]) {
-      error = `Kľúč '${key}' je nesprávneho typu`;
+  }
+  if (error) return { passed: false, error };
+
+  for (const [key, value] of Object.entries(sheet)) {
+    const keyType = key in reqKeys ? 'REQUIRED' : (key in optKeys ? 'OPTIONAL' : 'UNKNOWN')
+    if (keyType === 'REQUIRED' || keyType === 'OPTIONAL') {
+      const expectedType = keyType === 'REQUIRED' ? reqKeys[key] : optKeys[key]
+      if (typeof value !== expectedType) {
+        error = `Kľúč '${key}' je nesprávneho typu`;
+        break;
+      }
+    } else {
+      error = `Neznámi Kľúč '${key}'`;
       break;
     }
   }
   if (error) return { passed: false, error };
+
+  /* TODO? Cell and CellComment keys test */
 
   /* idCounter is bigger than max id */
   const ids = Object.keys(sheet.cells).map(str => parseInt(str));
