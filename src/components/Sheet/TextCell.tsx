@@ -1,14 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown"
-import RemarkMathPlugin from 'remark-math';
-import remarkGfm from 'remark-gfm'
-import rehypeKatex from "rehype-katex";
-import 'katex/dist/katex.min.css';
 import styles from './TextCell.module.css'
 import CodeMirror from '@uiw/react-codemirror';
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { sheetActions, sheetSelectors } from "../../store/sheetSlice";
 import { markdown } from '@codemirror/lang-markdown';
+import FormattedTextRenderer from "../FormattedTextRenderer";
 
 export interface TextCellProps {
   cellId: number
@@ -71,11 +67,9 @@ function TextCell(props: TextCellProps) {
   );
 
   const markdownDisp = (
-    <ReactMarkdown
+    <FormattedTextRenderer
       className={styles.textCell}
-      children={content}
-      remarkPlugins={[RemarkMathPlugin, remarkGfm]}
-      rehypePlugins={[rehypeKatex]}
+      text={content}
     />
   )
 

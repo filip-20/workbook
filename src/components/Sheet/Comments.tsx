@@ -1,17 +1,14 @@
 import { Button, ButtonProps, Dropdown } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from "../../store/hooks"
 import { CellComment, sheetActions, sheetSelectors } from "../../store/sheetSlice"
-import ReactMarkdown from "react-markdown";
-import RemarkMathPlugin from 'remark-math';
-import rehypeKatex from "rehype-katex";
 import Moment from "react-moment";
 import 'moment/locale/sk';
 import { authSelectors } from "../../store/authSlice";
-import { BiTrash } from "react-icons/bi";
 import UserAvatar from "../UserAvatar";
 import { BsThreeDots } from "react-icons/bs";
 import React, { useState } from "react";
 import { CommentEditor } from "./AddComment";
+import FormattedTextRenderer from "../FormattedTextRenderer";
 
 function EditCommentMenu(props: { onDelete: () => void, onEdit: () => void }) {
   const MenuButton = React.forwardRef<HTMLButtonElement, ButtonProps>(({ children, onClick }, ref) => (
@@ -86,11 +83,9 @@ function Comment(props: CommentProps) {
               onSave={handleCommentUpdate}
             />
             :
-            <ReactMarkdown
+            <FormattedTextRenderer
               className="small pb-0 mb-0"
-              children={comment.text}
-              remarkPlugins={[RemarkMathPlugin]}
-              rehypePlugins={[rehypeKatex]}
+              text={comment.text}
             />
         }
 
