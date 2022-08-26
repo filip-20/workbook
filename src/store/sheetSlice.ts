@@ -29,12 +29,10 @@ export interface FileInfo {
   sha: string,
 }
 
-export interface Sheet {
-  idCounter: number,
+export interface SheetFile {
+  versionNumber?: number,
   cells: { [key: number]: Cell },
   cellsOrder: Array<number>,
-  firstCellId: number,
-  lastCellId: number,
 }
 
 interface CommitInfo {
@@ -51,7 +49,8 @@ export type DeletePayload = CellDeletePayload | CommentDeletePayload;
 
 export interface SheetSliceData {
   state: SheetState,
-  sheet: Sheet,
+  sheetFile: SheetFile,
+  cellIdCounter: number,
   commitIdCounter: number,
   commitQueue: Array<CommitInfo>,
   resumeCommitter?: boolean,
@@ -65,19 +64,18 @@ export interface SheetSliceData {
   error?: string
 }
 
-export const emptySheet: Sheet = {
-  idCounter: 0,
+export const emptySheet: SheetFile = {
+  versionNumber: 1,
   cells: {},
   cellsOrder: [],
-  firstCellId: -1,
-  lastCellId: -1,
 };
 
 const initialState: SheetSliceData = {
   state: 'not_loaded',
+  cellIdCounter: 0,
   commitIdCounter: 0,
   commitQueue: [],
-  sheet: emptySheet,
+  sheetFile: emptySheet,
 }
 
 export const sheetSlice = createSlice({
@@ -86,22 +84,24 @@ export const sheetSlice = createSlice({
   reducers: {
     loadSheet: (state, action: PayloadAction<{ json: string, fileInfo: FileInfo }>) => {
       const { json, fileInfo } = action.payload;
-      let sheet = null;
+      let sheetFile = null;
       try {
-        sheet = JSON.parse(json);
+        sheetFile = JSON.parse(json);
       } catch (e) {
         const syntaxErr = e as SyntaxError
         state.state = "load_error"
         state.error = `Súbor zošita je poškodený. (${syntaxErr.message})`
       }
-      if (sheet) {
-        const { passed, error } = testSheetIntegrity(sheet);
+      if (sheetFile) {
+        const { passed, error } = testSheetIntegrity(sheetFile);
         if (!passed) {
           state.state = "load_error"
           state.error = `Súbor zošita je poškodený. (${error})`;
         } else {
           state.fileInfo = fileInfo;
-          state.sheet = sheet;
+          // initialize cellIdCounter with max cell id + 1
+          state.cellIdCounter = Object.entries((sheetFile as SheetFile).cells).map(e => e[1].id).reduce((prev, cur) => Math.max(prev, cur), 0) + 1
+          state.sheetFile = sheetFile;
           state.state = 'loaded';
         }
       }
@@ -142,24 +142,23 @@ export const sheetSlice = createSlice({
     },
     insertCell: (state, action: PayloadAction<{ afterIndex: number, type: string, data: string }>) => {
       const { afterIndex, type, data } = action.payload;
-      const { sheet } = state;
-      if (afterIndex >= -2 && afterIndex < sheet.cellsOrder.length) {
+      const { sheetFile } = state;
+      if (afterIndex >= -2 && afterIndex < sheetFile.cellsOrder.length) {
         const cell: Cell = {
-          id: sheet.idCounter,
+          id: state.cellIdCounter,
           type, data,
           idCounter: 0,
           comments: commentsAdapter.getInitialState(),
           isEdited: false,
         };
 
-        sheet.cells[cell.id] = cell;
+        sheetFile.cells[cell.id] = cell;
         if (action.payload.afterIndex === -2) {
-          sheet.cellsOrder.push(cell.id);
+          sheetFile.cellsOrder.push(cell.id);
         } else {
-          sheet.cellsOrder.splice(action.payload.afterIndex + 1, 0, cell.id);
+          sheetFile.cellsOrder.splice(action.payload.afterIndex + 1, 0, cell.id);
         }
-        sheet.idCounter += 1;
-        updateFirstLastCellId(sheet);
+        state.cellIdCounter += 1;
         enqueUpdate(state, `Created new cell of type '${type}'`)
       } else {
         console.log('Invalid afterIndex parameters for insertCell action. ' + action.payload);
@@ -167,9 +166,9 @@ export const sheetSlice = createSlice({
     },
     updateCellData: (state, action: PayloadAction<{ cellId: number, data: any }>) => {
       const { cellId, data } = action.payload;
-      const { sheet } = state;
-      if (sheet.cells[cellId] !== undefined) {
-        sheet.cells[cellId].data = data;
+      const { sheetFile } = state;
+      if (sheetFile.cells[cellId] !== undefined) {
+        sheetFile.cells[cellId].data = data;
         console.log(`updating cell ${cellId} data`)
         //console.log(data);
         enqueUpdate(state, `Updated cell ${cellId}`)
@@ -179,9 +178,9 @@ export const sheetSlice = createSlice({
     },
     addCellComment: (state, action: PayloadAction<{ cellId: number, author: string, text: string }>) => {
       const { cellId, author, text } = action.payload;
-      const { sheet } = state;
-      if (sheet.cells[cellId] !== undefined) {
-        const cell = sheet.cells[cellId];
+      const { sheetFile } = state;
+      if (sheetFile.cells[cellId] !== undefined) {
+        const cell = sheetFile.cells[cellId];
         const comment: CellComment = {
           author, text, timestamp: new Date().getTime(), id: cell.idCounter++
         }
@@ -193,9 +192,9 @@ export const sheetSlice = createSlice({
     },
     updateCellComment: (state, action: PayloadAction<{ cellId: number, commentId: number, text: string }>) => {
       const { cellId, commentId, text } = action.payload;
-      const { sheet } = state;
-      if (sheet.cells[cellId] !== undefined) {
-        const cell = sheet.cells[cellId];
+      const { sheetFile } = state;
+      if (sheetFile.cells[cellId] !== undefined) {
+        const cell = sheetFile.cells[cellId];
 
         commentsAdapter.updateOne(cell.comments, {id: commentId, changes: {text, timestamp: new Date().getTime()}})
         enqueUpdate(state, `Updated comment ${commentId} in cell ${cellId}`);
@@ -205,25 +204,23 @@ export const sheetSlice = createSlice({
     },
     moveUpCell: (state, action: PayloadAction<number>) => {
       const cellIndex = action.payload;
-      const { sheet } = state;
-      if (cellIndex >= 1 && cellIndex < sheet.cellsOrder.length) {
-        const cellId = sheet.cellsOrder[cellIndex];
-        sheet.cellsOrder.splice(cellIndex, 1);
-        sheet.cellsOrder.splice(cellIndex - 1, 0, cellId)
-        updateFirstLastCellId(sheet);
-        enqueUpdate(state, `Moved up cell ${cellId}`)
+      const { sheetFile } = state;
+      if (cellIndex >= 1 && cellIndex < sheetFile.cellsOrder.length) {
+        const cellId = sheetFile.cellsOrder[cellIndex];
+        sheetFile.cellsOrder.splice(cellIndex, 1);
+        sheetFile.cellsOrder.splice(cellIndex - 1, 0, cellId);
+        enqueUpdate(state, `Moved up cell ${cellId}`);
       } else {
         console.log('Invalid cellIndex parameters for moveUpCell action. ' + action.payload);
       }
     },
     moveDownCell: (state, action: PayloadAction<number>) => {
       const cellIndex = action.payload;
-      const { sheet } = state;
-      if (cellIndex >= 0 && cellIndex < sheet.cellsOrder.length - 1) {
-        const cellId = sheet.cellsOrder[cellIndex];
-        sheet.cellsOrder.splice(cellIndex, 1);
-        sheet.cellsOrder.splice(cellIndex + 1, 0, cellId)
-        updateFirstLastCellId(sheet);
+      const { sheetFile } = state;
+      if (cellIndex >= 0 && cellIndex < sheetFile.cellsOrder.length - 1) {
+        const cellId = sheetFile.cellsOrder[cellIndex];
+        sheetFile.cellsOrder.splice(cellIndex, 1);
+        sheetFile.cellsOrder.splice(cellIndex + 1, 0, cellId)
         enqueUpdate(state, `Moved down cell ${cellId}`)
       } else {
         console.log('Invalid cellIndex parameters for moveDownCell action. ' + action.payload);
@@ -231,8 +228,8 @@ export const sheetSlice = createSlice({
     },
     setCellEdited: (state, action: PayloadAction<{ cellId: number, isEdited: boolean }>) => {
       const { cellId, isEdited } = action.payload;
-      if (cellId in state.sheet.cells) {
-        state.sheet.cells[cellId].isEdited = isEdited
+      if (cellId in state.sheetFile.cells) {
+        state.sheetFile.cells[cellId].isEdited = isEdited
       } else {
         console.log('Invalid cellId parameters for setCellEdited action. ' + action.payload);
       }
@@ -258,10 +255,10 @@ export const sheetSlice = createSlice({
         if (isCellDeletePayload(request, payload)) {
           const { cellId, cellIndex } = payload;
 
-          const { sheet } = state;
-          if (cellIndex >= 0 && cellIndex < sheet.cellsOrder.length && sheet.cells[cellId] !== undefined) {
-            delete sheet.cells[cellId];
-            sheet.cellsOrder.splice(cellIndex, 1);
+          const { sheetFile } = state;
+          if (cellIndex >= 0 && cellIndex < sheetFile.cellsOrder.length && sheetFile.cells[cellId] !== undefined) {
+            delete sheetFile.cells[cellId];
+            sheetFile.cellsOrder.splice(cellIndex, 1);
             state.deleteRequest = state.deletePayload = undefined;
             enqueUpdate(state, `Removed cell ${cellId}`);
           } else {
@@ -274,9 +271,9 @@ export const sheetSlice = createSlice({
         if (isCommentDeletePayload(request, payload)) {
           const { cellId, commentId } = payload;
 
-          const { sheet } = state;
-          if (sheet.cells[cellId] !== undefined) {
-            const cell = sheet.cells[cellId];
+          const { sheetFile } = state;
+          if (sheetFile.cells[cellId] !== undefined) {
+            const cell = sheetFile.cells[cellId];
             commentsAdapter.removeOne(cell.comments, commentId);
             state.deleteRequest = state.deletePayload = undefined;
             enqueUpdate(state, `Removed comment of cell ${cellId}`);
@@ -304,37 +301,30 @@ function isCommentDeletePayload(request: DeleteRequest, payload: any): payload i
 }
 
 function enqueUpdate(data: SheetSliceData, message: string) {
-  const commit = { id: data.commitIdCounter++, message, json: JSON.stringify(data.sheet, null, 2) };
+  const commit = { id: data.commitIdCounter++, message, json: JSON.stringify(data.sheetFile, null, 2) };
   data.commitQueue.push(commit);
   if (data.commitQueue.length === 1) {
     data.queueHead = commit;
   }
 }
 
-function updateFirstLastCellId(state: Sheet) {
-  if (state.cellsOrder.length === 0) {
-    state.firstCellId = -1;
-    state.lastCellId = -1;
-  } else {
-    state.firstCellId = state.cellsOrder[0];
-    state.lastCellId = state.cellsOrder[state.cellsOrder.length - 1];
-  }
-}
-
-function testSheetIntegrity(sheet: Sheet): { passed: boolean, error?: string } {
+function testSheetIntegrity(sheet: SheetFile): { passed: boolean, error?: string } {
   let error = undefined;
 
   /* test keys and types of sheet object */
   const reqKeys: { [key: string]: string } = {
-    'idCounter': 'number',
     'cells': 'object',
     'cellsOrder': 'object',
-    'firstCellId': 'number',
-    'lastCellId': 'number',
   }
   /* optional keys */
   const optKeys: { [key: string]: string } = {
+    /* now unused --> */
+    'idCounter': 'number',
     'editedCellId': 'number',
+    'firstCellId': 'number',
+    'lastCellId': 'number',
+    /* <-- */
+    'versionNumber': 'number',
   }
 
   /* check for presence of required keys */
@@ -363,19 +353,20 @@ function testSheetIntegrity(sheet: Sheet): { passed: boolean, error?: string } {
 
   /* TODO? Cell and CellComment keys test */
 
-  /* idCounter is bigger than max id */
-  const ids = Object.keys(sheet.cells).map(str => parseInt(str));
-  if (sheet.idCounter <= Math.max(...ids)) {
-    error = 'Hodnota idCounter je menšia ako maximálne ID bunky';
-  }
-  if (error) return { passed: false, error };
-
   /* cellsOrder has no duplicates */
   if (new Set(sheet.cellsOrder).size !== sheet.cellsOrder.length) {
     error = 'Poradie buniek obsahuje duplicitné hodnoty';
   }
   if (error) return { passed: false, error };
 
+  /* cellsOrder contains only existing cell ids */
+  for (const id of sheet.cellsOrder) {
+    if (!(id in sheet.cells)) {
+      error = 'Poradie buniek obsahuje neexistujúce id';
+      break;
+    }
+  }
+  if (error) return { passed: false, error };
 
   return { passed: true }
 }
@@ -395,7 +386,7 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
   return (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
     const { cellId, commentId } = payload;
-    const cell = state.sheet.sheet.cells[cellId]
+    const cell = state.sheet.sheetFile.cells[cellId]
     if (cell !== undefined) {
       if (state.auth.user) {
         const user = state.auth.user.login;
@@ -431,12 +422,12 @@ export const sheetSelectors = {
   commitQueue: (state: RootState) => state.sheet.commitQueue,
   resumeCommitter: (state: RootState) => state.sheet.resumeCommitter,
   fileInfo: (state: RootState) => state.sheet.fileInfo,
-  cellsOrder: (state: RootState) => state.sheet.sheet.cellsOrder,
-  cells: (state: RootState) => state.sheet.sheet.cells,
-  cell: (cellId: number) => { return (state: RootState) => state.sheet.sheet.cells[cellId] },
-  firstCellId: (state: RootState) => state.sheet.sheet.firstCellId,
-  lastCellId: (state: RootState) => state.sheet.sheet.lastCellId,
-  cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.sheet.cells[cellId].comments) },
+  cellsOrder: (state: RootState) => state.sheet.sheetFile.cellsOrder,
+  cells: (state: RootState) => state.sheet.sheetFile.cells,
+  cell: (cellId: number) => { return (state: RootState) => state.sheet.sheetFile.cells[cellId] },
+  firstCellId: (state: RootState) => state.sheet.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.sheetFile.cellsOrder[0],
+  lastCellId: (state: RootState) => state.sheet.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.sheetFile.cellsOrder[state.sheet.sheetFile.cellsOrder.length - 1],
+  cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.sheetFile.cells[cellId].comments) },
   deleteRequest: (state: RootState) => state.sheet.deleteRequest,
 }
 
