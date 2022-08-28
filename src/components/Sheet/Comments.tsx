@@ -61,8 +61,8 @@ function Comment(props: CommentProps) {
 
   return (
     <div key={comment.id} className="border p-2 mb-1">
-      <div className="small" style={{ display: 'flex', alignItems: 'center' }}>
-        <UserAvatar username={comment.author} className="border border-secondary" style={{ height: '2rem' }} />
+      <div className="small" style={{ display: 'flex' }}>
+        <UserAvatar username={comment.author} className="border border-secondary my-auto" style={{ height: '3em' }} />
         <div className="ms-2" style={{ flexGrow: '1' }}>
           <div>{comment.author}</div>
           <Moment className="small" date={new Date(comment.timestamp)} locale='sk' fromNow />
@@ -71,7 +71,7 @@ function Comment(props: CommentProps) {
           {canEdit && <EditCommentMenu onEdit={() => setIsEdited(true)} onDelete={handleDelete} />}
         </div>
       </div>
-      <div style={{ marginTop: '1rem' }}>
+      <div style={{ marginTop: '0.5rem' }}>
         {
           isEdited ?
             <CommentEditor
@@ -84,7 +84,7 @@ function Comment(props: CommentProps) {
             />
             :
             <FormattedTextRenderer
-              className="small pb-0 mb-0"
+              className="small"
               text={comment.text}
             />
         }
