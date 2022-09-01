@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Container, Spinner } from "react-bootstrap";
+import { Alert, ButtonGroup, ButtonToolbar, Container, Dropdown, Spinner } from "react-bootstrap";
 import { useLocation, useParams } from "react-router-dom";
 import { githubApi } from "../services/githubApi/endpoints/repos"
 import { githubApiErrorMessage } from "../services/githubApi/errorMessage";
-import { MdMenuBook } from "react-icons/md";
+import { MdMenuBook, MdSettings } from "react-icons/md";
 import { authSelectors } from "../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { makeRepoLink, parseFilepath, parseGithubUrlPath } from "./RepoPage";
@@ -17,6 +17,7 @@ import Err404Page from "./Err404Page";
 import BranchLabel from "./Repo/BranchLabel";
 import LoginPage from "./LoginPage";
 import { pathURIEncode } from "./Repo/RepoExplorer";
+import SheetSettingsModal, { SettingTab } from "./Sheet/SheetSettingsModal";
 
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
@@ -25,6 +26,8 @@ function SheetPage() {
   const params = useParams();
   const { owner, repo } = params;
   const repoParams = parseGithubUrlPath(params['*'] || '');
+
+  const [settingsTab, setSettingsTab] = useState<SettingTab>('NONE')
 
   // state of workbook file loading from github
   const loadState = useRef<'not-loaded' | 'loaded' | 'decode-fail'>('not-loaded');
@@ -47,10 +50,10 @@ function SheetPage() {
         let content;
         try {
           content = Base64.decode(data.content);
-        } catch (e) {}
+        } catch (e) { }
         if (content) {
           loadState.current = 'loaded';
-          const {owner, path, repo, ref} = lastPromiseInfo.lastArg;
+          const { owner, path, repo, ref } = lastPromiseInfo.lastArg;
           dispatch(sheetActions.loadSheet({ json: content, fileInfo: { owner, repo, branch: ref!!, path, sha: data.sha } }))
           setSheetBody(<Sheet />);
         } else {
@@ -79,11 +82,29 @@ function SheetPage() {
 
       return (
         <Container fluid className="w-100 m-0 p-0" style={{ minHeight: 'calc(100vh - var(--workbook-nav-height))', background: 'white' }}>
-          <div className="mx-3 p-3 border-bottom" style={{ fontSize: '1.5rem' }}>
-            <MdMenuBook />
-            <BranchLabel branch={branch} />
-            <Pathbar style={{ color: 'white !important' }} owner={owner} path={path} branch={branch} repoName={repo} makeLink={makeRepoLink} />
-            <div style={{ display: 'inline-block' }}><SheetCommitter style={{ marginLeft: '1rem' }} /></div>
+
+          <SheetSettingsModal tab={settingsTab} onClose={() => setSettingsTab('NONE')} />
+
+          <div className="p-3 border-bottom d-flex align-items-center flex-wrap">
+            <div style={{ fontSize: '1.5rem' }}>
+              <MdMenuBook />
+              <BranchLabel branch={branch} />
+              <Pathbar style={{ color: 'white !important' }} owner={owner} path={path} branch={branch} repoName={repo} makeLink={makeRepoLink} />
+            </div>
+            <div><SheetCommitter style={{ marginLeft: '1rem' }} /></div>
+            <div style={{ flexGrow: '1' }}></div>
+            <ButtonToolbar className="d-inline-block">
+              <ButtonGroup>
+                <Dropdown>
+                  <Dropdown.Toggle title="Nastavenia aktuálneho hárku" variant="secondary">
+                    <MdSettings />
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item onClick={() => setSettingsTab('KATEX_MACROS')}>Katex makrá</Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
+              </ButtonGroup>
+            </ButtonToolbar>
           </div>
           <div className="m-3 h-100">
             {loadResult.isLoading && loading}

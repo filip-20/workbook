@@ -7,11 +7,12 @@ import { markdown } from '@codemirror/lang-markdown';
 import FormattedTextRenderer from "../FormattedTextRenderer";
 
 export interface TextCellProps {
-  cellId: number
+  cellId: number,
+  katexMacros: object,
 }
 
 function TextCell(props: TextCellProps) {
-  const { cellId } = props;
+  const { cellId, katexMacros } = props;
   const dispatch = useAppDispatch();
 
   const cell = useAppSelector(sheetSelectors.cell(cellId));
@@ -69,6 +70,7 @@ function TextCell(props: TextCellProps) {
   const markdownDisp = (
     <FormattedTextRenderer
       className={styles.textCell}
+      katexMacros={katexMacros}
       text={content}
     />
   )

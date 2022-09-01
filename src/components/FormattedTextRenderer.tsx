@@ -11,10 +11,11 @@ import styles from './FormattedTextRenderer.module.css'
 export interface FormattedTextRendererProps {
   className?: string,
   text: string,
+  katexMacros?: object,
 }
 
 export default function FormattedTextRenderer(props: FormattedTextRendererProps) {
-  const { className, text } = props;
+  const { className, text, katexMacros } = props;
 
   const rehypeSanitizeOptions = {
     ...defaultSchema,
@@ -31,12 +32,16 @@ export default function FormattedTextRenderer(props: FormattedTextRendererProps)
     }
   }
 
+  const rehypeKatexOptions = katexMacros ? {
+    macros: katexMacros
+  } : undefined;
+
   return (
     <ReactMarkdown
       className={`${className} ${styles.formattedText}`}
       children={text}
       remarkPlugins={[remarkMath, remarkGfm]}
-      rehypePlugins={[rehypeRaw, [rehypeSanitize, rehypeSanitizeOptions], rehypeKatex]}
+      rehypePlugins={[rehypeRaw, [rehypeSanitize, rehypeSanitizeOptions], [rehypeKatex, rehypeKatexOptions]]}
     />
   )
 }

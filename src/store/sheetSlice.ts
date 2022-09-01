@@ -29,8 +29,17 @@ export interface FileInfo {
   sha: string,
 }
 
+export interface SheetSettings {
+  katexMacros?: string
+}
+
+const defaultSettings: SheetSettings = {
+  katexMacros: ''
+}
+
 export interface SheetFile {
   versionNumber?: number,
+  settings?: SheetSettings,
   cells: { [key: number]: Cell },
   cellsOrder: Array<number>,
 }
@@ -286,6 +295,10 @@ export const sheetSlice = createSlice({
       } else {
         console.log(`Invalid deletion confirmation (deleteRequest: ${state.deleteRequest})`);
       }
+    },
+    updateSettings: (state, action: PayloadAction<SheetSettings | undefined>) => {
+      state.sheetFile.settings = action.payload
+      enqueUpdate(state, 'Updated sheet settings');
     }
   }
 });
@@ -325,6 +338,7 @@ function testSheetIntegrity(sheet: SheetFile): { passed: boolean, error?: string
     'lastCellId': 'number',
     /* <-- */
     'versionNumber': 'number',
+    'settings': 'object',
   }
 
   /* check for presence of required keys */
@@ -425,6 +439,7 @@ export const sheetSelectors = {
   cellsOrder: (state: RootState) => state.sheet.sheetFile.cellsOrder,
   cells: (state: RootState) => state.sheet.sheetFile.cells,
   cell: (cellId: number) => { return (state: RootState) => state.sheet.sheetFile.cells[cellId] },
+  sheetSettings: (state: RootState) => state.sheet.sheetFile.settings || defaultSettings,
   firstCellId: (state: RootState) => state.sheet.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.sheetFile.cellsOrder[0],
   lastCellId: (state: RootState) => state.sheet.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.sheetFile.cellsOrder[state.sheet.sheetFile.cellsOrder.length - 1],
   cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.sheetFile.cells[cellId].comments) },

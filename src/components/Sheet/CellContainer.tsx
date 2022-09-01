@@ -14,11 +14,12 @@ export type CellContainerProps = {
   className?: string,
   cellId: number,
   cellIndex: number,
+  katexMacros: object,
   onFullscreenToggleClick: (isFullscreen: boolean) => void,
 };
 
 export default function CellContainer(props: CellContainerProps) {
-  const { className, cellId, cellIndex } = props;
+  const { className, cellId, cellIndex, katexMacros } = props;
   const { onFullscreenToggleClick } = props;
 
   const dispatch = useAppDispatch();
@@ -44,7 +45,7 @@ export default function CellContainer(props: CellContainerProps) {
 
   const createCell = (id: number, type: string) => {
     if (type === 'text') {
-      return (<TextCell cellId={id} />)
+      return (<TextCell katexMacros={katexMacros} cellId={id} />)
     } else {
       return (<AppCell cellId={id} />)
     }
