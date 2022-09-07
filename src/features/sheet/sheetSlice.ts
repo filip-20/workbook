@@ -1,5 +1,10 @@
 import { createEntityAdapter, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
 import { AppDispatch, RootState } from '../../app/store'
+import { pathURIEncode } from "../repository/RepoExplorer";
+
+import { githubApi } from "../../api/githubApi/endpoints/repos"
+import { Base64 } from 'js-base64';
+import { githubApiErrorMessage } from "../../api/githubApi/errorMessage";
 
 export interface CellComment {
   id: number,
@@ -50,7 +55,7 @@ interface CommitInfo {
   json: string,
 }
 
-export type SheetState = 'loaded' | 'not_loaded' | 'load_error' | 'save_error' | 'update_detected';
+export type SheetState = 'loaded' | 'not_loaded' | 'loading' | 'load_error' | 'save_error' | 'update_detected';
 export type DeleteRequest = 'cell' | 'comment';
 type CellDeletePayload = { cellId: number, cellIndex: number };
 type CommentDeletePayload = { cellId: number, commentId: number };
@@ -65,6 +70,8 @@ export interface SheetSliceData {
   resumeCommitter?: boolean,
   queueHead?: CommitInfo
   fileInfo?: FileInfo,
+
+  openedFile?: {owner: string, repo: string, path: string, branch: string},
 
   deleteRequest?: DeleteRequest,
   deletePayload?: DeletePayload,
@@ -99,13 +106,13 @@ export const sheetSlice = createSlice({
       } catch (e) {
         const syntaxErr = e as SyntaxError
         state.state = "load_error"
-        state.error = `Súbor zošita je poškodený. (${syntaxErr.message})`
+        state.error = `Súbor zošita je poškodený: ${syntaxErr.message}`
       }
       if (sheetFile) {
         const { passed, error } = testSheetIntegrity(sheetFile);
         if (!passed) {
           state.state = "load_error"
-          state.error = `Súbor zošita je poškodený. (${error})`;
+          state.error = `Súbor zošita je poškodený: ${error}`;
         } else {
           state.fileInfo = fileInfo;
           // initialize cellIdCounter with max cell id + 1
@@ -117,6 +124,9 @@ export const sheetSlice = createSlice({
     },
     clearSheet: (state) => {
       state = initialState;
+    },
+    setState: (state, action: PayloadAction<SheetState>) => { 
+      state.state = action.payload 
     },
     dequeueCommit: (state, action: PayloadAction<{ id: number, updateSha: string }>) => {
       const { id, updateSha } = action.payload;
@@ -135,6 +145,14 @@ export const sheetSlice = createSlice({
       } else {
         console.log('Commit queue is empty, cannot call dequeueCommit');
       }
+    },
+    setOpenedFile:(state, action: PayloadAction<{owner: string, repo: string, path: string, branch: string} | undefined>) => {
+      state.openedFile = action.payload;
+    }, 
+    setError: (state, action: PayloadAction<{ errorCode: number, errorMsg: string }>) => {
+      const { errorCode, errorMsg } = action.payload;
+      state.errorCode = errorCode;
+      state.error = errorMsg;
     },
     saveError: (state, action: PayloadAction<{ errorCode: number, errorMsg: string }>) => {
       const { errorCode, errorMsg } = action.payload;
@@ -303,6 +321,35 @@ export const sheetSlice = createSlice({
   }
 });
 
+function openSheet(fileInfo: {owner: string, repo: string, path: string, branch: string}) {
+  return async (dispatch: AppDispatch, getState: () => RootState) => {
+    const { owner, repo, path, branch } = fileInfo;
+    dispatch(sheetActions.setOpenedFile(fileInfo))
+    dispatch(sheetActions.setState('loading'))
+    const loadArgs = { owner, repo, path: pathURIEncode(path), ref: branch };
+    const response = await githubApi.endpoints.reposGetContent.initiate(loadArgs)(dispatch, getState, null)
+    if (response.isSuccess) {
+      const { data } = response;
+      if ('content' in data) {
+        try {
+          const content = Base64.decode(data.content);
+          console.log('decoded ', content);
+          dispatch(sheetActions.loadSheet({ json: content, fileInfo: { owner, repo, branch, path, sha: data.sha } }))
+        } catch (e) { 
+          dispatch(sheetActions.setState('load_error'))
+          dispatch(sheetActions.setError({errorMsg: `Dekódovanie base64 obsahu zlyhalo`, errorCode: 0}))
+        }
+      } else {
+        dispatch(sheetActions.setState('load_error'))
+        dispatch(sheetActions.setError({errorMsg: 'Cesta k hárku neodkazuje na súbor', errorCode: 0}))
+      }
+    } else {
+      dispatch(sheetActions.setState('load_error'))
+      dispatch(sheetActions.setError({errorMsg: response.error ? githubApiErrorMessage(response.error) : 'Chyba pri volaní github API', errorCode: 0}))
+    }
+  }
+}
+
 function isCellDeletePayload(request: DeleteRequest, payload: any): payload is CellDeletePayload {
   const p = payload as CellDeletePayload;
   return request === 'cell' && p.cellId !== undefined && p.cellIndex !== undefined;
@@ -426,12 +473,13 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
 /* Actions */
 const insertTextCell = (text: string, afterIndex: number) => sheetActions.insertCell({ afterIndex, type: 'text', data: text })
 const insertAppCell = (type: string, state: any, afterIndex: number) => sheetActions.insertCell({ afterIndex, type, data: state })
-export const sheetActions = { ...sheetSlice.actions, addCellComment, remmoveCellComment, insertTextCell, insertAppCell };
+export const sheetActions = { ...sheetSlice.actions, openSheet, addCellComment, remmoveCellComment, insertTextCell, insertAppCell };
 /* Selectors */
 export const sheetSelectors = {
   state: (state: RootState) => state.sheet.state,
   error: (state: RootState) => state.sheet.error,
   errorCode: (state: RootState) => state.sheet.errorCode,
+  openedFile: (state: RootState) => state.sheet.openedFile,
   commitQueueHead: (state: RootState) => state.sheet.queueHead,
   commitQueue: (state: RootState) => state.sheet.commitQueue,
   resumeCommitter: (state: RootState) => state.sheet.resumeCommitter,
