@@ -342,7 +342,7 @@ function testSheetIntegrity(sheet: SheetFile): { passed: boolean, error?: string
   }
 
   /* check for presence of required keys */
-  for (const [key, value] of Object.entries(reqKeys)) {
+  for (const [key] of Object.entries(reqKeys)) {
     if (!(key in sheet)) {
       error = `Chýba kľúč '${key}'`;
       break;

@@ -72,7 +72,7 @@ function BranchSelect(props: BranchSelectProps) {
   /* using memo prevents render loop */
   const memoizedContent = useMemo(() => {
     return displayLoadable(branches, loadingSmall, renderList, () => err('Načítanie vetiev zlyhalo'))
-  }, [branches, branch]);
+  }, [branches, branch, loadingSmall, renderList]);
 
   const renderBranchName = (name: string) => <><BiGitBranch />{name}<BsCaretDownFill /></>
   return (

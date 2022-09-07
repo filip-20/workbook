@@ -1,4 +1,4 @@
-import { Button, Card, Form } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import CodeMirror from '@uiw/react-codemirror';
 import RemarkMathPlugin from 'remark-math';
 import rehypeKatex from "rehype-katex";

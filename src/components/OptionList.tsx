@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ListGroup } from "react-bootstrap";
 import { BsCheckCircle, BsCircle } from "react-icons/bs";
 
@@ -17,9 +17,6 @@ export interface OptionsListItemProps {
 
 function OptionsList(props: OptionsListProps) {
   const [selected, setSelected] = useState(props.selected);
-  useEffect(() => {
-    props.onSelectedChange && props.onSelectedChange(selected);
-  }, [selected])
   return <ListGroup variant="flush">
     {
       props.children.map(c => {
@@ -27,6 +24,7 @@ function OptionsList(props: OptionsListProps) {
         const onSelected = (name: string) => {
           setSelected(name);
           _s && _s(name);
+          props.onSelectedChange && props.onSelectedChange(name);
         }
         return <OptionsListItem {...c.props} key={c.props.name} selected={c.props.name === selected} onSelected={onSelected} />
       })

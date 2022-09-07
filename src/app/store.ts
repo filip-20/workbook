@@ -4,7 +4,7 @@ import { githubApi } from '../api/githubApi/endpoints/repos';
 import authReducer from '../features/auth/authSlice';
 import { setupListeners } from '@reduxjs/toolkit/dist/query';
 
-const jsonState = localStorage.getItem('reduxState')
+//const jsonState = localStorage.getItem('reduxState')
 //const preloadedState = jsonState === null ? undefined : {sheet: JSON.parse(jsonState)}
 
 export const store = configureStore({

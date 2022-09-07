@@ -47,7 +47,7 @@ export default function LoginPage(props: LoginPageProps) {
         dispatch(authActions.requestAccessToken(code));
       }
     }
-  }, [path]);
+  }, [path, dispatch]);
 
   useEffect(() => {
     if (authState === 'authenticated' && params['*'] !== undefined) {

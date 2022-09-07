@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ListGroup } from "react-bootstrap";
 import { BsCheckSquare, BsSquare } from "react-icons/bs";
 
@@ -39,11 +39,16 @@ function CheckList(props: CheckListProps) {
 
 function CheckListItem(props: CheckListItemProps) {
   const [checked, setChecked] = useState(props.checked || false)
-  useEffect(() => {
-    props.onToggle && props.onToggle(checked);
-  }, [checked]);
+
+  const handleClick = async () => {
+    let c = await new Promise<boolean>((resolve => {
+      setChecked(prev => {resolve(!prev); return !prev})
+    }));
+    props.onToggle && props.onToggle(c);
+  }
+
   return (
-    <ListGroup.Item action onClick={() => setChecked(prev => !prev)}>
+    <ListGroup.Item action onClick={handleClick}>
       {checked ? <BsCheckSquare className="me-2" /> : <BsSquare className="me-2" />}
       {props.children}
     </ListGroup.Item>

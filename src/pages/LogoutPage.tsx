@@ -9,10 +9,9 @@ function LogoutPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('logout');
     dispatch(logout())
     navigate('/');
-  }, [])
+  }, [dispatch, navigate])
 
   return (
     <Container>logout</Container>
