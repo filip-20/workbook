@@ -3,16 +3,16 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
-import Navigation from './components/Navigation';
-import SheetPage from './components/SheetPage';
-import RepoPage from './components/RepoPage';
-import RepoListPage from './components/RepoListPage';
-import { useAppSelector } from './store/hooks';
-import { authSelectors, saveAuthState } from './store/authSlice';
-import LogoutPage from './components/LogoutPage';
-import { useUsersGetAuthenticatedQuery } from './services/githubApi/endpoints/users';
-import Err404Page from './components/Err404Page';
-import LoginPage from './components/LoginPage';
+import Navigation from './pages/Navigation';
+import SheetPage from './pages/SheetPage';
+import RepoPage from './pages/RepoPage';
+import RepoListPage from './pages/RepoListPage';
+import { useAppSelector } from './app/hooks';
+import { authSelectors, saveAuthState } from './features/auth/authSlice';
+import LogoutPage from './pages/LogoutPage';
+import { useUsersGetAuthenticatedQuery } from './api/githubApi/endpoints/users';
+import Err404Page from './pages/Err404Page';
+import LoginPage from './pages/LoginPage';
 
 import config from './config.json';
 

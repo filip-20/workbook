@@ -4,7 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { Provider } from 'react-redux';
-import { store } from './store/store'
+import { store } from './app/store'
 
 ReactDOM.render(
   <React.StrictMode>
@@ -14,6 +14,18 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById('root')
 );
+
+document.addEventListener("visibilitychange", function() {
+  console.log('visibilitychange: ', document.hidden, document.visibilityState);
+}, false);
+
+window.addEventListener('focus', function(){
+  console.log('focus: ', this.document.hasFocus());
+}, false);
+
+window.addEventListener('blur', function(){
+  console.log('focus: ', this.document.hasFocus());
+}, false);
 
 window.addEventListener('error', function(event) { 
   /* 
