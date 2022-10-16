@@ -158,7 +158,7 @@ export const sheetSlice = createSlice({
           type, data,
           idCounter: 0,
           comments: commentsAdapter.getInitialState(),
-          isEdited: false,
+          isEdited: true,
         };
 
         sheetFile.cells[cell.id] = cell;

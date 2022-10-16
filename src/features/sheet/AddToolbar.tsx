@@ -21,7 +21,7 @@ export default function AddToolbar(props: AddToolbarProps) {
     if (typeName.startsWith('app/')) {
       dispatch(sheetActions.insertAppCell(typeName.slice(4), null, cellIndex))
     } else {
-      dispatch(sheetActions.insertTextCell('some content', cellIndex))
+      dispatch(sheetActions.insertTextCell('', cellIndex))
     }
   }
 
