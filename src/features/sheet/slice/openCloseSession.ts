@@ -31,7 +31,7 @@ function listAllRepoBranches(owner: string, repo: string) {
   }
 }
 
-function getSessionBranchName(fileInfo: { owner: string, repo: string, path: string, branch: string }) {
+export function getSessionBranchName(fileInfo: { owner: string, repo: string, path: string, branch: string }) {
   const { owner, repo, path, branch } = fileInfo;
   const getName = (p: string) => {
     const f = p.split('/').pop()?.split('.');
