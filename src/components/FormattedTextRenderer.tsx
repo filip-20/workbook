@@ -5,6 +5,8 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 
+import {Schema} from 'hast-util-sanitize';
+
 import 'katex/dist/katex.min.css';
 import styles from './FormattedTextRenderer.module.css'
 
@@ -16,21 +18,19 @@ export interface FormattedTextRendererProps {
 
 export default function FormattedTextRenderer(props: FormattedTextRendererProps) {
   const { className, text, katexMacros } = props;
-
-  const rehypeSanitizeOptions = {
+  
+  let rehypeSanitizeOptions: Schema = {
     ...defaultSchema,
     attributes: {
       ...defaultSchema.attributes,
-      div: [
-        ...(defaultSchema.attributes?.div || []),
-        ['className', 'math', 'math-display']
-      ],
-      span: [
-        ...(defaultSchema.attributes?.span || []),
-        ['className', 'math', 'math-inline']
+      '*': [
+        ...(defaultSchema.attributes !== undefined ? defaultSchema.attributes['*'] || [] : []),
+        'className'
       ]
     }
   }
+
+  //rehypeSanitizeOptions.attributes['*'] = [...rehypeSanitizeOptions.attributes['*'], 'className', 'style']
 
   const rehypeKatexOptions = katexMacros ? {
     macros: katexMacros
