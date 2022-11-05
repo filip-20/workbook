@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { BiDownload, BiRefresh } from "react-icons/bi";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 
 export default function FileErrorModal() {
   const sheetState = useAppSelector(sheetSelectors.state);

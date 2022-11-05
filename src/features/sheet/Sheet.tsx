@@ -2,7 +2,7 @@ import { Alert, Container, Spinner } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import CellContainer from "./CellContainer";
 import AddToolbar from "./AddToolbar";
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import { useEffect, useMemo, useState } from "react";
 
 import styles from "./Sheet.module.css";

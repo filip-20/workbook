@@ -13,7 +13,7 @@ import { BsSlashCircle } from "react-icons/bs";
 import { HiDocumentAdd } from 'react-icons/hi'
 import CreateFileButton from "./CreateFileButton";
 import { useRef } from "react";
-import { emptySheet } from "../sheet/sheetSlice";
+import { emptySheet } from "../sheet/slice/sheetSlice";
 
 export interface RepoExplorerProps {
   owner: string,

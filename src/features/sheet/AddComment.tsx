@@ -5,7 +5,7 @@ import rehypeKatex from "rehype-katex";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useAppDispatch } from "../../app/hooks";
-import { sheetActions } from "./sheetSlice";
+import { sheetActions } from "./slice/sheetSlice";
 
 export interface CommentEditorProps {
   content?: string,

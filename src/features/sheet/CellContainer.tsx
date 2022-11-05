@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
 import AppCell from './AppCell';

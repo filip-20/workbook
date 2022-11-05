@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { githubApiErrorMessage, isFetchBaseQueryError, isGithubErrorResponse } from "../../api/githubApi/errorMessage";
 import { Base64 } from 'js-base64';
 import { Alert, Spinner } from "react-bootstrap";
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import { BsExclamationTriangle } from "react-icons/bs";
 
 export interface SheetCommitterProps {

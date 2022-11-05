@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import sheetReducer from '../features/sheet/sheetSlice';
+import sheetReducer from '../features/sheet/slice/sheetSlice';
 import { githubApi } from '../api/githubApi/endpoints/repos';
 import authReducer from '../features/auth/authSlice';
 import { setupListeners } from '@reduxjs/toolkit/dist/query';

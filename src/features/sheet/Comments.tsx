@@ -1,6 +1,6 @@
 import { Button, ButtonProps, Dropdown } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
-import { CellComment, sheetActions, sheetSelectors } from "./sheetSlice";
+import { CellComment, sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import Moment from "react-moment";
 import 'moment/locale/sk';
 import { authSelectors } from "../auth/authSlice";

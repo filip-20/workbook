@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Alert, Button, Modal } from "react-bootstrap";
 import CodeMirror from '@uiw/react-codemirror';
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { sheetActions, sheetSelectors, SheetSettings } from "./sheetSlice";
+import { sheetActions, sheetSelectors, SheetSettings } from "./slice/sheetSlice";
 import katex from "katex";
 import React from "react";
 

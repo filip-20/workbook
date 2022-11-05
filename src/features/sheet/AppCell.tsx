@@ -3,7 +3,7 @@ import { PrepareResult } from '@fmfi-uk-1-ain-412/fol-graphexplorer';
 import { useEffect, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 
 export interface AppCellProps {
   cellId: number

@@ -3,7 +3,7 @@ import { Plus } from "react-bootstrap-icons";
 
 import { embeddedApps } from "../../embeddedApps";
 import { useAppDispatch } from "../../app/hooks";
-import { sheetActions } from "./sheetSlice";
+import { sheetActions } from "./slice/sheetSlice";
 
 
 export interface AddToolbarProps {

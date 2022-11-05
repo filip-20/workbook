@@ -1,10 +1,8 @@
 import { createEntityAdapter, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
-import { AppDispatch, RootState } from '../../app/store'
-import { pathURIEncode } from "../repository/RepoExplorer";
-
-import { githubApi } from "../../api/githubApi/endpoints/repos"
-import { Base64 } from 'js-base64';
-import { githubApiErrorMessage } from "../../api/githubApi/errorMessage";
+import { AppDispatch, RootState } from '../../../app/store'
+import { pathURIEncode } from "../../repository/RepoExplorer";
+import { openSheet } from "./openCloseSession";
+import { testSheetIntegrity } from "./sheetVersions";
 
 export interface CellComment {
   id: number,
@@ -65,13 +63,14 @@ export interface SheetSliceData {
   state: SheetState,
   sheetFile: SheetFile,
   cellIdCounter: number,
+
   commitIdCounter: number,
   commitQueue: Array<CommitInfo>,
   resumeCommitter?: boolean,
   queueHead?: CommitInfo
   fileInfo?: FileInfo,
 
-  openedFile?: {owner: string, repo: string, path: string, branch: string},
+  openedFile?: { owner: string, repo: string, path: string, branch: string },
 
   deleteRequest?: DeleteRequest,
   deletePayload?: DeletePayload,
@@ -114,9 +113,17 @@ export const sheetSlice = createSlice({
           state.state = "load_error"
           state.error = `Súbor zošita je poškodený: ${error}`;
         } else {
+          const sf = sheetFile as SheetFile
           state.fileInfo = fileInfo;
+          
           // initialize cellIdCounter with max cell id + 1
-          state.cellIdCounter = Object.entries((sheetFile as SheetFile).cells).map(e => e[1].id).reduce((prev, cur) => Math.max(prev, cur), 0) + 1
+          state.cellIdCounter = Object.entries(sf.cells).map(e => e[1].id).reduce((prev, cur) => Math.max(prev, cur), 0) + 1
+          
+          // set all cells to closed
+          for (let id in sf.cells) {
+            sf.cells[id].isEdited = false;
+          }
+
           state.sheetFile = sheetFile;
           state.state = 'loaded';
         }
@@ -125,8 +132,8 @@ export const sheetSlice = createSlice({
     clearSheet: (state) => {
       state = initialState;
     },
-    setState: (state, action: PayloadAction<SheetState>) => { 
-      state.state = action.payload 
+    setState: (state, action: PayloadAction<SheetState>) => {
+      state.state = action.payload
     },
     dequeueCommit: (state, action: PayloadAction<{ id: number, updateSha: string }>) => {
       const { id, updateSha } = action.payload;
@@ -146,13 +153,14 @@ export const sheetSlice = createSlice({
         console.log('Commit queue is empty, cannot call dequeueCommit');
       }
     },
-    setOpenedFile:(state, action: PayloadAction<{owner: string, repo: string, path: string, branch: string} | undefined>) => {
+    setOpenedFile: (state, action: PayloadAction<{ owner: string, repo: string, path: string, branch: string } | undefined>) => {
       state.openedFile = action.payload;
-    }, 
-    setError: (state, action: PayloadAction<{ errorCode: number, errorMsg: string }>) => {
-      const { errorCode, errorMsg } = action.payload;
+    },
+    setError: (state, action: PayloadAction<{ errorCode: number, errorMsg: string, newState: SheetState | undefined }>) => {
+      const { errorCode, errorMsg, newState } = action.payload;
       state.errorCode = errorCode;
       state.error = errorMsg;
+      newState != undefined && (state.state = newState);
     },
     saveError: (state, action: PayloadAction<{ errorCode: number, errorMsg: string }>) => {
       const { errorCode, errorMsg } = action.payload;
@@ -176,7 +184,7 @@ export const sheetSlice = createSlice({
           type, data,
           idCounter: 0,
           comments: commentsAdapter.getInitialState(),
-          isEdited: false,
+          isEdited: true,
         };
 
         sheetFile.cells[cell.id] = cell;
@@ -223,7 +231,7 @@ export const sheetSlice = createSlice({
       if (sheetFile.cells[cellId] !== undefined) {
         const cell = sheetFile.cells[cellId];
 
-        commentsAdapter.updateOne(cell.comments, {id: commentId, changes: {text, timestamp: new Date().getTime()}})
+        commentsAdapter.updateOne(cell.comments, { id: commentId, changes: { text, timestamp: new Date().getTime() } })
         enqueUpdate(state, `Updated comment ${commentId} in cell ${cellId}`);
       } else {
         console.log('Invalid cellId parameters for updateCellComment action. ' + action.payload);
@@ -321,33 +329,8 @@ export const sheetSlice = createSlice({
   }
 });
 
-function openSheet(fileInfo: {owner: string, repo: string, path: string, branch: string}) {
-  return async (dispatch: AppDispatch, getState: () => RootState) => {
-    const { owner, repo, path, branch } = fileInfo;
-    dispatch(sheetActions.setOpenedFile(fileInfo))
-    dispatch(sheetActions.setState('loading'))
-    const loadArgs = { owner, repo, path: pathURIEncode(path), ref: branch };
-    const response = await githubApi.endpoints.reposGetContent.initiate(loadArgs)(dispatch, getState, null)
-    if (response.isSuccess) {
-      const { data } = response;
-      if ('content' in data) {
-        try {
-          const content = Base64.decode(data.content);
-          console.log('decoded ', content);
-          dispatch(sheetActions.loadSheet({ json: content, fileInfo: { owner, repo, branch, path, sha: data.sha } }))
-        } catch (e) { 
-          dispatch(sheetActions.setState('load_error'))
-          dispatch(sheetActions.setError({errorMsg: `Dekódovanie base64 obsahu zlyhalo`, errorCode: 0}))
-        }
-      } else {
-        dispatch(sheetActions.setState('load_error'))
-        dispatch(sheetActions.setError({errorMsg: 'Cesta k hárku neodkazuje na súbor', errorCode: 0}))
-      }
-    } else {
-      dispatch(sheetActions.setState('load_error'))
-      dispatch(sheetActions.setError({errorMsg: response.error ? githubApiErrorMessage(response.error) : 'Chyba pri volaní github API', errorCode: 0}))
-    }
-  }
+function isValidSheetFilename(filename: string) {
+  
 }
 
 function isCellDeletePayload(request: DeleteRequest, payload: any): payload is CellDeletePayload {
@@ -366,70 +349,6 @@ function enqueUpdate(data: SheetSliceData, message: string) {
   if (data.commitQueue.length === 1) {
     data.queueHead = commit;
   }
-}
-
-function testSheetIntegrity(sheet: SheetFile): { passed: boolean, error?: string } {
-  let error = undefined;
-
-  /* test keys and types of sheet object */
-  const reqKeys: { [key: string]: string } = {
-    'cells': 'object',
-    'cellsOrder': 'object',
-  }
-  /* optional keys */
-  const optKeys: { [key: string]: string } = {
-    /* now unused --> */
-    'idCounter': 'number',
-    'editedCellId': 'number',
-    'firstCellId': 'number',
-    'lastCellId': 'number',
-    /* <-- */
-    'versionNumber': 'number',
-    'settings': 'object',
-  }
-
-  /* check for presence of required keys */
-  for (const [key] of Object.entries(reqKeys)) {
-    if (!(key in sheet)) {
-      error = `Chýba kľúč '${key}'`;
-      break;
-    }
-  }
-  if (error) return { passed: false, error };
-
-  for (const [key, value] of Object.entries(sheet)) {
-    const keyType = key in reqKeys ? 'REQUIRED' : (key in optKeys ? 'OPTIONAL' : 'UNKNOWN')
-    if (keyType === 'REQUIRED' || keyType === 'OPTIONAL') {
-      const expectedType = keyType === 'REQUIRED' ? reqKeys[key] : optKeys[key]
-      if (typeof value !== expectedType) {
-        error = `Kľúč '${key}' je nesprávneho typu`;
-        break;
-      }
-    } else {
-      error = `Neznámi Kľúč '${key}'`;
-      break;
-    }
-  }
-  if (error) return { passed: false, error };
-
-  /* TODO? Cell and CellComment keys test */
-
-  /* cellsOrder has no duplicates */
-  if (new Set(sheet.cellsOrder).size !== sheet.cellsOrder.length) {
-    error = 'Poradie buniek obsahuje duplicitné hodnoty';
-  }
-  if (error) return { passed: false, error };
-
-  /* cellsOrder contains only existing cell ids */
-  for (const id of sheet.cellsOrder) {
-    if (!(id in sheet.cells)) {
-      error = 'Poradie buniek obsahuje neexistujúce id';
-      break;
-    }
-  }
-  if (error) return { passed: false, error };
-
-  return { passed: true }
 }
 
 const addCellComment = function (payload: { cellId: number, text: string }) {
@@ -454,7 +373,7 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
         const comment = commentsAdapter.getSelectors().selectById(cell.comments, commentId);
         if (comment) {
           if (comment.author === user) {
-            dispatch(sheetSlice.actions.deleteRequest({request: 'comment', payload: { cellId, commentId }}));
+            dispatch(sheetSlice.actions.deleteRequest({ request: 'comment', payload: { cellId, commentId } }));
           } else {
             console.log('You can delete only your own comments. ' + payload);
           }
