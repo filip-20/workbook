@@ -50,6 +50,10 @@ function getSessionBranchName(fileInfo: { owner: string, repo: string, path: str
   return `${branch}_session_${getName(path)}_${sha1(path)}`;
 }
 
+export function isSessionBranchName(name: string) {
+  return name.match(/_session_/) !== null && name.match(/_[a-z0-9]+$/) !== null;
+}
+
 function createNewSessionBranch(fileInfo: { owner: string, repo: string, path: string, branch: string }, fromCommit: string) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     console.log('createing new session branch')
