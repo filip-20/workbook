@@ -6,8 +6,8 @@ import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import { useEffect, useMemo, useState } from "react";
 
 import styles from "./Sheet.module.css";
-import FileErrorModal from "./FileErrorModal";
-import ConfirmDeletionModal from "./ConfirmDeletionModal";
+import FileErrorModal from "./modals/FileErrorModal";
+import ConfirmDeletionModal from "./modals/ConfirmDeletionModal";
 import katex from "katex";
 
 interface FileInfo {

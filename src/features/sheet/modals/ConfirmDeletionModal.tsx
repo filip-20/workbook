@@ -1,6 +1,6 @@
 import { Button, Modal } from "react-bootstrap";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
+import { sheetActions, sheetSelectors } from "../slice/sheetSlice";
 
 export default function ConfirmDeletionModal() {
   const request = useAppSelector(sheetSelectors.deleteRequest);

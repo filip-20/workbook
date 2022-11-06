@@ -326,9 +326,6 @@ export const sheetSlice = createSlice({
     updateSettings: (state, action: PayloadAction<SheetSettings | undefined>) => {
       state.sheetFile.settings = action.payload
       enqueUpdate(state, 'Updated sheet settings');
-    },
-    mergeSheet: (state) => {
-
     }
   }
 });
