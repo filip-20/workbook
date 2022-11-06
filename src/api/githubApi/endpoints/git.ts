@@ -63,6 +63,7 @@ const injectedRtkApi = api.injectEndpoints({
         method: "POST",
         body: queryArg.body,
       }),
+      invalidatesTags: ['Refs']
     }),
     gitUpdateRef: build.mutation<GitUpdateRefApiResponse, GitUpdateRefApiArg>({
       query: (queryArg) => ({
@@ -70,12 +71,14 @@ const injectedRtkApi = api.injectEndpoints({
         method: "PATCH",
         body: queryArg.body,
       }),
+      invalidatesTags: ['Refs']
     }),
     gitDeleteRef: build.mutation<GitDeleteRefApiResponse, GitDeleteRefApiArg>({
       query: (queryArg) => ({
         url: `/repos/${queryArg.owner}/${queryArg.repo}/git/refs/${queryArg.ref}`,
         method: "DELETE",
       }),
+      invalidatesTags: ['Refs']
     }),
     gitCreateTag: build.mutation<GitCreateTagApiResponse, GitCreateTagApiArg>({
       query: (queryArg) => ({

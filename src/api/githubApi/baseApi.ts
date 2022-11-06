@@ -8,7 +8,7 @@ import githubApiParseLastPage from "./lastPage";
 export const githubApi = createApi({
   reducerPath: "githubApi",
   baseQuery: githubBaseQuery,
-  tagTypes: ['Files'],
+  tagTypes: ['Files', 'Refs'],
   endpoints: (build) => ({
     reposListForUserHeaders: build.query<{ link?: string }, ReposListForUserApiArg>({
       query: (queryArg) => ({

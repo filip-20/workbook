@@ -111,6 +111,7 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
         },
       }),
+      providesTags: ['Refs']
     }),
     reposGetBranch: build.query<
       ReposGetBranchApiResponse,
