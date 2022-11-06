@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ButtonGroup, ButtonToolbar, Container, Dropdown, Spinner } from "react-bootstrap";
+import { Button, ButtonGroup, ButtonToolbar, Container, Dropdown, Spinner } from "react-bootstrap";
 import { useLocation, useParams } from "react-router-dom";
 import { MdMenuBook, MdSettings } from "react-icons/md";
+import { FaSave } from "react-icons/fa";
 import { authSelectors } from "../features/auth/authSlice";
-import { useAppSelector } from "../app/hooks";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { makeRepoLink, parseFilepath, parseGithubUrlPath } from "./RepoPage";
 import Sheet from "../features/sheet/Sheet";
 import SheetCommitter from "../features/sheet/SheetCommitter";
@@ -14,6 +15,7 @@ import BranchLabel from "../features/repository/BranchLabel";
 import LoginPage from "./LoginPage";
 import { pathURIEncode } from "../features/repository/RepoExplorer";
 import SheetSettingsModal, { SettingTab } from "../features/sheet/SheetSettingsModal";
+import { sheetActions } from "../features/sheet/slice/sheetSlice";
 
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
@@ -22,6 +24,8 @@ function SheetPage() {
   const params = useParams();
   const { owner, repo } = params;
   const repoParams = parseGithubUrlPath(params['*'] || '');
+
+  const dispatch = useAppDispatch();
 
   const [settingsTab, setSettingsTab] = useState<SettingTab>('NONE')
 
@@ -49,6 +53,9 @@ function SheetPage() {
             <div><SheetCommitter style={{ marginLeft: '1rem' }} /></div>
             <div style={{ flexGrow: '1' }}></div>
             <ButtonToolbar className="d-inline-block">
+              <ButtonGroup className="me-2">
+                <Button variant="success" onClick={() => dispatch(sheetActions.mergeSheet())}><FaSave /></Button>
+              </ButtonGroup>
               <ButtonGroup>
                 <Dropdown>
                   <Dropdown.Toggle title="Nastavenia aktuálneho hárku" variant="secondary">
@@ -62,7 +69,7 @@ function SheetPage() {
             </ButtonToolbar>
           </div>
           <div className="m-3 h-100">
-            <Sheet fileInfo={{owner, repo, path: pathURIEncode(path), branch}} />
+            <Sheet fileInfo={{ owner, repo, path: pathURIEncode(path), branch }} />
           </div>
         </Container>
       )

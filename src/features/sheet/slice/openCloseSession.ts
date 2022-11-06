@@ -70,7 +70,7 @@ function createNewSessionBranch(fileInfo: { owner: string, repo: string, path: s
   }
 }
 
-function mergeSessionBranch(owner: string, repo: string, sourceBranch: ShortBranch, targetBranch: ShortBranch, comparison: CommitComparison, squash: boolean) {
+export function mergeSessionBranch(owner: string, repo: string, sourceBranch: string, targetBranch: string, squash: boolean) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const r1 = await pullsApi.endpoints.pullsList.initiate({owner, repo, state: "open"})(dispatch, getState, null);
     if (!('data' in r1) || r1.data === undefined) {
@@ -82,7 +82,7 @@ function mergeSessionBranch(owner: string, repo: string, sourceBranch: ShortBran
     const pullsList = r1.data;
     console.log('Pulls list: ', pullsList);
 
-    const pr = pullsList.filter(pull => pull.base.ref === targetBranch.name && pull.head.ref === sourceBranch.name);
+    const pr = pullsList.filter(pull => pull.base.ref === targetBranch && pull.head.ref === sourceBranch);
     console.log('filtered pr: ', pr);
     
     if (pr.length > 1) {
@@ -95,7 +95,7 @@ function mergeSessionBranch(owner: string, repo: string, sourceBranch: ShortBran
       console.log('PR already created');
       pullNumber = pr[0].number;
     } else {
-      const r2 = await pullsApi.endpoints.pullsCreate.initiate({owner, repo, body: {title: 'Merged session', head: `refs/heads/${sourceBranch.name}`, base: `refs/heads/${targetBranch.name}`}})(dispatch, getState, null);
+      const r2 = await pullsApi.endpoints.pullsCreate.initiate({owner, repo, body: {title: 'Merged session', head: `refs/heads/${sourceBranch}`, base: `refs/heads/${targetBranch}`}})(dispatch, getState, null);
       if (!('data' in r2)) {
         // pull request creation failed
         dispatch(sheetActions.setError({ errorMsg: `Vytvorenie PR zlyhalo, skúste to znovu`, errorCode: 0, newState: "load_error" }))
@@ -115,7 +115,7 @@ function mergeSessionBranch(owner: string, repo: string, sourceBranch: ShortBran
 
     console.log('merge success', r3.data);
 
-    const r4 = await gitDbApi.endpoints.gitDeleteRef.initiate({owner, repo, ref: `heads/${sourceBranch.name}`})(dispatch, getState, null);
+    const r4 = await gitDbApi.endpoints.gitDeleteRef.initiate({owner, repo, ref: `heads/${sourceBranch}`})(dispatch, getState, null);
     if (!('data' in r4)) {
       dispatch(sheetActions.setError({ errorMsg: `Zmazanie starej vetvy zlyhalo, skúste to znovu`, errorCode: 0, newState: "load_error" }))
       return false;
@@ -169,12 +169,12 @@ export function openSheet(fileInfo: { owner: string, repo: string, path: string,
         dispatch(sheetActions.setError({ errorMsg: `API volanie zlyhalo, skúste to znovu`, errorCode: 0, newState: "load_error" }))
       } else {
         // open created session
-        dispatch(openSession(owner, repo, path, expectedSessionBranchName, newBranch.data.object.sha));
+        dispatch(openSession(owner, repo, path, expectedSessionBranchName, newBranch.data.object.sha, sheetBranch.name));
       }
     } else {
 
       console.log('Reusing existing session branch');
-      dispatch(openSession(owner, repo, path, sessionBranch.name, sessionBranch.commit.sha));
+      dispatch(openSession(owner, repo, path, sessionBranch.name, sessionBranch.commit.sha, sheetBranch.name));
 
       /*
       const cmp = await reposApi.endpoints.reposCompareCommits.initiate({owner, repo, basehead: `${sheetBranch.name}...${sessionBranch.name}`})(dispatch, getState, null);
@@ -218,7 +218,7 @@ export function openSheet(fileInfo: { owner: string, repo: string, path: string,
   }
 }
 
-function openSession(owner: string, repo: string, path: string, branch: string, sha: string) {
+function openSession(owner: string, repo: string, path: string, branch: string, sha: string, sheetBranch: string) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     console.log('opening session at branch ', branch, ', commit ', sha);
 
@@ -228,7 +228,7 @@ function openSession(owner: string, repo: string, path: string, branch: string, 
       if ('content' in data) {
         try {
           const content = Base64.decode(data.content);
-          dispatch(sheetActions.loadSheet({ json: content, fileInfo: { owner, repo, branch, path, sha: data.sha } }))
+          dispatch(sheetActions.loadSheet({ json: content, fileInfo: { owner, repo, branch, path, sha: data.sha, sheetBranch} }))
         } catch (e) {
           dispatch(sheetActions.setError({ errorMsg: `Dekódovanie base64 obsahu zlyhalo`, errorCode: 0, newState: "load_error" }))
         }

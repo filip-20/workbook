@@ -1,7 +1,7 @@
 import { createEntityAdapter, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
 import { AppDispatch, RootState } from '../../../app/store'
 import { pathURIEncode } from "../../repository/RepoExplorer";
-import { openSheet } from "./openCloseSession";
+import { mergeSessionBranch, openSheet } from "./openCloseSession";
 import { testSheetIntegrity } from "./sheetVersions";
 
 export interface CellComment {
@@ -30,6 +30,7 @@ export interface FileInfo {
   branch: string,
   path: string,
   sha: string,
+  sheetBranch: string
 }
 
 export interface SheetSettings {
@@ -325,6 +326,9 @@ export const sheetSlice = createSlice({
     updateSettings: (state, action: PayloadAction<SheetSettings | undefined>) => {
       state.sheetFile.settings = action.payload
       enqueUpdate(state, 'Updated sheet settings');
+    },
+    mergeSheet: (state) => {
+
     }
   }
 });
@@ -389,10 +393,20 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
   }
 }
 
+function mergeSheet() {
+  return (dispatch: AppDispatch, getState: () => RootState) => {
+    const fileInfo = getState().sheet.fileInfo;
+    if (fileInfo !== undefined) {
+      const {owner, repo, path, branch, sheetBranch} = fileInfo;
+      dispatch(mergeSessionBranch(owner, repo, branch, sheetBranch, true));
+    }
+  }
+}
+
 /* Actions */
 const insertTextCell = (text: string, afterIndex: number) => sheetActions.insertCell({ afterIndex, type: 'text', data: text })
 const insertAppCell = (type: string, state: any, afterIndex: number) => sheetActions.insertCell({ afterIndex, type, data: state })
-export const sheetActions = { ...sheetSlice.actions, openSheet, addCellComment, remmoveCellComment, insertTextCell, insertAppCell };
+export const sheetActions = { ...sheetSlice.actions, openSheet, mergeSheet, addCellComment, remmoveCellComment, insertTextCell, insertAppCell };
 /* Selectors */
 export const sheetSelectors = {
   state: (state: RootState) => state.sheet.state,
