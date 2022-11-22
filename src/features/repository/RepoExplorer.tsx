@@ -14,7 +14,7 @@ import { HiDocumentAdd } from 'react-icons/hi'
 import CreateFileButton from "./CreateFileButton";
 import { useRef } from "react";
 import { emptySheet } from "../sheet/slice/sheetSlice";
-import { getSessionBranchName } from "../sheet/slice/openCloseSession";
+import { getSessionBranchName } from "../sheetStorage/github/githubStorage";
 
 export interface RepoExplorerProps {
   owner: string,
@@ -108,7 +108,7 @@ function RepoExplorer(props: RepoExplorerProps) {
 
     const unsavedChanges = () => {
       const branchList = branches.data;
-      const expectedSessionBranchName = getSessionBranchName({owner, repo, path: filePath, branch: branch || ''});
+      const expectedSessionBranchName = getSessionBranchName({owner, repo, path: filePath, ref: branch || ''});
       return branchList?.find(b => b.name == expectedSessionBranchName) !== undefined;
     }
 
