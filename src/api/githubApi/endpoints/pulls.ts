@@ -143,6 +143,7 @@ const injectedRtkApi = api.injectEndpoints({
         method: "PUT",
         body: queryArg.body,
       }),
+      invalidatesTags: ['Files'],  // workbook file changes after merge 
     }),
     pullsListRequestedReviewers: build.query<
       PullsListRequestedReviewersApiResponse,
