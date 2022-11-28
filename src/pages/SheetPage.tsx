@@ -10,7 +10,6 @@ import Pathbar from "../features/repository/Pathbar";
 import Err404Page from "./Err404Page";
 import BranchLabel from "../features/repository/BranchLabel";
 import LoginPage from "./LoginPage";
-import { pathURIEncode } from "../features/repository/RepoExplorer";
 import SheetSettingsModal, { SettingTab } from "../features/sheet/modals/SheetSettingsModal";
 import MergeSheetModal from "../features/sheetStorage/github/MergeSheetModal";
 import { GithubFileLocation, openSheet } from "../features/sheetStorage/github/githubStorage";

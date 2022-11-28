@@ -9,22 +9,7 @@ import styles from "./Sheet.module.css";
 import ConfirmDeletionModal from "./modals/ConfirmDeletionModal";
 import katex from "katex";
 
-interface FileInfo {
-  owner: string,
-  repo: string,
-  path: string,
-  branch: string,
-}
-
 export interface SheetProps {
-}
-
-function fileInfoCmp(f1: FileInfo, f2: FileInfo) {
-  return (f1.owner === f2.owner
-    && f1.repo === f2.repo 
-    && f1.path === f2.path
-    && f1.branch === f2.branch
-  )
 }
 
 export default function Sheet(props: SheetProps) {

@@ -1,10 +1,5 @@
 import { Button, Modal } from "react-bootstrap";
-import { ReposCompareCommitsApiResponse } from "../../../api/githubApi/endpoints/repos";
-import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import ErrBox from "../../../components/ErrBox";
-import Loading from "../../../components/Loading";
-import { IoMdGitMerge } from "react-icons/io";
-import { storageActions } from "../sheetStorage";
+import { useAppSelector } from "../../../app/hooks";
 import { GhMergeError, ghStorageSelectors } from "./githubStorage";
 import { useEffect, useState } from "react";
 

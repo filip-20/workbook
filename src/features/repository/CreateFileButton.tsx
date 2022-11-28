@@ -27,7 +27,6 @@ function CreateFileButton(props: CreateFileButtonProps) {
   const confirmText="Vytvoriť"
   const errEmptyText="Prázdny názov"
   const errExistsText="Zošit s týmto názvom už existuje"
-  const validFilenameRegexp = /asdf/
 
   const [show, setShow] = useState(false);
   const [validationMsg, setValidationMsg] = useState('');

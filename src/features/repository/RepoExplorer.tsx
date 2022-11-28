@@ -109,7 +109,7 @@ function RepoExplorer(props: RepoExplorerProps) {
     const unsavedChanges = () => {
       const branchList = branches.data;
       const expectedSessionBranchName = getSessionBranchName({owner, repo, path: filePath, ref: branch || ''});
-      return branchList?.find(b => b.name == expectedSessionBranchName) !== undefined;
+      return branchList?.find(b => b.name === expectedSessionBranchName) !== undefined;
     }
 
     if (transformFileItem) {

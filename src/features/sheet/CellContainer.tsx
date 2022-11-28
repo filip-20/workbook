@@ -8,7 +8,6 @@ import TextCell from './TextCell';
 import styles from './CellContainer.module.css';
 import AddComment from './AddComment';
 import Comments from './Comments';
-import { BiLock } from 'react-icons/bi';
 
 export type CellContainerProps = {
   className?: string,
@@ -69,12 +68,6 @@ export default function CellContainer(props: CellContainerProps) {
             cellId={cellId} cellIndex={cellIndex}
             onCommentClick={() => setAddComment(prev => !prev)}
             onToggleFullscreenClick={(isFullscreen) => onFullscreenToggleClick(isFullscreen)}
-          />
-
-          <BiLock
-            className={`bg-secondary text-white ${styles.lockIcon}`}
-            size={35}
-            style={{ display: cellHovered && !isEdited ? 'initial' : 'none' }}
           />
           <div className="pt-3" style={{ overflowY: 'auto' }}>
             {createCell(cellId, type)}

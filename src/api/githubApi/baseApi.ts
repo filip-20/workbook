@@ -2,7 +2,6 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import githubBaseQuery from "./baseQuery";
 import { ReposListBranchesApiArg, ReposListBranchesApiResponse, ReposListForAuthenticatedUserApiArg, ReposListForUserApiArg, ReposMergeApiArg, ReposMergeApiResponse } from "./endpoints/repos";
 import { SearchReposApiArg } from "./endpoints/search";
-import { githubApi as reposApi } from "./endpoints/repos";
 import githubApiParseLastPage from "./lastPage";
 
 export const githubApi = createApi({

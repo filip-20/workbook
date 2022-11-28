@@ -33,7 +33,7 @@ export default function EditToolbar(props: EditToolbarProps) {
   return (
     <ButtonToolbar className={props.className} style={props.style}>
       <ButtonGroup>
-        {/*<Button disabled variant="secondary" ><BiLock /></Button>*/}
+        {isEdited === false && <Button disabled variant="danger" ><BiLock /></Button>}
         <Button className="text-nowrap" onClick={() => dispatch(sheetActions.setCellEdited({ cellId, isEdited: !isEdited }))}>
           {isEdited ? <><BiCheck /> Zamknúť</> : <><BiEdit /> Upraviť</>}
         </Button>
