@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Alert, Button, Form, Modal, Spinner } from "react-bootstrap";
 import { useReposCreateOrUpdateFileContentsMutation } from "../../api/githubApi/endpoints/repos";
 import { githubApiErrorMessage } from "../../api/githubApi/errorMessage";
+import { pathURIEncode } from "./RepoExplorer";
 
 export interface CreateFileButtonProps {
   children?: React.ReactNode,
@@ -26,6 +27,7 @@ function CreateFileButton(props: CreateFileButtonProps) {
   const confirmText="Vytvoriť"
   const errEmptyText="Prázdny názov"
   const errExistsText="Zošit s týmto názvom už existuje"
+  const validFilenameRegexp = /asdf/
 
   const [show, setShow] = useState(false);
   const [validationMsg, setValidationMsg] = useState('');
@@ -44,7 +46,7 @@ function CreateFileButton(props: CreateFileButtonProps) {
 
     const filepath = path === '' ? filename : `${path}/${filename}`;
     createFile({
-      owner, repo, path: filepath,
+      owner, repo, path: pathURIEncode(filepath),
       body: {
         message: commitMessage,
         content: btoa(withContent || ''),

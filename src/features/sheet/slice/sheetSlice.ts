@@ -1,5 +1,6 @@
-import { createEntityAdapter, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
-import { AppDispatch, RootState } from '../../app/store'
+import { AnyAction, createEntityAdapter, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
+import { AppDispatch, RootState } from '../../../app/store'
+import { testSheetIntegrity } from "./sheetVersions";
 
 export interface CellComment {
   id: number,
@@ -21,14 +22,6 @@ export interface Cell {
   data: any,
 }
 
-export interface FileInfo {
-  owner: string,
-  repo: string,
-  branch: string,
-  path: string,
-  sha: string,
-}
-
 export interface SheetSettings {
   katexMacros?: string
 }
@@ -44,34 +37,10 @@ export interface SheetFile {
   cellsOrder: Array<number>,
 }
 
-interface CommitInfo {
-  id: number,
-  message: string,
-  json: string,
-}
-
-export type SheetState = 'loaded' | 'not_loaded' | 'load_error' | 'save_error' | 'update_detected';
 export type DeleteRequest = 'cell' | 'comment';
 type CellDeletePayload = { cellId: number, cellIndex: number };
 type CommentDeletePayload = { cellId: number, commentId: number };
 export type DeletePayload = CellDeletePayload | CommentDeletePayload;
-
-export interface SheetSliceData {
-  state: SheetState,
-  sheetFile: SheetFile,
-  cellIdCounter: number,
-  commitIdCounter: number,
-  commitQueue: Array<CommitInfo>,
-  resumeCommitter?: boolean,
-  queueHead?: CommitInfo
-  fileInfo?: FileInfo,
-
-  deleteRequest?: DeleteRequest,
-  deletePayload?: DeletePayload,
-
-  errorCode?: number,
-  error?: string
-}
 
 export const emptySheet: SheetFile = {
   versionNumber: 1,
@@ -79,82 +48,81 @@ export const emptySheet: SheetFile = {
   cellsOrder: [],
 };
 
-const initialState: SheetSliceData = {
+export interface LocalState {
+  sheetId: string,
+  cellIdCounter: number,
+  deleteRequest?: DeleteRequest,
+  deletePayload?: DeletePayload,
+}
+
+export type SheetState = 'not_loaded' | 'loading' | 'loaded' | 'load_error';
+
+export interface SheetSlice {
+  state: SheetState,
+  errorMessage?: string, 
+  sheetFile: SheetFile,
+  localState: LocalState,
+}
+
+const initialState: SheetSlice = {
   state: 'not_loaded',
-  cellIdCounter: 0,
-  commitIdCounter: 0,
-  commitQueue: [],
   sheetFile: emptySheet,
+  localState: { cellIdCounter: 0, sheetId: 'initial' },
 }
 
 export const sheetSlice = createSlice({
   name: 'sheet',
   initialState,
   reducers: {
-    loadSheet: (state, action: PayloadAction<{ json: string, fileInfo: FileInfo }>) => {
-      const { json, fileInfo } = action.payload;
+    setErrorMessage: (state, action: PayloadAction<{message: string | undefined, newState: SheetState | undefined}>) => {
+      const { message, newState } = action.payload;
+      state.errorMessage = message;
+      if (newState !== undefined) {
+        state.state = newState;
+      }
+    },
+    initFromJson: (state, action: PayloadAction<{ json: string, sheetId: string }>) => {
+      const { json, sheetId } = action.payload;
+
+      state.sheetFile = emptySheet;
+      state.localState = { sheetId, cellIdCounter: 0 }
+
       let sheetFile = null;
       try {
         sheetFile = JSON.parse(json);
       } catch (e) {
         const syntaxErr = e as SyntaxError
-        state.state = "load_error"
-        state.error = `Súbor zošita je poškodený. (${syntaxErr.message})`
+        state.state = "load_error";
+        state.errorMessage = `JSON parse failed: ${syntaxErr.message}`;
       }
       if (sheetFile) {
         const { passed, error } = testSheetIntegrity(sheetFile);
         if (!passed) {
           state.state = "load_error"
-          state.error = `Súbor zošita je poškodený. (${error})`;
+          state.errorMessage = `JSON file does not contain propper workbook: ${error}`;
         } else {
-          state.fileInfo = fileInfo;
+          const { localState } = state;
+          const sf = sheetFile as SheetFile
+
           // initialize cellIdCounter with max cell id + 1
-          state.cellIdCounter = Object.entries((sheetFile as SheetFile).cells).map(e => e[1].id).reduce((prev, cur) => Math.max(prev, cur), 0) + 1
+          localState.cellIdCounter = Object.entries(sf.cells).map(e => e[1].id).reduce((prev, cur) => Math.max(prev, cur), 0) + 1
+
+          // set all cells to closed
+          for (let id in sf.cells) {
+            sf.cells[id].isEdited = false;
+          }
+
           state.sheetFile = sheetFile;
           state.state = 'loaded';
         }
       }
-    },
-    clearSheet: (state) => {
-      state = initialState;
-    },
-    dequeueCommit: (state, action: PayloadAction<{ id: number, updateSha: string }>) => {
-      const { id, updateSha } = action.payload;
-      if (state.commitQueue.length !== 0) {
-        if (state.commitQueue[0].id === id) {
-          state.commitQueue.shift();
-          state.fileInfo && (state.fileInfo.sha = updateSha);
-          if (state.commitQueue.length !== 0) {
-            state.queueHead = state.commitQueue[0];
-          } else {
-            state.queueHead = undefined;
-          }
-        } else {
-          console.log('dequeueCommit: head contains different commit id');
-        }
-      } else {
-        console.log('Commit queue is empty, cannot call dequeueCommit');
-      }
-    },
-    saveError: (state, action: PayloadAction<{ errorCode: number, errorMsg: string }>) => {
-      const { errorCode, errorMsg } = action.payload;
-      state.state = 'save_error';
-      state.errorCode = errorCode;
-      state.error = errorMsg;
-    },
-    resumeCommitter: (state) => {
-      state.resumeCommitter = true;
-    },
-    resumeCommitterAck: (state) => {
-      state.state = 'loaded';
-      state.resumeCommitter = undefined;
     },
     insertCell: (state, action: PayloadAction<{ afterIndex: number, type: string, data: string }>) => {
       const { afterIndex, type, data } = action.payload;
       const { sheetFile } = state;
       if (afterIndex >= -2 && afterIndex < sheetFile.cellsOrder.length) {
         const cell: Cell = {
-          id: state.cellIdCounter,
+          id: state.localState.cellIdCounter,
           type, data,
           idCounter: 0,
           comments: commentsAdapter.getInitialState(),
@@ -167,8 +135,8 @@ export const sheetSlice = createSlice({
         } else {
           sheetFile.cellsOrder.splice(action.payload.afterIndex + 1, 0, cell.id);
         }
-        state.cellIdCounter += 1;
-        enqueUpdate(state, `Created new cell of type '${type}'`)
+        state.localState.cellIdCounter += 1;
+        updateHistory(action, `Created new cell of type '${type}'`)
       } else {
         console.log('Invalid afterIndex parameters for insertCell action. ' + action.payload);
       }
@@ -180,7 +148,7 @@ export const sheetSlice = createSlice({
         sheetFile.cells[cellId].data = data;
         console.log(`updating cell ${cellId} data`)
         //console.log(data);
-        enqueUpdate(state, `Updated cell ${cellId}`)
+        updateHistory(action, `Updated cell ${cellId}`)
       } else {
         console.log('Invalid cellId parameters for updateCellData action. ' + action.payload);
       }
@@ -194,7 +162,7 @@ export const sheetSlice = createSlice({
           author, text, timestamp: new Date().getTime(), id: cell.idCounter++
         }
         commentsAdapter.addOne(cell.comments, comment);
-        enqueUpdate(state, `Added comment to cell ${cellId}`);
+        updateHistory(action, `Added comment to cell ${cellId}`);
       } else {
         console.log('Invalid cellId parameters for addCellComment action. ' + action.payload);
       }
@@ -205,8 +173,8 @@ export const sheetSlice = createSlice({
       if (sheetFile.cells[cellId] !== undefined) {
         const cell = sheetFile.cells[cellId];
 
-        commentsAdapter.updateOne(cell.comments, {id: commentId, changes: {text, timestamp: new Date().getTime()}})
-        enqueUpdate(state, `Updated comment ${commentId} in cell ${cellId}`);
+        commentsAdapter.updateOne(cell.comments, { id: commentId, changes: { text, timestamp: new Date().getTime() } })
+        updateHistory(action, `Updated comment ${commentId} in cell ${cellId}`);
       } else {
         console.log('Invalid cellId parameters for updateCellComment action. ' + action.payload);
       }
@@ -218,7 +186,7 @@ export const sheetSlice = createSlice({
         const cellId = sheetFile.cellsOrder[cellIndex];
         sheetFile.cellsOrder.splice(cellIndex, 1);
         sheetFile.cellsOrder.splice(cellIndex - 1, 0, cellId);
-        enqueUpdate(state, `Moved up cell ${cellId}`);
+        updateHistory(action, `Moved up cell ${cellId}`);
       } else {
         console.log('Invalid cellIndex parameters for moveUpCell action. ' + action.payload);
       }
@@ -230,7 +198,7 @@ export const sheetSlice = createSlice({
         const cellId = sheetFile.cellsOrder[cellIndex];
         sheetFile.cellsOrder.splice(cellIndex, 1);
         sheetFile.cellsOrder.splice(cellIndex + 1, 0, cellId)
-        enqueUpdate(state, `Moved down cell ${cellId}`)
+        updateHistory(action, `Moved down cell ${cellId}`)
       } else {
         console.log('Invalid cellIndex parameters for moveDownCell action. ' + action.payload);
       }
@@ -244,21 +212,23 @@ export const sheetSlice = createSlice({
       }
     },
     deleteRequest: (state, action: PayloadAction<{ request: DeleteRequest, payload: DeletePayload } | undefined>) => {
+      const { localState } = state;
       if (action.payload === undefined) {
-        state.deleteRequest = state.deletePayload = undefined;
+        localState.deleteRequest = localState.deletePayload = undefined;
       } else {
         const { request, payload } = action.payload;
         if (!isCellDeletePayload(request, payload) && !isCommentDeletePayload(request, payload)) {
           console.log(`Invalid deletion request or payload. ( ${JSON.stringify(action.payload)} )`)
         } else {
-          state.deleteRequest = request;
-          state.deletePayload = payload;
+          localState.deleteRequest = request;
+          localState.deletePayload = payload;
         }
       }
     },
-    confirmDeletion: (state) => {
-      const request = state.deleteRequest;
-      const payload = state.deletePayload;
+    confirmDeletion: (state, action: AnyAction) => {
+      const { localState } = state;
+      const request = localState.deleteRequest;
+      const payload = localState.deletePayload;
 
       if (request === 'cell') {
         if (isCellDeletePayload(request, payload)) {
@@ -268,8 +238,8 @@ export const sheetSlice = createSlice({
           if (cellIndex >= 0 && cellIndex < sheetFile.cellsOrder.length && sheetFile.cells[cellId] !== undefined) {
             delete sheetFile.cells[cellId];
             sheetFile.cellsOrder.splice(cellIndex, 1);
-            state.deleteRequest = state.deletePayload = undefined;
-            enqueUpdate(state, `Removed cell ${cellId}`);
+            localState.deleteRequest = localState.deletePayload = undefined;
+            updateHistory(action, `Removed cell ${cellId}`);
           } else {
             console.log(`Invalid payload values for cell deletion. (payload: ${payload})`);
           }
@@ -284,8 +254,8 @@ export const sheetSlice = createSlice({
           if (sheetFile.cells[cellId] !== undefined) {
             const cell = sheetFile.cells[cellId];
             commentsAdapter.removeOne(cell.comments, commentId);
-            state.deleteRequest = state.deletePayload = undefined;
-            enqueUpdate(state, `Removed comment of cell ${cellId}`);
+            localState.deleteRequest = localState.deletePayload = undefined;
+            updateHistory(action, `Removed comment of cell ${cellId}`);
           } else {
             console.log(`Invalid cellId parameter for comment deletion. (payload: ${payload})`);
           }
@@ -293,15 +263,23 @@ export const sheetSlice = createSlice({
           console.log(`Invalid payload for comment deletion request (payload: ${payload})`)
         }
       } else {
-        console.log(`Invalid deletion confirmation (deleteRequest: ${state.deleteRequest})`);
+        console.log(`Invalid deletion confirmation (deleteRequest: ${localState.deleteRequest})`);
       }
     },
     updateSettings: (state, action: PayloadAction<SheetSettings | undefined>) => {
       state.sheetFile.settings = action.payload
-      enqueUpdate(state, 'Updated sheet settings');
+      updateHistory(action, 'Updated sheet settings');
     }
   }
 });
+
+function updateHistory(action: AnyAction, message: string) {
+  if ('historyChanged' in action) {
+    (action as unknown as {historyChanged: (msg: string) => void}).historyChanged(message);
+  } else {
+    console.error('Storage middleware not applied');
+  }
+}
 
 function isCellDeletePayload(request: DeleteRequest, payload: any): payload is CellDeletePayload {
   const p = payload as CellDeletePayload;
@@ -311,78 +289,6 @@ function isCellDeletePayload(request: DeleteRequest, payload: any): payload is C
 function isCommentDeletePayload(request: DeleteRequest, payload: any): payload is CommentDeletePayload {
   const p = payload as CommentDeletePayload;
   return request === 'comment' && p.cellId !== undefined && p.commentId !== undefined;
-}
-
-function enqueUpdate(data: SheetSliceData, message: string) {
-  const commit = { id: data.commitIdCounter++, message, json: JSON.stringify(data.sheetFile, null, 2) };
-  data.commitQueue.push(commit);
-  if (data.commitQueue.length === 1) {
-    data.queueHead = commit;
-  }
-}
-
-function testSheetIntegrity(sheet: SheetFile): { passed: boolean, error?: string } {
-  let error = undefined;
-
-  /* test keys and types of sheet object */
-  const reqKeys: { [key: string]: string } = {
-    'cells': 'object',
-    'cellsOrder': 'object',
-  }
-  /* optional keys */
-  const optKeys: { [key: string]: string } = {
-    /* now unused --> */
-    'idCounter': 'number',
-    'editedCellId': 'number',
-    'firstCellId': 'number',
-    'lastCellId': 'number',
-    /* <-- */
-    'versionNumber': 'number',
-    'settings': 'object',
-  }
-
-  /* check for presence of required keys */
-  for (const [key] of Object.entries(reqKeys)) {
-    if (!(key in sheet)) {
-      error = `Chýba kľúč '${key}'`;
-      break;
-    }
-  }
-  if (error) return { passed: false, error };
-
-  for (const [key, value] of Object.entries(sheet)) {
-    const keyType = key in reqKeys ? 'REQUIRED' : (key in optKeys ? 'OPTIONAL' : 'UNKNOWN')
-    if (keyType === 'REQUIRED' || keyType === 'OPTIONAL') {
-      const expectedType = keyType === 'REQUIRED' ? reqKeys[key] : optKeys[key]
-      if (typeof value !== expectedType) {
-        error = `Kľúč '${key}' je nesprávneho typu`;
-        break;
-      }
-    } else {
-      error = `Neznámi Kľúč '${key}'`;
-      break;
-    }
-  }
-  if (error) return { passed: false, error };
-
-  /* TODO? Cell and CellComment keys test */
-
-  /* cellsOrder has no duplicates */
-  if (new Set(sheet.cellsOrder).size !== sheet.cellsOrder.length) {
-    error = 'Poradie buniek obsahuje duplicitné hodnoty';
-  }
-  if (error) return { passed: false, error };
-
-  /* cellsOrder contains only existing cell ids */
-  for (const id of sheet.cellsOrder) {
-    if (!(id in sheet.cells)) {
-      error = 'Poradie buniek obsahuje neexistujúce id';
-      break;
-    }
-  }
-  if (error) return { passed: false, error };
-
-  return { passed: true }
 }
 
 const addCellComment = function (payload: { cellId: number, text: string }) {
@@ -407,7 +313,7 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
         const comment = commentsAdapter.getSelectors().selectById(cell.comments, commentId);
         if (comment) {
           if (comment.author === user) {
-            dispatch(sheetSlice.actions.deleteRequest({request: 'comment', payload: { cellId, commentId }}));
+            dispatch(sheetSlice.actions.deleteRequest({ request: 'comment', payload: { cellId, commentId } }));
           } else {
             console.log('You can delete only your own comments. ' + payload);
           }
@@ -430,12 +336,8 @@ export const sheetActions = { ...sheetSlice.actions, addCellComment, remmoveCell
 /* Selectors */
 export const sheetSelectors = {
   state: (state: RootState) => state.sheet.state,
-  error: (state: RootState) => state.sheet.error,
-  errorCode: (state: RootState) => state.sheet.errorCode,
-  commitQueueHead: (state: RootState) => state.sheet.queueHead,
-  commitQueue: (state: RootState) => state.sheet.commitQueue,
-  resumeCommitter: (state: RootState) => state.sheet.resumeCommitter,
-  fileInfo: (state: RootState) => state.sheet.fileInfo,
+  sheetId: (state: RootState) => state.sheet.localState.sheetId,
+  error: (state: RootState) => state.sheet.errorMessage,
   cellsOrder: (state: RootState) => state.sheet.sheetFile.cellsOrder,
   cells: (state: RootState) => state.sheet.sheetFile.cells,
   cell: (cellId: number) => { return (state: RootState) => state.sheet.sheetFile.cells[cellId] },
@@ -443,7 +345,7 @@ export const sheetSelectors = {
   firstCellId: (state: RootState) => state.sheet.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.sheetFile.cellsOrder[0],
   lastCellId: (state: RootState) => state.sheet.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.sheetFile.cellsOrder[state.sheet.sheetFile.cellsOrder.length - 1],
   cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.sheetFile.cells[cellId].comments) },
-  deleteRequest: (state: RootState) => state.sheet.deleteRequest,
+  deleteRequest: (state: RootState) => state.sheet.localState.deleteRequest,
 }
 
 export default sheetSlice.reducer;

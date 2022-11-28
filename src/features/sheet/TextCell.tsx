@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import styles from './TextCell.module.css'
 import CodeMirror from '@uiw/react-codemirror';
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import { markdown } from '@codemirror/lang-markdown';
 import FormattedTextRenderer from "../../components/FormattedTextRenderer";
 

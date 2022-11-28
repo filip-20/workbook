@@ -7,6 +7,7 @@ import { useReposListForAuthenticatedUserQuery } from "../../api/githubApi/endpo
 import { displayLoadable } from "./displayLoadable";
 import { useSearchReposQuery } from "../../api/githubApi/endpoints/search";
 import { BsSlashCircle } from "react-icons/bs";
+import githubApiParseLastPage from "../../api/githubApi/lastPage";
 
 export interface RepoListProps {
   itemsPerPage: number,
@@ -28,27 +29,6 @@ function RepoList(props: RepoListProps) {
   const q = useSearchReposQuery({ q: (`${query} user:${props.user}`) }, { skip: query === undefined })
   const paginationInfo2 = useSearchReposHeadersQuery({ q: (`${query} user:${props.user}`) }, { skip: query === undefined });
   console.log('repo list render');
-  const parseLastPage = (link?: string) => {
-    let lastPage: number | null = null;
-    if (link) {
-      link.split(', ').forEach(item => {
-        const parts = item.split('; ');
-        if (parts[1] === 'rel="last"') {
-          const match = parts[0].match(/.*[?&]+page=([0-9]+)/)
-          /* was positive integer parsed? */
-          if (match && match[1] !== undefined && /^\d+$/.test(match[1])) {
-            lastPage = parseInt(match[1]);
-          }
-        }
-      })
-    }
-    if (!lastPage) {
-      return 1
-    } else {
-      return lastPage;
-    }
-  }
-
   const lastPage = useRef<number | undefined>(undefined);
 
   const renderListItem = (item: RepoInfo) => {
@@ -75,7 +55,7 @@ function RepoList(props: RepoListProps) {
     }
   }
   const renderPagination = (data: { link?: string }) => {
-    lastPage.current = parseLastPage(data.link);
+    lastPage.current = githubApiParseLastPage(data.link);
     return lastPage.current !== 1 ? <Paginate makePageLink={props.makePageLink} pageCount={lastPage.current} currentPage={page || 1} /> : <></>
   }
 

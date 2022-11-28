@@ -1,8 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
-import sheetReducer from '../features/sheet/sheetSlice';
+import sheetReducer from '../features/sheet/slice/sheetSlice';
 import { githubApi } from '../api/githubApi/endpoints/repos';
 import authReducer from '../features/auth/authSlice';
+import storageReducer from '../features/sheetStorage/sheetStorage';
 import { setupListeners } from '@reduxjs/toolkit/dist/query';
+import { storageMiddleware } from './storageMiddleware';
 
 //const jsonState = localStorage.getItem('reduxState')
 //const preloadedState = jsonState === null ? undefined : {sheet: JSON.parse(jsonState)}
@@ -11,9 +13,10 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     sheet: sheetReducer,
+    sheetStorage: storageReducer,
     [githubApi.reducerPath]: githubApi.reducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(githubApi.middleware),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(githubApi.middleware, storageMiddleware),
   /*preloadedState*/
 });
 

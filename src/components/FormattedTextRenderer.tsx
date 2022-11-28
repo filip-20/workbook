@@ -16,18 +16,14 @@ export interface FormattedTextRendererProps {
 
 export default function FormattedTextRenderer(props: FormattedTextRendererProps) {
   const { className, text, katexMacros } = props;
-
-  const rehypeSanitizeOptions = {
+  
+  let rehypeSanitizeOptions = {
     ...defaultSchema,
     attributes: {
       ...defaultSchema.attributes,
-      div: [
-        ...(defaultSchema.attributes?.div || []),
-        ['className', 'math', 'math-display']
-      ],
-      span: [
-        ...(defaultSchema.attributes?.span || []),
-        ['className', 'math', 'math-inline']
+      '*': [
+        ...(defaultSchema.attributes !== undefined ? defaultSchema.attributes['*'] || [] : []),
+        'className'
       ]
     }
   }

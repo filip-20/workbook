@@ -2,7 +2,7 @@ import { Button, ButtonGroup, ButtonToolbar } from "react-bootstrap";
 import { BiCheck, BiComment, BiEdit, BiExitFullscreen, BiFullscreen, BiLock, BiTrash } from "react-icons/bi";
 import { ArrowDown, ArrowUp } from "react-bootstrap-icons";
 import { useEffect, useState } from "react";
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 
 export interface EditToolbarProps {

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
 import AppCell from './AppCell';
@@ -24,6 +24,7 @@ export default function CellContainer(props: CellContainerProps) {
 
   const dispatch = useAppDispatch();
   const cell = useAppSelector(sheetSelectors.cell(cellId));
+  const sheetId = useAppSelector(sheetSelectors.sheetId);
   const { isEdited, type } = cell;
 
   const [addComment, setAddComment] = useState(false);
@@ -45,9 +46,9 @@ export default function CellContainer(props: CellContainerProps) {
 
   const createCell = (id: number, type: string) => {
     if (type === 'text') {
-      return (<TextCell katexMacros={katexMacros} cellId={id} />)
+      return (<TextCell key={sheetId} katexMacros={katexMacros} cellId={id} />)
     } else {
-      return (<AppCell cellId={id} />)
+      return (<AppCell key={sheetId} cellId={id} />)
     }
   }
 

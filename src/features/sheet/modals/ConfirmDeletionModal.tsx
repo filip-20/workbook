@@ -1,13 +1,16 @@
 import { Button, Modal } from "react-bootstrap";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
+import { sheetActions, sheetSelectors } from "../slice/sheetSlice";
 
 export default function ConfirmDeletionModal() {
   const request = useAppSelector(sheetSelectors.deleteRequest);
   const dispatch = useAppDispatch();
 
   return (
-    <Modal show={request !== undefined} onHide={() => dispatch(sheetActions.deleteRequest(undefined))}>
+    <Modal
+      show={request !== undefined}
+      onHide={() => dispatch(sheetActions.deleteRequest(undefined))}
+    >
       <Modal.Header closeButton>
         <Modal.Title>
           {request === 'cell' && <>Zmazanie bunky</>}
