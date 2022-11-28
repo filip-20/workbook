@@ -5,7 +5,7 @@ import ErrBox from "../../../components/ErrBox";
 import Loading from "../../../components/Loading";
 import { IoMdGitMerge } from "react-icons/io";
 import { storageActions } from "../sheetStorage";
-import { ghStorageSelectors } from "./githubStorage";
+import { GhMergeError, ghStorageSelectors } from "./githubStorage";
 import { useEffect, useState } from "react";
 
 export interface MergeSheetModalProps {
@@ -15,79 +15,63 @@ export interface MergeSheetModalProps {
 
 export default function MergeSheetModal(props: MergeSheetModalProps) {
   const ghState = useAppSelector(ghStorageSelectors.ghState);
-  const dispatch = useAppDispatch();
-/*
-  const compareArgs = (() => {
-    if (ghState === undefined || ghState.sessionBranch === undefined) {
-      return {owner: '', repo: '', basehead: ''};
-    }
-    return {
-      owner: ghState.location.owner,
-      repo: ghState.location.repo,
-      basehead: `${ghState.baseBranch.name}...${ghState.sessionBranch}`,
-    }
-  })();
-  const compare = useReposCompareCommitsQuery(compareArgs, { skip: ghState === undefined });
-
-  const [unmergedChanges, setUnmergedChanges] = useState(false);
-
-  useEffect(() => setUnmergedChanges((compare.data?.ahead_by || 0) > 0), [compare.data?.ahead_by])
-  useEffect(() => {
-    console.log('refetching compare');
-    compare.refetch();
-  }, [props.show])
-*/
-
-  const [ closed, setClosed ] = useState(false);
+  const [closed, setClosed] = useState(false);
   useEffect(() => {
     setClosed(false);
-  }, [ghState?.mergeState?.state])
+  }, [ghState?.mergeState])
 
   if (ghState === undefined) {
     return <></>
   }
 
-  const {state, errorAdditional, errorMessage, url} = ghState.mergeState;
-  /*
-  const showCompare = (data: ReposCompareCommitsApiResponse) => {
-    return (
-      <>
-        <p>Počet neuložených zmien v hárku: {data.ahead_by}</p>
-        <p>Počet zmien v hlavnej vetve: {data.behind_by}</p>
-      </>
-    )
-  }*/
+  const state = ghState.mergeState;
+  const { mergeError } = ghState;
 
   const handleClose = () => {
     setClosed(true);
   }
 
+  const renderError = (error: GhMergeError | undefined) => {
+    if (error === undefined) {
+      return <></>
+    }
+    if (error.type === 'api_call_failed') {
+      return (
+        <>
+          <p>Api call{error.call !== undefined && `' ${error.call}'`} to github failed: {error.message}. Try it again.</p>
+        </>
+      )
+    }
+    if (error.type === 'not_mergable') {
+      return (
+        <>
+          <p>Changes are <strong>not mergable</strong> to origin branch. This may be because manual changes to workbook file were made in origin branch.</p>
+          <p>To fix this problem you need resolve conflicts manually on github{error.url === undefined ? '. ' : <> at <a href={error.url}>{error.url}</a></>} </p>
+        </>
+      )
+    }
+    return (<p>Unknown error</p>)
+  }
+
   return (
-    <Modal show={state === 'error' && !closed} onHide={handleClose}>
+    <Modal
+      show={state === 'error' && !closed}
+      onHide={handleClose}
+      size="lg"
+      centered
+    >
       <Modal.Header closeButton>
-        <Modal.Title>Zlúčenie zmien do hlavnej vetvy</Modal.Title>
+        <Modal.Title>Merging changes <strong>failed</strong></Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {/*displayLoadable(compare, <Loading />, showCompare, <ErrBox>Api volanie zlyhalo</ErrBox>)*/}
-        {errorMessage !== undefined &&
-          <ErrBox>
-            <>
-              {errorMessage} ({errorAdditional})
-              {url !== undefined && <p>Skontrolujte pull request na stránke githubu: <a href={url}>{url}</a></p> }
-            </>
-          </ErrBox>
-        }
+        <p className="text-danger">Merging from branch <strong>{ghState.sessionBranch?.name}</strong> to <strong>{ghState.baseBranch}</strong> failed.</p>
+        {renderError(mergeError)}
       </Modal.Body>
 
       <Modal.Footer>
         <Button variant="secondary" onClick={handleClose}>
           Close
         </Button>
-        {/*
-        <Button variant="primary" onClick={() => dispatch(storageActions.saveChanges())}>
-          <IoMdGitMerge /> Merge changes
-          {state === 'merging' && <Loading compact />}
-      </Button>*/}
       </Modal.Footer>
     </Modal>
   )

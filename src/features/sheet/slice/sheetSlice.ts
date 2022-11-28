@@ -37,7 +37,6 @@ export interface SheetFile {
   cellsOrder: Array<number>,
 }
 
-export type _SheetState = 'loaded' | 'not_loaded' | 'loading' | 'load_error' | 'save_error' | 'update_detected';
 export type DeleteRequest = 'cell' | 'comment';
 type CellDeletePayload = { cellId: number, cellIndex: number };
 type CommentDeletePayload = { cellId: number, commentId: number };
@@ -50,6 +49,7 @@ export const emptySheet: SheetFile = {
 };
 
 export interface LocalState {
+  sheetId: string,
   cellIdCounter: number,
   deleteRequest?: DeleteRequest,
   deletePayload?: DeletePayload,
@@ -67,7 +67,7 @@ export interface SheetSlice {
 const initialState: SheetSlice = {
   state: 'not_loaded',
   sheetFile: emptySheet,
-  localState: { cellIdCounter: 0 },
+  localState: { cellIdCounter: 0, sheetId: 'initial' },
 }
 
 export const sheetSlice = createSlice({
@@ -81,11 +81,11 @@ export const sheetSlice = createSlice({
         state.state = newState;
       }
     },
-    initFromJson: (state, action: PayloadAction<{ json: string }>) => {
-      const { json } = action.payload;
+    initFromJson: (state, action: PayloadAction<{ json: string, sheetId: string }>) => {
+      const { json, sheetId } = action.payload;
 
-      // TODO clear state
-      //state = {...initialState};
+      state.sheetFile = emptySheet;
+      state.localState = { sheetId, cellIdCounter: 0 }
 
       let sheetFile = null;
       try {
@@ -336,6 +336,7 @@ export const sheetActions = { ...sheetSlice.actions, addCellComment, remmoveCell
 /* Selectors */
 export const sheetSelectors = {
   state: (state: RootState) => state.sheet.state,
+  sheetId: (state: RootState) => state.sheet.localState.sheetId,
   error: (state: RootState) => state.sheet.errorMessage,
   cellsOrder: (state: RootState) => state.sheet.sheetFile.cellsOrder,
   cells: (state: RootState) => state.sheet.sheetFile.cells,

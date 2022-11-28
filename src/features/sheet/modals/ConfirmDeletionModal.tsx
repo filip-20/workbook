@@ -7,7 +7,10 @@ export default function ConfirmDeletionModal() {
   const dispatch = useAppDispatch();
 
   return (
-    <Modal show={request !== undefined} onHide={() => dispatch(sheetActions.deleteRequest(undefined))}>
+    <Modal
+      show={request !== undefined}
+      onHide={() => dispatch(sheetActions.deleteRequest(undefined))}
+    >
       <Modal.Header closeButton>
         <Modal.Title>
           {request === 'cell' && <>Zmazanie bunky</>}

@@ -15,7 +15,7 @@ export default function MergeButton() {
     return <></>
   }
 
-  const {state} = ghState.mergeState;
+  const state = ghState.mergeState;
   const variant = (() => {
     switch (state) {
       case 'error':

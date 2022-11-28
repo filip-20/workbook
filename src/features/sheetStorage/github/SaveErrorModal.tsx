@@ -1,16 +1,25 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button, Modal } from "react-bootstrap";
-import { BiDownload, BiRefresh } from "react-icons/bi";
+import { BiDownload, BiRefresh, BiTrash } from "react-icons/bi";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
+import { githubApi as gitDbApi } from '../../../api/githubApi/endpoints/git'
 import { parseFilepath } from "../../../pages/RepoPage";
 import { storageActions, storageSelectors } from "../sheetStorage";
-import { GhSaveError, ghStorageSelectors } from "./githubStorage";
+import { ghClearSessionBranch, GhSaveError, ghStorageSelectors } from "./githubStorage";
+import Loading from "../../../components/Loading";
+import { githubApiErrorMessage } from "../../../api/githubApi/errorMessage";
+import ErrBox from "../../../components/ErrBox";
 
 export default function SaveErrorModal() {
   const queue = useAppSelector(storageSelectors.queue);
   const ghState = useAppSelector(ghStorageSelectors.ghState);
 
+  const [deleteRefState, setDeleteRefState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [deleteRefError, setDeleteRefError] = useState<string | undefined>(undefined);
+
   const dispatch = useAppDispatch();
+
+  //const [deleteRef, deleteRefResult] = useGitDeleteRefMutation()
 
   let fileName: string | undefined = undefined;
   if (ghState !== undefined) {
@@ -45,14 +54,26 @@ export default function SaveErrorModal() {
     return <></>
   }
 
+  const deleteOldSession = async () => {
+    setDeleteRefState('loading');
+    const { owner, repo } = ghState.location;
+    const ref = ghState.sessionBranch!.name;
+    const r = await dispatch(gitDbApi.endpoints.gitDeleteRef.initiate({ owner, repo, ref: `heads/${ref}` }));
+    console.log('delete ref response: ', r);
+    if ('data' in r) {
+      dispatch(ghClearSessionBranch());
+      dispatch(storageActions.resume());
+    } else {
+      setDeleteRefState('error');
+      setDeleteRefError(githubApiErrorMessage(r.error));
+    }
+    setDeleteRefState('success');
+    setDeleteRefError(undefined);
+  }
+
   const type = ghState.saveError?.type;
   const unknownError = (saveError: GhSaveError) => (
     <>
-      <Modal.Header>
-        <Modal.Title id="contained-modal-title-vcenter">
-          Zmeny hárku sa nepodarilo uložiť
-        </Modal.Title>
-      </Modal.Header>
       <Modal.Body>
         <p>Pri ukladaní zmien nastala <strong>neočakávaná chyba</strong>: ${saveError.message}.</p>
         <p>
@@ -71,13 +92,35 @@ export default function SaveErrorModal() {
       </Modal.Footer>
     </>
   )
+  const mergedSessionError = (saveError: GhSaveError) => (
+    <>
+      <Modal.Body>
+        <p>
+          Aktuálna vetva sedenia {ghState.sessionBranch?.name} bola zlúčená do pôvodnej vetvy. Pred uložením vykonaných zmien je potrebné starú vetvu sedenia zmazať.
+        </p>
+        <p className="text-danger">Pokým nezmažete starú vetvu sedenia, automatické ukladanie bude <strong>pozastavené</strong>.</p>
+        <p>Zmeny vykonané v starej vetve sedenia sú uložené vo vetve <strong>{ghState.baseBranch}</strong>.</p>
+        <p>Čo chcete urobiť?</p>
+
+        {deleteRefError && (
+          <ErrBox><>Operácia zlyhala: {deleteRefError}</></ErrBox>
+        )}
+
+      </Modal.Body>
+      <Modal.Footer>
+        <div className="mx-auto">
+          {json !== undefined && <Button className="mx-2" variant="success" onClick={() => download(json)}><BiDownload /> Stiahnuť hárok</Button>}
+          <Button className="mx-2" variant="warning" onClick={deleteOldSession}>
+            <BiTrash />
+            Zmazať starú vetvu
+            {deleteRefState === 'loading' && <Loading compact />}
+          </Button>
+        </div>
+      </Modal.Footer>
+    </>
+  )
   const backgroundUpdateError = (saveError: GhSaveError) => (
     <>
-      <Modal.Header>
-        <Modal.Title id="contained-modal-title-vcenter">
-          Zmeny hárku sa <strong>nepodarilo</strong> uložiť
-        </Modal.Title>
-      </Modal.Header>
       <Modal.Body>
         <p>
           Zdá sa že súbor hárku bol aktualizovaný na pozadí.
@@ -104,7 +147,14 @@ export default function SaveErrorModal() {
     /*onHide={() => setClosed(true)}*/
     /*centered*/
     >
+      <Modal.Header>
+        <Modal.Title id="contained-modal-title-vcenter">
+          Zmeny hárku sa <strong>nepodarilo</strong> uložiť
+        </Modal.Title>
+      </Modal.Header>
+
       {type === 'background_update' && backgroundUpdateError(ghState.saveError!)}
+      {type === 'merged_session' && mergedSessionError(ghState.saveError!)}
       {type === 'unknown_error' && unknownError(ghState.saveError!)}
     </Modal>
   )
