@@ -42,6 +42,7 @@ const injectedRtkApi = api.injectEndpoints({
         method: "POST",
         body: queryArg.body,
       }),
+      invalidatesTags: ['Pulls']
     }),
     pullsListReviewCommentsForRepo: build.query<
       PullsListReviewCommentsForRepoApiResponse,
@@ -164,7 +165,7 @@ const injectedRtkApi = api.injectEndpoints({
         method: "PUT",
         body: queryArg.body,
       }),
-      invalidatesTags: ['Files'],  // workbook file changes after merge 
+      invalidatesTags: ['Files', 'Pulls'],  // workbook file changes after merge 
     }),
     pullsListRequestedReviewers: build.query<
       PullsListRequestedReviewersApiResponse,

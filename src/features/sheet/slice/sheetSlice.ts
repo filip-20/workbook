@@ -81,6 +81,9 @@ export const sheetSlice = createSlice({
         state.state = newState;
       }
     },
+    startLoading: (state) => {
+      state.state = 'loading';
+    },
     initFromJson: (state, action: PayloadAction<{ json: string, sheetId: string }>) => {
       const { json, sheetId } = action.payload;
 
