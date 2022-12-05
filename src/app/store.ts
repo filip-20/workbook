@@ -29,6 +29,9 @@ store.subscribe(() => {
   //localStorage.setItem('reduxState', JSON.stringify(store.getState().sheet));
 });
 
+store.dispatch({type: window.navigator.onLine ? 'browser/online' : 'browser/offline'});
+window.addEventListener('online', () => store.dispatch({type: 'browser/online'}))
+window.addEventListener('offline', () => store.dispatch({type: 'browser/offline'}))
 
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof store.getState>;
