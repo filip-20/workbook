@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import AddToolbar from './AddToolbar';
@@ -23,7 +23,7 @@ export default function CellContainer(props: CellContainerProps) {
 
   const dispatch = useAppDispatch();
   const cell = useAppSelector(sheetSelectors.cell(cellId));
-  const sheetId = useAppSelector(sheetSelectors.sheetId);
+  let sheetId = useAppSelector(sheetSelectors.sheetId);
   const { isEdited, type } = cell;
 
   const [addComment, setAddComment] = useState(false);
@@ -42,6 +42,9 @@ export default function CellContainer(props: CellContainerProps) {
       setAddToolbarVisible(false);
     }
   }
+
+  const urIndex = useAppSelector(state => state.sheet.index);
+  sheetId = `${sheetId}${urIndex}`
 
   const createCell = (id: number, type: string) => {
     if (type === 'text') {

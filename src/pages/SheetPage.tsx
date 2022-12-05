@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {  ButtonGroup, ButtonToolbar, Container, Dropdown } from "react-bootstrap";
+import {  Button, ButtonGroup, ButtonToolbar, Container, Dropdown } from "react-bootstrap";
 import { useLocation, useParams } from "react-router-dom";
 import { MdMenuBook, MdSettings } from "react-icons/md";
 import { authSelectors } from "../features/auth/authSlice";
@@ -16,6 +16,9 @@ import { GithubFileLocation, openSheet } from "../features/sheetStorage/github/g
 import SaveIndicator from "../features/sheetStorage/SaveIndicator";
 import MergeButton from "../features/sheetStorage/github/MergeButton";
 import SaveErrorModal from "../features/sheetStorage/github/SaveErrorModal";
+import { BiRedo, BiUndo } from "react-icons/bi";
+import { ActionCreators as UndoActionCreators } from 'redux-undo'
+import UndoRedoButtonGroup from "../features/sheet/UndoRedo";
 
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
@@ -66,6 +69,7 @@ function SheetPage() {
             <div><SaveIndicator style={{ marginLeft: '1rem' }} /></div>
             <div style={{ flexGrow: '1' }}></div>
             <ButtonToolbar className="d-inline-block">
+              <UndoRedoButtonGroup />
               <ButtonGroup className="me-2">
                 <MergeButton />
               </ButtonGroup>

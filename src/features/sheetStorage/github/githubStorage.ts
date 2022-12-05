@@ -13,6 +13,7 @@ import { pathURIEncode } from "../../repository/RepoExplorer";
 import sha1 from 'sha1';
 import { Base64 } from 'js-base64';
 import { HistoryRecord, storageActions } from "../sheetStorage"
+import { ActionCreators as UndoActionCreators } from 'redux-undo'
 
 export interface GithubFileLocation {
   owner: string,
@@ -216,7 +217,6 @@ export function openSheet(location: GithubFileLocation) {
 
     // init storage engine
     dispatch(storageActions.init({ type: 'github', initialState: engineState }));
-
     if (engineState.sessionBranch !== undefined) {
       const merged = await isSessionBranchMerged()(dispatch, getState);
       console.log('isSessionBranchMerged: ', merged);
@@ -224,6 +224,8 @@ export function openSheet(location: GithubFileLocation) {
     const sheetId = sha1(JSON.stringify({storageType: 'github', location}))
     // init sheet
     dispatch(sheetActions.initFromJson({ json: content, sheetId }));
+    // reset sheet undo redo history
+    dispatch(UndoActionCreators.clearHistory())
   }
 }
 

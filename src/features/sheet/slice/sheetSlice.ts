@@ -1,4 +1,5 @@
 import { AnyAction, createEntityAdapter, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
+import undoable, { includeAction } from "redux-undo";
 import { AppDispatch, RootState } from '../../../app/store'
 import { testSheetIntegrity } from "./sheetVersions";
 
@@ -309,7 +310,7 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
   return (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
     const { cellId, commentId } = payload;
-    const cell = state.sheet.sheetFile.cells[cellId]
+    const cell = state.sheet.present.sheetFile.cells[cellId]
     if (cell !== undefined) {
       if (state.auth.user) {
         const user = state.auth.user.login;
@@ -338,17 +339,28 @@ const insertAppCell = (type: string, state: any, afterIndex: number) => sheetAct
 export const sheetActions = { ...sheetSlice.actions, addCellComment, remmoveCellComment, insertTextCell, insertAppCell };
 /* Selectors */
 export const sheetSelectors = {
-  state: (state: RootState) => state.sheet.state,
-  sheetId: (state: RootState) => state.sheet.localState.sheetId,
-  error: (state: RootState) => state.sheet.errorMessage,
-  cellsOrder: (state: RootState) => state.sheet.sheetFile.cellsOrder,
-  cells: (state: RootState) => state.sheet.sheetFile.cells,
-  cell: (cellId: number) => { return (state: RootState) => state.sheet.sheetFile.cells[cellId] },
-  sheetSettings: (state: RootState) => state.sheet.sheetFile.settings || defaultSettings,
-  firstCellId: (state: RootState) => state.sheet.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.sheetFile.cellsOrder[0],
-  lastCellId: (state: RootState) => state.sheet.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.sheetFile.cellsOrder[state.sheet.sheetFile.cellsOrder.length - 1],
-  cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.sheetFile.cells[cellId].comments) },
-  deleteRequest: (state: RootState) => state.sheet.localState.deleteRequest,
+  state: (state: RootState) => state.sheet.present.state,
+  sheetId: (state: RootState) => state.sheet.present.localState.sheetId,
+  error: (state: RootState) => state.sheet.present.errorMessage,
+  cellsOrder: (state: RootState) => state.sheet.present.sheetFile.cellsOrder,
+  cells: (state: RootState) => state.sheet.present.sheetFile.cells,
+  cell: (cellId: number) => { return (state: RootState) => state.sheet.present.sheetFile.cells[cellId] },
+  sheetSettings: (state: RootState) => state.sheet.present.sheetFile.settings || defaultSettings,
+  firstCellId: (state: RootState) => state.sheet.present.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.present.sheetFile.cellsOrder[0],
+  lastCellId: (state: RootState) => state.sheet.present.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.present.sheetFile.cellsOrder[state.sheet.present.sheetFile.cellsOrder.length - 1],
+  cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.present.sheetFile.cells[cellId].comments) },
+  deleteRequest: (state: RootState) => state.sheet.present.localState.deleteRequest,
 }
 
-export default sheetSlice.reducer;
+export default undoable(sheetSlice.reducer, {
+  filter: includeAction([
+    'sheet/insertCell',
+    'sheet/updateCellData',
+    'sheet/addCellComment',
+    'sheet/updateCellComment',
+    'sheet/moveUpCell',
+    'sheet/moveDownCell',
+    'sheet/confirmDeletion',
+    'sheet/updateSettings',
+  ])
+});
