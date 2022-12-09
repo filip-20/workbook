@@ -60,7 +60,7 @@ export type SheetState = 'not_loaded' | 'loading' | 'loaded' | 'load_error';
 
 export interface SheetSlice {
   state: SheetState,
-  errorMessage?: string, 
+  errorMessage?: string,
   sheetFile: SheetFile,
   localState: LocalState,
 }
@@ -75,7 +75,7 @@ export const sheetSlice = createSlice({
   name: 'sheet',
   initialState,
   reducers: {
-    setErrorMessage: (state, action: PayloadAction<{message: string | undefined, newState: SheetState | undefined}>) => {
+    setErrorMessage: (state, action: PayloadAction<{ message: string | undefined, newState: SheetState | undefined }>) => {
       const { message, newState } = action.payload;
       state.errorMessage = message;
       if (newState !== undefined) {
@@ -215,59 +215,32 @@ export const sheetSlice = createSlice({
         console.log('Invalid cellId parameters for setCellEdited action. ' + action.payload);
       }
     },
-    deleteRequest: (state, action: PayloadAction<{ request: DeleteRequest, payload: DeletePayload } | undefined>) => {
+    deleteCell: (state, action: PayloadAction<{ cellId: number, cellIndex: number }>) => {
       const { localState } = state;
-      if (action.payload === undefined) {
+      const { cellId, cellIndex } = action.payload;
+
+      const { sheetFile } = state;
+      if (cellIndex >= 0 && cellIndex < sheetFile.cellsOrder.length && sheetFile.cells[cellId] !== undefined) {
+        delete sheetFile.cells[cellId];
+        sheetFile.cellsOrder.splice(cellIndex, 1);
         localState.deleteRequest = localState.deletePayload = undefined;
+        updateHistory(action, `Removed cell ${cellId}`);
       } else {
-        const { request, payload } = action.payload;
-        if (!isCellDeletePayload(request, payload) && !isCommentDeletePayload(request, payload)) {
-          console.log(`Invalid deletion request or payload. ( ${JSON.stringify(action.payload)} )`)
-        } else {
-          localState.deleteRequest = request;
-          localState.deletePayload = payload;
-        }
+        console.log(`Invalid payload values for cell deletion. (payload: ${action.payload})`);
       }
     },
-    confirmDeletion: (state, action: AnyAction) => {
+    deleteComment: (state, action: PayloadAction<{ cellId: number, commentId: number }>) => {
       const { localState } = state;
-      const request = localState.deleteRequest;
-      const payload = localState.deletePayload;
+      const { cellId, commentId } = action.payload;
 
-      if (request === 'cell') {
-        if (isCellDeletePayload(request, payload)) {
-          const { cellId, cellIndex } = payload;
-
-          const { sheetFile } = state;
-          if (cellIndex >= 0 && cellIndex < sheetFile.cellsOrder.length && sheetFile.cells[cellId] !== undefined) {
-            delete sheetFile.cells[cellId];
-            sheetFile.cellsOrder.splice(cellIndex, 1);
-            localState.deleteRequest = localState.deletePayload = undefined;
-            updateHistory(action, `Removed cell ${cellId}`);
-          } else {
-            console.log(`Invalid payload values for cell deletion. (payload: ${payload})`);
-          }
-        } else {
-          console.log(`Invalid payload for cell deletion request (payload: ${payload})`)
-        }
-      } else if (request === 'comment') {
-        if (isCommentDeletePayload(request, payload)) {
-          const { cellId, commentId } = payload;
-
-          const { sheetFile } = state;
-          if (sheetFile.cells[cellId] !== undefined) {
-            const cell = sheetFile.cells[cellId];
-            commentsAdapter.removeOne(cell.comments, commentId);
-            localState.deleteRequest = localState.deletePayload = undefined;
-            updateHistory(action, `Removed comment of cell ${cellId}`);
-          } else {
-            console.log(`Invalid cellId parameter for comment deletion. (payload: ${payload})`);
-          }
-        } else {
-          console.log(`Invalid payload for comment deletion request (payload: ${payload})`)
-        }
+      const { sheetFile } = state;
+      if (sheetFile.cells[cellId] !== undefined) {
+        const cell = sheetFile.cells[cellId];
+        commentsAdapter.removeOne(cell.comments, commentId);
+        localState.deleteRequest = localState.deletePayload = undefined;
+        updateHistory(action, `Removed comment of cell ${cellId}`);
       } else {
-        console.log(`Invalid deletion confirmation (deleteRequest: ${localState.deleteRequest})`);
+        console.log(`Invalid cellId parameter for comment deletion. (payload: ${action.payload})`);
       }
     },
     updateSettings: (state, action: PayloadAction<SheetSettings | undefined>) => {
@@ -279,20 +252,10 @@ export const sheetSlice = createSlice({
 
 function updateHistory(action: AnyAction, message: string) {
   if ('historyChanged' in action) {
-    (action as unknown as {historyChanged: (msg: string) => void}).historyChanged(message);
+    (action as unknown as { historyChanged: (msg: string) => void }).historyChanged(message);
   } else {
     console.error('Storage middleware not applied');
   }
-}
-
-function isCellDeletePayload(request: DeleteRequest, payload: any): payload is CellDeletePayload {
-  const p = payload as CellDeletePayload;
-  return request === 'cell' && p.cellId !== undefined && p.cellIndex !== undefined;
-}
-
-function isCommentDeletePayload(request: DeleteRequest, payload: any): payload is CommentDeletePayload {
-  const p = payload as CommentDeletePayload;
-  return request === 'comment' && p.cellId !== undefined && p.commentId !== undefined;
 }
 
 const addCellComment = function (payload: { cellId: number, text: string }) {
@@ -317,7 +280,7 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
         const comment = commentsAdapter.getSelectors().selectById(cell.comments, commentId);
         if (comment) {
           if (comment.author === user) {
-            dispatch(sheetSlice.actions.deleteRequest({ request: 'comment', payload: { cellId, commentId } }));
+            dispatch(sheetSlice.actions.deleteComment({ cellId, commentId }));
           } else {
             console.log('You can delete only your own comments. ' + payload);
           }
@@ -360,7 +323,8 @@ export default undoable(sheetSlice.reducer, {
     'sheet/updateCellComment',
     'sheet/moveUpCell',
     'sheet/moveDownCell',
-    'sheet/confirmDeletion',
+    'sheet/deleteCell',
+    'sheet/deleteComment',
     'sheet/updateSettings',
   ])
 });

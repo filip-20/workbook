@@ -37,7 +37,7 @@ export default function EditToolbar(props: EditToolbarProps) {
         <Button className="text-nowrap" onClick={() => dispatch(sheetActions.setCellEdited({ cellId, isEdited: !isEdited }))}>
           {isEdited ? <><BiCheck /> Zamknúť</> : <><BiEdit /> Upraviť</>}
         </Button>
-        <Button title="Odstrániť bunku" onClick={() => dispatch(sheetActions.deleteRequest({request: 'cell', payload: {cellId, cellIndex}}))}><BiTrash /></Button>
+        <Button title="Odstrániť bunku" onClick={() => dispatch(sheetActions.deleteCell({cellId, cellIndex}))}><BiTrash /></Button>
         <Button title="Pridať komentár" onClick={props.onCommentClick}><BiComment /></Button>
         {showUp && <Button title="Presunúť vyššie" onClick={() => dispatch(sheetActions.moveUpCell(cellIndex))}><ArrowUp /></Button>}
         {showDown && <Button title="Presunúť nižšie" onClick={() => dispatch(sheetActions.moveDownCell(cellIndex))}><ArrowDown /></Button>}

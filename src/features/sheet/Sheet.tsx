@@ -6,7 +6,6 @@ import { sheetSelectors } from "./slice/sheetSlice";
 import { useMemo, useState } from "react";
 
 import styles from "./Sheet.module.css";
-import ConfirmDeletionModal from "./modals/ConfirmDeletionModal";
 import katex from "katex";
 
 export interface SheetProps {
@@ -44,7 +43,6 @@ export default function Sheet(props: SheetProps) {
   } else {
     return (
       <>
-        <ConfirmDeletionModal />
         {
           cellsOrder.map((cellId, index) => (
             <CellContainer key={cellId} cellId={cellId} cellIndex={index}
