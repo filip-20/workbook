@@ -48,18 +48,17 @@ export const storageMiddleware: Middleware =
     return res;
   }
 
-  const continueQueue = () => {
-    const { status, queue } = api.getState().sheetStorage;
-    if (queue.nextIndex < queue.items.length && status === 'ready') {
-      api.dispatch(processQueue())
-    }
-  }
-
   if (type === 'sheetStorage/processResult' 
       || type === 'sheetStorage/resume'
   ) {
     const res = next(action);
-    continueQueue();
+    api.dispatch(processQueue())
+    return res;
+  }
+
+  if (type === 'browser/online' || type === 'browser/offline') {
+    const res = next(action);
+    api.dispatch(processQueue());
     return res;
   }
 

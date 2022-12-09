@@ -32,6 +32,20 @@ store.subscribe(() => {
   //localStorage.setItem('reduxState', JSON.stringify(store.getState().sheet));
 });
 
+store.dispatch({ type: window.navigator.onLine ? 'browser/online' : 'browser/offline' });
+window.addEventListener('online', () => store.dispatch({ type: 'browser/online' }))
+window.addEventListener('offline', () => store.dispatch({ type: 'browser/offline' }))
+window.onbeforeunload = function (e) {
+  console.log('on unload');
+  const queue = store.getState().sheetStorage.queue;
+  const msg = 'There are unsaved changes, do you really want to leave?'
+  if (queue.items.length - queue.nextIndex > 0) {
+    if (e) {
+      e.returnValue = msg;
+    }
+    return msg;
+  }
+};
 
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof store.getState>;

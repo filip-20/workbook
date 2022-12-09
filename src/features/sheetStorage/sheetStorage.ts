@@ -4,7 +4,7 @@ import { AppDispatch, RootState } from "../../app/store";
 import { processRecord as ghProcessRecord, mergeChanges as ghSaveChanges, onResume as ghOnResume } from "./github/githubStorage";
 
 
-export type StorageStatus = 'not_initialized' | 'ready' | 'processing' | 'paused' | 'error'
+export type StorageStatus = 'not_initialized' | 'ready' | 'processing' | 'paused' | 'error' | 'offline_paused'
 
 export interface HistoryRecord {
   id: number,
@@ -24,11 +24,13 @@ export interface SheetStorage {
   status: StorageStatus,
   errorMessage?: string,
   queue: HistoryQueue,
+  online: boolean,
   storageEngine?: { type: string, state: any }
 }
 
 const initialState: SheetStorage = {
   status: 'not_initialized',
+  online: false,
   queue: {
     idCounter: 0,
     nextIndex: 0,
@@ -100,6 +102,14 @@ const storageSlice = createSlice({
     setErrorMessage: (state, action: PayloadAction<string | undefined>) => {
       state.errorMessage = action.payload;
     }
+  },
+  extraReducers: {
+    ['browser/online']: (state) => {
+      state.online = true;
+    },
+    ['browser/offline']: (state) => {
+      state.online = false;
+    }
   }
 });
 
@@ -114,7 +124,17 @@ export const storageSelectors = {
 export function processQueue() {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
-    if (state.sheetStorage.status === 'ready') {
+    if (state.sheetStorage.status === 'ready' || (state.sheetStorage.status === 'offline_paused' && state.sheetStorage.online === true)) {
+      // pause history saving when offline
+      if (state.sheetStorage.online === false) {
+        dispatch(storageActions.updateStatus('offline_paused'))
+        return ;
+      }
+      // resume history
+      if (state.sheetStorage.status === 'offline_paused' && state.sheetStorage.online === true) {
+        dispatch(storageActions.updateStatus('ready'))
+      }
+
       const { queue } = state.sheetStorage;
       if (state.sheetStorage.storageEngine === undefined) {
         console.error('Storage engine not initialized');
@@ -124,7 +144,6 @@ export function processQueue() {
         dispatch(storageActions.updateStatus('processing'));
         const record = queue.items[queue.nextIndex];
         if (state.sheetStorage.storageEngine.type === 'github') {
-          console.log('dispatching');
           dispatch(ghProcessRecord(record));
         }
       }
