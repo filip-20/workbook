@@ -23,8 +23,8 @@ const mapDispatchToProps = (dispatch: AppDispatch) => {
 function _UndoRedoButtonGroup(props: { canUndo: boolean, canRedo: boolean, onUndo: () => void, onRedo: () => void }) {
   return (
     <ButtonGroup className="me-2">
-      <Button disabled={!props.canUndo}><BiUndo onClick={props.onUndo} /></Button>
-      <Button disabled={!props.canRedo}><BiRedo onClick={props.onRedo} /></Button>
+      <Button disabled={!props.canUndo} onClick={props.onUndo}><BiUndo /></Button>
+      <Button disabled={!props.canRedo} onClick={props.onRedo}><BiRedo /></Button>
     </ButtonGroup>
   )
 }
