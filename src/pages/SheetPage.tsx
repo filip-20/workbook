@@ -60,7 +60,7 @@ function SheetPage() {
           <SheetSettingsModal tab={settingsTab} onClose={() => setSettingsTab('NONE')} />
           <SaveErrorModal />
 
-          <div className="p-3 border-bottom d-flex align-items-center flex-wrap">
+          <div style={{top: '0px', position: 'sticky', zIndex: 999, background: 'white'}} className="p-3 border-bottom d-flex align-items-center flex-wrap">
             <div style={{ fontSize: '1.5rem' }}>
               <MdMenuBook />
               <BranchLabel branch={branch} />
