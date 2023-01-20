@@ -26,6 +26,7 @@ export interface SheetStorage {
   queue: HistoryQueue,
   online: boolean,
   storageEngine?: { type: string, state: any }
+  unsyncedChanges: number,
 }
 
 const initialState: SheetStorage = {
@@ -35,7 +36,8 @@ const initialState: SheetStorage = {
     idCounter: 0,
     nextIndex: 0,
     items: []
-  }
+  },
+  unsyncedChanges: 0,
 }
 
 const storageSlice = createSlice({
@@ -101,6 +103,15 @@ const storageSlice = createSlice({
     },
     setErrorMessage: (state, action: PayloadAction<string | undefined>) => {
       state.errorMessage = action.payload;
+    },
+    addUnsyncedChange: (state) => {
+      state.unsyncedChanges += 1;
+    },
+    subUnsyncedChange: (state) => {
+      state.unsyncedChanges -= 1;
+    },
+    resetUnsyncedChanges: (state) => {
+      state.unsyncedChanges = 0;
     }
   },
   extraReducers: {
@@ -119,6 +130,7 @@ export const storageSelectors = {
   queue: (state: RootState) => state.sheetStorage.queue,
   storageEngine: (state: RootState) => state.sheetStorage.storageEngine,
   errorMessage: (state: RootState) => state.sheetStorage.errorMessage,
+  unsyncedChanges: (state: RootState) => state.sheetStorage.unsyncedChanges,
 }
 
 export function processQueue() {

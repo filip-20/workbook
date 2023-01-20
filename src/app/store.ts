@@ -37,9 +37,10 @@ window.addEventListener('online', () => store.dispatch({ type: 'browser/online' 
 window.addEventListener('offline', () => store.dispatch({ type: 'browser/offline' }))
 window.onbeforeunload = function (e) {
   console.log('on unload');
-  const queue = store.getState().sheetStorage.queue;
+  const state = store.getState();
+  const queue = state.sheetStorage.queue;
   const msg = 'There are unsaved changes, do you really want to leave?'
-  if (queue.items.length - queue.nextIndex > 0) {
+  if (queue.items.length - queue.nextIndex > 0 || state.sheetStorage.unsyncedChanges > 0) {
     if (e) {
       e.returnValue = msg;
     }

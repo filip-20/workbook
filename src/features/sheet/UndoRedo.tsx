@@ -2,8 +2,10 @@ import { Button, ButtonGroup } from "react-bootstrap";
 import { BiRedo, BiUndo } from "react-icons/bi";
 import { useAppDispatch } from "../../app/hooks";
 import { ActionCreators as UndoActionCreators } from 'redux-undo';
-import {RootState, AppDispatch} from '../../app/store'
+import {RootState} from '../../app/store'
 import { connect } from 'react-redux';
+import { useRef } from "react";
+import { sheetActions } from "./slice/sheetSlice";
 
 
 const mapStateToProps = (state: RootState) => {
@@ -13,20 +15,28 @@ const mapStateToProps = (state: RootState) => {
   }
 }
 
-const mapDispatchToProps = (dispatch: AppDispatch) => {
-  return {
-    onUndo: () => dispatch(UndoActionCreators.undo()),
-    onRedo: () => dispatch(UndoActionCreators.redo())
-  }
-}
+function _UndoRedoButtonGroup(props: { canUndo: boolean, canRedo: boolean }) {
+  const dispatch = useAppDispatch();
+  const undoRedoCounter = useRef(0);
 
-function _UndoRedoButtonGroup(props: { canUndo: boolean, canRedo: boolean, onUndo: () => void, onRedo: () => void }) {
+  const undo = () => {
+    undoRedoCounter.current += 1;
+    dispatch(UndoActionCreators.undo());
+    dispatch(sheetActions.syncUndoRedoCounter(undoRedoCounter.current));
+  }
+
+  const redo = () => {
+    undoRedoCounter.current += 1;
+    dispatch(UndoActionCreators.redo());
+    dispatch(sheetActions.syncUndoRedoCounter(undoRedoCounter.current));
+  }
+  
   return (
     <ButtonGroup className="me-2">
-      <Button disabled={!props.canUndo} onClick={props.onUndo} variant="secondary"><BiUndo /> Undo</Button>
-      <Button disabled={!props.canRedo} onClick={props.onRedo} variant="secondary">Redo <BiRedo /></Button>
+      <Button disabled={!props.canUndo} onClick={undo} variant="secondary"><BiUndo /> Undo</Button>
+      <Button disabled={!props.canRedo} onClick={redo} variant="secondary">Redo <BiRedo /></Button>
     </ButtonGroup>
   )
 }
-const UndoRedoButtonGroup = connect(mapStateToProps, mapDispatchToProps)(_UndoRedoButtonGroup)
+const UndoRedoButtonGroup = connect(mapStateToProps, {})(_UndoRedoButtonGroup)
 export default UndoRedoButtonGroup

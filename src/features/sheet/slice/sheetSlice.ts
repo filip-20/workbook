@@ -19,7 +19,6 @@ export interface Cell {
   type: string,
   idCounter: number,
   comments: EntityState<CellComment>,
-  isEdited: boolean,
   data: any,
 }
 
@@ -38,11 +37,6 @@ export interface SheetFile {
   cellsOrder: Array<number>,
 }
 
-export type DeleteRequest = 'cell' | 'comment';
-type CellDeletePayload = { cellId: number, cellIndex: number };
-type CommentDeletePayload = { cellId: number, commentId: number };
-export type DeletePayload = CellDeletePayload | CommentDeletePayload;
-
 export const emptySheet: SheetFile = {
   versionNumber: 1,
   cells: {},
@@ -52,8 +46,7 @@ export const emptySheet: SheetFile = {
 export interface LocalState {
   sheetId: string,
   cellIdCounter: number,
-  deleteRequest?: DeleteRequest,
-  deletePayload?: DeletePayload,
+  undoRedoCounter: number,
 }
 
 export type SheetState = 'not_loaded' | 'loading' | 'loaded' | 'load_error';
@@ -68,7 +61,7 @@ export interface SheetSlice {
 const initialState: SheetSlice = {
   state: 'not_loaded',
   sheetFile: emptySheet,
-  localState: { cellIdCounter: 0, sheetId: 'initial' },
+  localState: { cellIdCounter: 0, undoRedoCounter: 0, sheetId: 'initial' },
 }
 
 export const sheetSlice = createSlice({
@@ -89,7 +82,7 @@ export const sheetSlice = createSlice({
       const { json, sheetId } = action.payload;
 
       state.sheetFile = emptySheet;
-      state.localState = { sheetId, cellIdCounter: 0 }
+      state.localState = { sheetId, undoRedoCounter: 0, cellIdCounter: 0 }
 
       let sheetFile = null;
       try {
@@ -111,11 +104,6 @@ export const sheetSlice = createSlice({
           // initialize cellIdCounter with max cell id + 1
           localState.cellIdCounter = Object.entries(sf.cells).map(e => e[1].id).reduce((prev, cur) => Math.max(prev, cur), 0) + 1
 
-          // set all cells to closed
-          for (let id in sf.cells) {
-            sf.cells[id].isEdited = false;
-          }
-
           state.sheetFile = sheetFile;
           state.state = 'loaded';
         }
@@ -130,7 +118,6 @@ export const sheetSlice = createSlice({
           type, data,
           idCounter: 0,
           comments: commentsAdapter.getInitialState(),
-          isEdited: true,
         };
 
         sheetFile.cells[cell.id] = cell;
@@ -206,7 +193,7 @@ export const sheetSlice = createSlice({
       } else {
         console.log('Invalid cellIndex parameters for moveDownCell action. ' + action.payload);
       }
-    },
+    },/*
     setCellEdited: (state, action: PayloadAction<{ cellId: number, isEdited: boolean }>) => {
       const { cellId, isEdited } = action.payload;
       if (cellId in state.sheetFile.cells) {
@@ -214,7 +201,7 @@ export const sheetSlice = createSlice({
       } else {
         console.log('Invalid cellId parameters for setCellEdited action. ' + action.payload);
       }
-    },
+    },*/
     deleteCell: (state, action: PayloadAction<{ cellId: number, cellIndex: number }>) => {
       const { localState } = state;
       const { cellId, cellIndex } = action.payload;
@@ -223,7 +210,6 @@ export const sheetSlice = createSlice({
       if (cellIndex >= 0 && cellIndex < sheetFile.cellsOrder.length && sheetFile.cells[cellId] !== undefined) {
         delete sheetFile.cells[cellId];
         sheetFile.cellsOrder.splice(cellIndex, 1);
-        localState.deleteRequest = localState.deletePayload = undefined;
         updateHistory(action, `Removed cell ${cellId}`);
       } else {
         console.log(`Invalid payload values for cell deletion. (payload: ${action.payload})`);
@@ -237,7 +223,6 @@ export const sheetSlice = createSlice({
       if (sheetFile.cells[cellId] !== undefined) {
         const cell = sheetFile.cells[cellId];
         commentsAdapter.removeOne(cell.comments, commentId);
-        localState.deleteRequest = localState.deletePayload = undefined;
         updateHistory(action, `Removed comment of cell ${cellId}`);
       } else {
         console.log(`Invalid cellId parameter for comment deletion. (payload: ${action.payload})`);
@@ -246,7 +231,10 @@ export const sheetSlice = createSlice({
     updateSettings: (state, action: PayloadAction<SheetSettings | undefined>) => {
       state.sheetFile.settings = action.payload
       updateHistory(action, 'Updated sheet settings');
-    }
+    },
+    syncUndoRedoCounter: (state, action: PayloadAction<number>) => {
+      state.localState.undoRedoCounter = action.payload;
+    },
   }
 });
 
@@ -312,7 +300,7 @@ export const sheetSelectors = {
   firstCellId: (state: RootState) => state.sheet.present.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.present.sheetFile.cellsOrder[0],
   lastCellId: (state: RootState) => state.sheet.present.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.present.sheetFile.cellsOrder[state.sheet.present.sheetFile.cellsOrder.length - 1],
   cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.present.sheetFile.cells[cellId].comments) },
-  deleteRequest: (state: RootState) => state.sheet.present.localState.deleteRequest,
+  undoRedoCounter: (state: RootState) => state.sheet.present.localState.undoRedoCounter,
 }
 
 export default undoable(sheetSlice.reducer, {
