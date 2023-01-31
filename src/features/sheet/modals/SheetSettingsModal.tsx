@@ -83,10 +83,11 @@ function KatexMacrosTab(props: SheetSettingTabProps) {
 
     } catch (err) {
       if (err instanceof katex.ParseError) {
+        const msg = `${(err as katex.ParseError).name}: ${(err as katex.ParseError).message}`
         const errLine = (macrosDef.substring(0, err.position).match(/\n/g) || []).length + 1
-        setErr(`Chyba syntaxe na riadku ${errLine}`);
+        setErr(`Chyba na riadku ${errLine}: ${msg}`);
       } else {
-        setErr(`Chyba syntaxe`);
+        setErr(`Chyba`);
       }
     }
   }
