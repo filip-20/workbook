@@ -2,15 +2,16 @@ import { Alert, Container, Spinner } from "react-bootstrap";
 import { useAppSelector } from "../../app/hooks";
 import CellContainer from "./CellContainer";
 import AddToolbar from "./AddToolbar";
-import { sheetSelectors } from "./sheetSlice";
+import { sheetSelectors } from "./slice/sheetSlice";
 import { useMemo, useState } from "react";
 
 import styles from "./Sheet.module.css";
-import FileErrorModal from "./FileErrorModal";
-import ConfirmDeletionModal from "./ConfirmDeletionModal";
 import katex from "katex";
 
-function Sheet() {
+export interface SheetProps {
+}
+
+export default function Sheet(props: SheetProps) {
   const loadState = useAppSelector(sheetSelectors.state);
   const sheetError = useAppSelector(sheetSelectors.error);
   const cellsOrder = useAppSelector(sheetSelectors.cellsOrder);
@@ -35,15 +36,13 @@ function Sheet() {
     return m;
   }, [settings.katexMacros]);
 
-  if (loadState === "not_loaded") {
+  if (loadState === "not_loaded" || loadState === "loading") {
     return (<Container><div style={{ width: '100%', textAlign: 'center' }}><Spinner animation="grow" role="status" /></div></Container>)
   } else if (loadState === 'load_error') {
-    return (<Container><Alert variant="danger">{sheetError}</Alert></Container>)
+    return (<Container><Alert variant="danger">Načítanie hárku zlyhalo.{sheetError && <> ({sheetError})</>}</Alert></Container>)
   } else {
     return (
       <>
-        <ConfirmDeletionModal />
-        <FileErrorModal />
         {
           cellsOrder.map((cellId, index) => (
             <CellContainer key={cellId} cellId={cellId} cellIndex={index}
@@ -58,5 +57,3 @@ function Sheet() {
     )
   }
 }
-
-export default Sheet;

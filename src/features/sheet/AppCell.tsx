@@ -3,35 +3,41 @@ import { PrepareResult } from '@fmfi-uk-1-ain-412/fol-graphexplorer';
 import { useEffect, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { sheetActions, sheetSelectors } from "./sheetSlice";
+import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 
 export interface AppCellProps {
   cellId: number
+  isEdited: boolean,
+  onDataChanged: (getData: () => any) => void,
 }
 
 function AppCell(props: AppCellProps) {
-  const dispatch = useAppDispatch();
-  const { cellId } = props;
+  //const dispatch = useAppDispatch();
+  const { cellId, isEdited, onDataChanged } = props;
 
   const cell = useAppSelector(sheetSelectors.cell(cellId));
-  const { type, isEdited, data } = cell;
+  const { type, data } = cell;
 
   const { prepare, AppComponent } = getAppInfo(type)
 
-  const lastState = useRef<any | null>(data);
+  //const lastState = useRef<any | null>(data);
   const prepareResult = useRef<PrepareResult | null>(null);
   if (prepareResult.current === null) {
     prepareResult.current = prepare(data)
   }
 
   const { instance, getState } = prepareResult.current;
-  const stateChanged = useRef(false)
+  const getState1 = () => getState(instance);
+  //const stateChanged = useRef(false)
 
   var onAppStateChanged = () => {
-    stateChanged.current = true
+    //stateChanged.current = true
+    onDataChanged(getState1)
   }
 
+  
   /* check for state change periodically */
+  /*
   useEffect(() => {
     const interval = setInterval(() => {
       if (stateChanged.current) {
@@ -45,7 +51,7 @@ function AppCell(props: AppCellProps) {
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, []);*/
 
   return (
     <div

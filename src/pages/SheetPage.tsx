@@ -1,23 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, ButtonGroup, ButtonToolbar, Container, Dropdown, Spinner } from "react-bootstrap";
+import {  Button, ButtonGroup, ButtonToolbar, Container, Dropdown } from "react-bootstrap";
 import { useLocation, useParams } from "react-router-dom";
-import { githubApi } from "../api/githubApi/endpoints/repos"
-import { githubApiErrorMessage } from "../api/githubApi/errorMessage";
 import { MdMenuBook, MdSettings } from "react-icons/md";
 import { authSelectors } from "../features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { makeRepoLink, parseFilepath, parseGithubUrlPath } from "./RepoPage";
 import Sheet from "../features/sheet/Sheet";
-import SheetCommitter from "../features/sheet/SheetCommitter";
-import { Base64 } from 'js-base64';
-
 import Pathbar from "../features/repository/Pathbar";
-import { sheetActions } from "../features/sheet/sheetSlice";
 import Err404Page from "./Err404Page";
 import BranchLabel from "../features/repository/BranchLabel";
 import LoginPage from "./LoginPage";
-import { pathURIEncode } from "../features/repository/RepoExplorer";
-import SheetSettingsModal, { SettingTab } from "../features/sheet/SheetSettingsModal";
+import SheetSettingsModal, { SettingTab } from "../features/sheet/modals/SheetSettingsModal";
+import MergeSheetModal from "../features/sheetStorage/github/MergeSheetModal";
+import { GithubFileLocation, openSheet } from "../features/sheetStorage/github/githubStorage";
+import SaveIndicator from "../features/sheetStorage/SaveIndicator";
+import MergeButton from "../features/sheetStorage/github/MergeButton";
+import SaveErrorModal from "../features/sheetStorage/github/SaveErrorModal";
+import { BiRedo, BiUndo } from "react-icons/bi";
+import { ActionCreators as UndoActionCreators } from 'redux-undo'
+import UndoRedoButtonGroup from "../features/sheet/UndoRedo";
 
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
@@ -27,42 +28,19 @@ function SheetPage() {
   const { owner, repo } = params;
   const repoParams = parseGithubUrlPath(params['*'] || '');
 
-  const [settingsTab, setSettingsTab] = useState<SettingTab>('NONE')
-
-  // state of workbook file loading from github
-  const loadState = useRef<'not-loaded' | 'loaded' | 'decode-fail'>('not-loaded');
-  const [sheetBody, setSheetBody] = useState(<></>);
-
-  const [loadTrigger, loadResult, lastPromiseInfo] = githubApi.useLazyReposGetContentQuery();
-
-  const loading = <div style={{ width: '100%', textAlign: 'center' }}><Spinner animation="grow" role="status" /></div>
-  const loadFail = (msg?: String) => <Alert variant="danger">Načítanie hárku zlyhalo.{msg && <> ({msg})</>}</Alert>
-
+  const ghLocation = useRef<GithubFileLocation | undefined>(undefined);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (loadState.current === 'not-loaded' && loadResult.isSuccess) {
-      const { data } = loadResult;
-      if (!('content' in data)) {
-        loadState.current = 'decode-fail'
-        setSheetBody(loadFail())
-      } else {
-        let content;
-        try {
-          content = Base64.decode(data.content);
-        } catch (e) { }
-        if (content) {
-          loadState.current = 'loaded';
-          const { owner, path, repo, ref } = lastPromiseInfo.lastArg;
-          dispatch(sheetActions.loadSheet({ json: content, fileInfo: { owner, repo, branch: ref!!, path, sha: data.sha } }))
-          setSheetBody(<Sheet />);
-        } else {
-          loadState.current = 'decode-fail';
-          setSheetBody(loadFail('Base64 decode failed'));
-        }
-      }
+    let lastLoaded: GithubFileLocation | undefined = undefined
+    if (ghLocation.current !== undefined && JSON.stringify(ghLocation.current) !== JSON.stringify(lastLoaded)) {
+      lastLoaded = {...ghLocation.current};
+      dispatch(openSheet(ghLocation.current));
     }
-  }, [loadResult, loadState])
+  }, [ghLocation, dispatch]);
+
+  const [settingsTab, setSettingsTab] = useState<SettingTab>('NONE')
+  const [mergeSheetModal, setMergeSheetModal] = useState(false);
 
   if ('error' in repoParams) {
     return (<Err404Page />);
@@ -74,42 +52,41 @@ function SheetPage() {
     if (type !== 'file' || extension !== 'workbook' || !owner || !repo || !branch) {
       return (<Err404Page />);
     } else {
-      const loadArgs = { owner, repo, path: pathURIEncode(path), ref: branch };
-      if (JSON.stringify(lastPromiseInfo.lastArg) !== JSON.stringify(loadArgs)) {
-        console.log('loading workbook');
-        loadTrigger(loadArgs);
-      }
-
+      ghLocation.current = { owner, repo, path: path, ref: branch };
       return (
         <Container fluid className="w-100 m-0 p-0" style={{ minHeight: 'calc(100vh - var(--workbook-nav-height))', background: 'white' }}>
 
+          <MergeSheetModal show={mergeSheetModal} onClose={() => setMergeSheetModal(false)} />
           <SheetSettingsModal tab={settingsTab} onClose={() => setSettingsTab('NONE')} />
+          <SaveErrorModal />
 
-          <div className="p-3 border-bottom d-flex align-items-center flex-wrap">
+          <div style={{top: '0px', position: 'sticky', zIndex: 999, background: 'white'}} className="p-3 border-bottom d-flex align-items-center flex-wrap">
             <div style={{ fontSize: '1.5rem' }}>
               <MdMenuBook />
               <BranchLabel branch={branch} />
               <Pathbar style={{ color: 'white !important' }} owner={owner} path={path} branch={branch} repoName={repo} makeLink={makeRepoLink} />
             </div>
-            <div><SheetCommitter style={{ marginLeft: '1rem' }} /></div>
+            <div><SaveIndicator style={{ marginLeft: '1rem' }} /></div>
             <div style={{ flexGrow: '1' }}></div>
             <ButtonToolbar className="d-inline-block">
+              <UndoRedoButtonGroup />
+              <ButtonGroup className="me-2">
+                <MergeButton />
+              </ButtonGroup>
               <ButtonGroup>
                 <Dropdown>
-                  <Dropdown.Toggle title="Nastavenia aktuálneho hárku" variant="secondary">
+                  <Dropdown.Toggle title="Workbook settings" variant="secondary">
                     <MdSettings />
                   </Dropdown.Toggle>
                   <Dropdown.Menu>
-                    <Dropdown.Item onClick={() => setSettingsTab('KATEX_MACROS')}>Katex makrá</Dropdown.Item>
+                    <Dropdown.Item onClick={() => setSettingsTab('KATEX_MACROS')}>Katex macros</Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>
               </ButtonGroup>
             </ButtonToolbar>
           </div>
           <div className="m-3 h-100">
-            {loadResult.isLoading && loading}
-            {loadResult.isError && loadFail(githubApiErrorMessage(loadResult.error))}
-            {loadResult.isSuccess && sheetBody}
+            <Sheet />
           </div>
         </Container>
       )

@@ -14,6 +14,27 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
         },
       }),
+      providesTags: ['Pulls']
+    }),
+    pullsListWH: build.query<{response: PullsListApiResponse, headers: {[key: string]: string}}, PullsListApiArg>({
+      query: (queryArg) => ({
+        url: `/repos/${queryArg.owner}/${queryArg.repo}/pulls`,
+        params: {
+          state: queryArg.state,
+          head: queryArg.head,
+          base: queryArg.base,
+          sort: queryArg.sort,
+          direction: queryArg.direction,
+          per_page: queryArg.perPage,
+          page: queryArg.page,
+        },
+      }),
+      transformResponse(apiResponse, meta) {
+        let headers: {[key: string]: string} = {};
+        meta?.response?.headers.forEach((value, key) => headers[key] = value);
+        return {response: apiResponse as PullsListApiResponse, headers}
+      },
+      providesTags: ['Pulls']
     }),
     pullsCreate: build.mutation<PullsCreateApiResponse, PullsCreateApiArg>({
       query: (queryArg) => ({
@@ -21,6 +42,7 @@ const injectedRtkApi = api.injectEndpoints({
         method: "POST",
         body: queryArg.body,
       }),
+      invalidatesTags: ['Pulls']
     }),
     pullsListReviewCommentsForRepo: build.query<
       PullsListReviewCommentsForRepoApiResponse,
@@ -143,6 +165,7 @@ const injectedRtkApi = api.injectEndpoints({
         method: "PUT",
         body: queryArg.body,
       }),
+      invalidatesTags: ['Files', 'Pulls'],  // workbook file changes after merge 
     }),
     pullsListRequestedReviewers: build.query<
       PullsListRequestedReviewersApiResponse,

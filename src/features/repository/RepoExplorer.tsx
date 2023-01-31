@@ -1,8 +1,8 @@
-import { Alert, Card, ListGroup, Placeholder, Spinner } from "react-bootstrap";
+import { Alert, Badge, Card, ListGroup, Placeholder, Spinner } from "react-bootstrap";
 import { File, FolderFill } from 'react-bootstrap-icons';
 import { Link } from "react-router-dom";
 import Pathbar from "./Pathbar";
-import { ContentDirectory, ReposGetContentApiResponse, useReposGetContentQuery, useReposGetQuery } from "../../api/githubApi/endpoints/repos";
+import { ContentDirectory, ReposGetContentApiResponse, useReposGetContentQuery, useReposGetQuery, useReposListBranchesQuery } from "../../api/githubApi/endpoints/repos";
 import BranchSelect from "./BranchSelect";
 import { displayLoadable } from "./displayLoadable";
 
@@ -13,7 +13,8 @@ import { BsSlashCircle } from "react-icons/bs";
 import { HiDocumentAdd } from 'react-icons/hi'
 import CreateFileButton from "./CreateFileButton";
 import { useRef } from "react";
-import { emptySheet } from "../sheet/sheetSlice";
+import { emptySheet } from "../sheet/slice/sheetSlice";
+import { getSessionBranchName } from "../sheetStorage/github/githubStorage";
 
 export interface RepoExplorerProps {
   owner: string,
@@ -60,7 +61,9 @@ function RepoExplorer(props: RepoExplorerProps) {
   let { branch } = props;
 
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
-  const content = useReposGetContentQuery({ owner, repo, ref: branch, path: pathURIEncode(path) }, { skip: branch === undefined && !repoInfo.isSuccess });
+  const branches = useReposListBranchesQuery({ owner, repo, perPage: 100 }, { skip: branch === undefined && !repoInfo.isSuccess });
+  const content = useReposGetContentQuery({ owner, repo, ref: branch, path: pathURIEncode(path) }, { skip: branch === undefined && !repoInfo.isSuccess && !branches.isSuccess });
+
 
   console.log('repo explorer');
   console.log(content)
@@ -103,6 +106,12 @@ function RepoExplorer(props: RepoExplorerProps) {
     const link = makeLink(filePath, file.type, owner, repo, branch);
     let icon = file.type === 'file' ? fileIcon : folderIcon
 
+    const unsavedChanges = () => {
+      const branchList = branches.data;
+      const expectedSessionBranchName = getSessionBranchName({owner, repo, path: filePath, ref: branch || ''});
+      return branchList?.find(b => b.name === expectedSessionBranchName) !== undefined;
+    }
+
     if (transformFileItem) {
       let { changeIcon } = transformFileItem(filePath, file.type);
       if (changeIcon) {
@@ -122,7 +131,8 @@ function RepoExplorer(props: RepoExplorerProps) {
     return (
       <ListGroup.Item className={styles.fileItem} key={file.name}>
         <span className={styles.itemIcon}>{icon}</span>
-        {link ? <Link className={styles.linkStyle} to={link}>{file.name}</Link> : file.name}
+        {link ? <Link className={styles.linkStyle} style={{marginRight: '1em'}} to={link}>{file.name}</Link> : file.name}
+        {unsavedChanges() && <Badge pill bg="secondary">unmerged</Badge>}
       </ListGroup.Item>
     )
   }
