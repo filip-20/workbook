@@ -132,6 +132,30 @@ export const sheetSlice = createSlice({
         console.log('Invalid afterIndex parameters for insertCell action. ' + action.payload);
       }
     },
+    duplicateCell: (state, action: PayloadAction<{cellId: number, cellIndex: number}>) => {
+      const { cellId, cellIndex } = action.payload;
+      const { sheetFile } = state;
+      if (sheetFile.cells[cellId] !== undefined) {
+        const srcCell = sheetFile.cells[cellId];
+        const { type } = srcCell;
+        const data = JSON.parse(JSON.stringify(srcCell.data))
+
+        const newCell: Cell = {
+          id: state.localState.cellIdCounter,
+          type, data,
+          idCounter: 0,
+          comments: commentsAdapter.getInitialState(),
+        };
+        state.localState.cellIdCounter += 1;
+
+        sheetFile.cells[newCell.id] = newCell;
+        sheetFile.cellsOrder.splice(cellIndex + 1, 0, newCell.id);
+
+        updateHistory(action, `Duplicated cell ${cellId}`)
+      } else {
+        console.log('Invalid cellId parameter for duplicateCell action. ' + action.payload);
+      }
+    },
     updateCellData: (state, action: PayloadAction<{ cellId: number, data: any }>) => {
       const { cellId, data } = action.payload;
       const { sheetFile } = state;

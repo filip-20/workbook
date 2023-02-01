@@ -1,5 +1,5 @@
 import { Button, ButtonGroup, ButtonToolbar } from "react-bootstrap";
-import { BiCheck, BiComment, BiEdit, BiExitFullscreen, BiFullscreen, BiLock, BiTrash } from "react-icons/bi";
+import { BiCheck, BiComment, BiDuplicate, BiEdit, BiExitFullscreen, BiFullscreen, BiLock, BiTrash } from "react-icons/bi";
 import { ArrowDown, ArrowUp } from "react-bootstrap-icons";
 import { useEffect, useState } from "react";
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
@@ -41,6 +41,7 @@ export default function EditToolbar(props: EditToolbarProps) {
         <Button title="Add comment" onClick={props.onAddComment}><BiComment /></Button>
         {showUp && <Button title="Move up" onClick={() => dispatch(sheetActions.moveUpCell(cellIndex))}><ArrowUp /></Button>}
         {showDown && <Button title="Move down" onClick={() => dispatch(sheetActions.moveDownCell(cellIndex))}><ArrowDown /></Button>}
+        <Button title="Duplicate cell" onClick={() => dispatch(sheetActions.duplicateCell({cellId, cellIndex}))}> <BiDuplicate /> </Button>
         <Button title="Toggle maximize cell" onClick={() => setFullscreen(prev => !prev )}>{fullscreen ? <BiExitFullscreen /> : <BiFullscreen />}</Button>
       </ButtonGroup>
     </ButtonToolbar>
