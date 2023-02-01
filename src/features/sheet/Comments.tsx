@@ -79,6 +79,7 @@ function Comment(props: CommentProps) {
               title=""
               saveText="Uložiť"
               hideCancel
+              unsyncedKey={`editedCellComment/${cellId}/${comment.id}`}
               onCancel={() => setIsEdited(false)}
               onSave={handleCommentUpdate}
             />

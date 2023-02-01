@@ -26,7 +26,7 @@ export interface SheetStorage {
   queue: HistoryQueue,
   online: boolean,
   storageEngine?: { type: string, state: any }
-  unsyncedChanges: number,
+  unsyncedChanges: {[key: string]: boolean},
 }
 
 const initialState: SheetStorage = {
@@ -37,7 +37,7 @@ const initialState: SheetStorage = {
     nextIndex: 0,
     items: []
   },
-  unsyncedChanges: 0,
+  unsyncedChanges: {},
 }
 
 const storageSlice = createSlice({
@@ -96,6 +96,7 @@ const storageSlice = createSlice({
     init: (state, action: PayloadAction<{ type: string, initialState: any }>) => {
       const { type, initialState } = action.payload;
       state.status = 'ready';
+      state.unsyncedChanges = {};
       state.storageEngine = {
         type,
         state: initialState
@@ -104,15 +105,14 @@ const storageSlice = createSlice({
     setErrorMessage: (state, action: PayloadAction<string | undefined>) => {
       state.errorMessage = action.payload;
     },
-    addUnsyncedChange: (state) => {
-      state.unsyncedChanges += 1;
+    unsyncedChange: (state, action: PayloadAction<{key: string, unsynced: boolean}>) => {
+      const { key, unsynced } = action.payload; 
+      if (unsynced === true) {
+        state.unsyncedChanges[key] = true;
+      } else {
+        delete state.unsyncedChanges[key];
+      }
     },
-    subUnsyncedChange: (state) => {
-      state.unsyncedChanges -= 1;
-    },
-    resetUnsyncedChanges: (state) => {
-      state.unsyncedChanges = 0;
-    }
   },
   extraReducers: {
     ['browser/online']: (state) => {
@@ -130,7 +130,7 @@ export const storageSelectors = {
   queue: (state: RootState) => state.sheetStorage.queue,
   storageEngine: (state: RootState) => state.sheetStorage.storageEngine,
   errorMessage: (state: RootState) => state.sheetStorage.errorMessage,
-  unsyncedChanges: (state: RootState) => state.sheetStorage.unsyncedChanges,
+  storageSynced: (state: RootState) => {console.log(` computing storage synced: ${Object.values(state.sheetStorage.unsyncedChanges)}`); return !(state.sheetStorage.queue.items.length - state.sheetStorage.queue.nextIndex > 0 || Object.values(state.sheetStorage.unsyncedChanges).some(b => b === true))},
 }
 
 export function processQueue() {

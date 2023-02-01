@@ -25,6 +25,7 @@ export default function CellContainer(props: CellContainerProps) {
   const dispatch = useAppDispatch();
   const cell = useAppSelector(sheetSelectors.cell(cellId));
   const { type, data } = cell;
+  const unsyncedDataKey = `cellData_${cellId}`;
 
   const undoRedoCounter = useAppSelector(sheetSelectors.undoRedoCounter);
   const lastUndoRedoCounter = useRef(undoRedoCounter);
@@ -53,7 +54,8 @@ export default function CellContainer(props: CellContainerProps) {
     console.log('unmounting cell ', cellId);
     const timeout = finishUpdate.current?.timeout;
     if (timeout) {
-      dispatch(storageActions.subUnsyncedChange())
+      dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: false}))
+      //dispatch(storageActions.subUnsyncedChange())
       clearTimeout(timeout);
       finishUpdate.current = undefined;
     }
@@ -63,7 +65,8 @@ export default function CellContainer(props: CellContainerProps) {
     // data was changed in redux, delayed update must be canceled
     const timeout = finishUpdate.current?.timeout;
     if (timeout) {
-      dispatch(storageActions.subUnsyncedChange())
+      dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: false}))
+      //dispatch(storageActions.subUnsyncedChange())
       clearTimeout(timeout);
       finishUpdate.current = undefined;
     }
@@ -74,7 +77,8 @@ export default function CellContainer(props: CellContainerProps) {
     const {timeout, getData} = finishUpdate.current!; 
     const data = getData();
     clearTimeout(timeout);
-    dispatch(storageActions.subUnsyncedChange())
+    //dispatch(storageActions.subUnsyncedChange())
+    dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: false}))
     finishUpdate.current = undefined;
     if (JSON.stringify(lastData.current) !== JSON.stringify(data)) {
       dispatch(sheetActions.updateCellData({cellId, data}));
@@ -96,7 +100,8 @@ export default function CellContainer(props: CellContainerProps) {
     console.log('onupdatehandler ', cellId)
     if (finishUpdate.current === undefined) {
       console.log('onupdatehandler ', cellId, ': creating timeout')
-      dispatch(storageActions.addUnsyncedChange())
+      //dispatch(storageActions.addUnsyncedChange())
+      dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: true}))
       finishUpdate.current = {
         timeout: setTimeout(updateData, 10000), 
         getData
@@ -142,7 +147,7 @@ export default function CellContainer(props: CellContainerProps) {
         </div>
         <div>
           <Comments className='ms-2' style={{ width: '20rem' }} cellId={cellId} />
-          {addComment && <AddComment className='ms-2' style={{ width: '20rem' }} cellId={cellId} onSave={() => setAddComment(false)} onCancel={() => setAddComment(false)} />}
+          {addComment && <AddComment className='ms-2' style={{ width: '20rem' }} unsyncedKey={`newCellComment/${cellId}`} cellId={cellId} onSave={() => setAddComment(false)} onCancel={() => setAddComment(false)} />}
         </div>
       </div>
       <div

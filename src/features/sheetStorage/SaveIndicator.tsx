@@ -10,7 +10,7 @@ export interface SaveIndicatorProps {
 }
 
 export default function SaveIndicator(props: SaveIndicatorProps) {
-  const unsyncedChanges = useAppSelector(storageSelectors.unsyncedChanges)
+  const storageSynced = useAppSelector(storageSelectors.storageSynced)
   const storageStatus = useAppSelector(storageSelectors.status);
   const queue = useAppSelector(storageSelectors.queue);
   const errorMessage = useAppSelector(storageSelectors.errorMessage);
@@ -26,7 +26,7 @@ export default function SaveIndicator(props: SaveIndicatorProps) {
   return (
     <div className={props.className} style={props.style}>
 
-      {storageStatus === 'ready' && queue.items.length > 0 && unsyncedChanges === 0 && <>Changes saved <MdCheck /></>}
+      {storageStatus === 'ready' && queue.items.length > 0 && storageSynced && <>Changes saved <MdCheck /></>}
       {storageStatus === 'processing' && <>Saving changes <Loading compact /></>}
       {storageStatus === 'error' && <div title={errorMessage}>Save error <BsExclamationTriangle /></div>}
       {storageStatus === 'offline_paused' && showOffline()}
