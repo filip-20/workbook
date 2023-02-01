@@ -53,6 +53,7 @@ export interface AddCommentProps {
   className?: string,
   style?: React.CSSProperties,
   cellId: number,
+  onSave: () => void,
   onCancel: () => void,
 }
 
@@ -68,7 +69,7 @@ export default function AddComment(props: AddCommentProps) {
         title="Pridať komentár"
         saveText="Pridať"
         onCancel={onCancel}
-        onSave={(text) => dispatch(sheetActions.addCellComment({ cellId, text }))}
+        onSave={(text) => {dispatch(sheetActions.addCellComment({ cellId, text })); props.onSave()} }
       />
 
       </div>
