@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import AddToolbar from './AddToolbar';
@@ -24,7 +24,7 @@ export default function CellContainer(props: CellContainerProps) {
 
   const dispatch = useAppDispatch();
   const cell = useAppSelector(sheetSelectors.cell(cellId));
-  const { type } = cell;
+  const { type, data } = cell;
 
   const undoRedoCounter = useAppSelector(sheetSelectors.undoRedoCounter);
   const lastUndoRedoCounter = useRef(undoRedoCounter);
@@ -35,7 +35,7 @@ export default function CellContainer(props: CellContainerProps) {
   const addToolbarHovered = useRef(false);
   const dropdownOpened = useRef(false);
 
-  const lastData = useRef<any | undefined>(undefined);
+  const lastData = useRef<any>(data);
   const finishUpdate = useRef<{timeout: ReturnType<typeof setTimeout>, getData: () => any} | undefined>(undefined);
 
   const toggleVisibility = (toolbarHovered: boolean, dropdownOpened_: boolean) => {
@@ -76,7 +76,7 @@ export default function CellContainer(props: CellContainerProps) {
     clearTimeout(timeout);
     dispatch(storageActions.subUnsyncedChange())
     finishUpdate.current = undefined;
-    if (lastData.current === undefined || (JSON.stringify(lastData.current) !== JSON.stringify(data))) {
+    if (JSON.stringify(lastData.current) !== JSON.stringify(data)) {
       dispatch(sheetActions.updateCellData({cellId, data}));
       lastData.current = data;
     }
@@ -108,6 +108,7 @@ export default function CellContainer(props: CellContainerProps) {
   }
 
   const createCell = (id: number, type: string, onDataChanged: (data: any) => void) => {
+    // When undoRedoCounter changes, cells are recreated so they are synced with changed sheet state in redux
     if (type === 'text') {
       return (<TextCell key={undoRedoCounter} katexMacros={katexMacros} isEdited={isEdited} data={cell.data} onDataChanged={onDataChanged} />)
     } else {
