@@ -22,6 +22,7 @@ function TextCell({ data, isEdited, katexMacros, onDataChanged }: TextCellProps)
       onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
       <CodeMirror
+        autoFocus
         extensions={[markdown()]}
         value={content}
         onChange={(value, viewUpdate) => {
