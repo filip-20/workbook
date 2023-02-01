@@ -47,6 +47,7 @@ export interface LocalState {
   sheetId: string,
   cellIdCounter: number,
   undoRedoCounter: number,
+  lastCreatedCellId?: number,
 }
 
 export type SheetState = 'not_loaded' | 'loading' | 'loaded' | 'load_error';
@@ -127,6 +128,7 @@ export const sheetSlice = createSlice({
           sheetFile.cellsOrder.splice(action.payload.afterIndex + 1, 0, cell.id);
         }
         state.localState.cellIdCounter += 1;
+        state.localState.lastCreatedCellId = cell.id;
         updateHistory(action, `Created new cell of type '${type}'`)
       } else {
         console.log('Invalid afterIndex parameters for insertCell action. ' + action.payload);
@@ -325,6 +327,7 @@ export const sheetSelectors = {
   lastCellId: (state: RootState) => state.sheet.present.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.present.sheetFile.cellsOrder[state.sheet.present.sheetFile.cellsOrder.length - 1],
   cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.present.sheetFile.cells[cellId].comments) },
   undoRedoCounter: (state: RootState) => state.sheet.present.localState.undoRedoCounter,
+  lastCreatedCellId: (state: RootState) => state.sheet.present.localState.lastCreatedCellId,
 }
 
 export default undoable(sheetSlice.reducer, {

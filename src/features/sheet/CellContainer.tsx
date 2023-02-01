@@ -27,9 +27,10 @@ export default function CellContainer(props: CellContainerProps) {
   const { type, data } = cell;
   const unsyncedDataKey = `cellData_${cellId}`;
 
+  const lastCreatedCellId = useAppSelector(sheetSelectors.lastCreatedCellId);
   const undoRedoCounter = useAppSelector(sheetSelectors.undoRedoCounter);
   const lastUndoRedoCounter = useRef(undoRedoCounter);
-  const [isEdited, setIsEdited] = useState(false);
+  const [isEdited, setIsEdited] = useState(lastCreatedCellId === cellId);
   const [addComment, setAddComment] = useState(false);
   const [addToolbarVisible, setAddToolbarVisible] = useState(false);
   const [cellHovered, setCellHovered] = useState(false);
