@@ -219,15 +219,7 @@ export const sheetSlice = createSlice({
       } else {
         console.log('Invalid cellIndex parameters for moveDownCell action. ' + action.payload);
       }
-    },/*
-    setCellEdited: (state, action: PayloadAction<{ cellId: number, isEdited: boolean }>) => {
-      const { cellId, isEdited } = action.payload;
-      if (cellId in state.sheetFile.cells) {
-        state.sheetFile.cells[cellId].isEdited = isEdited
-      } else {
-        console.log('Invalid cellId parameters for setCellEdited action. ' + action.payload);
-      }
-    },*/
+    },
     deleteCell: (state, action: PayloadAction<{ cellId: number, cellIndex: number }>) => {
       const { localState } = state;
       const { cellId, cellIndex } = action.payload;
@@ -333,6 +325,7 @@ export const sheetSelectors = {
 export default undoable(sheetSlice.reducer, {
   filter: includeAction([
     'sheet/insertCell',
+    'sheet/duplicateCell',
     'sheet/updateCellData',
     'sheet/addCellComment',
     'sheet/updateCellComment',
