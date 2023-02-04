@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
+import { BsExclamationTriangleFill } from 'react-icons/bs';
 
 export interface AppCellProps {
   cellId: number
@@ -11,13 +12,25 @@ export interface AppCellProps {
   onDataChanged: (getData: () => any) => void,
 }
 
+const unsupportedApp = (type: string) => {
+  return {
+    prepare: () => 0,
+    AppComponent: () => (
+      <div style={{textAlign: 'center'}}>
+      <BsExclamationTriangleFill color='red' size={70} />
+      <p>Unsupported app type: {type}</p>
+      </div>
+    )
+  }
+}
+
 function AppCell(props: AppCellProps) {
   const { cellId, isEdited, onDataChanged } = props;
   const cell = useAppSelector(sheetSelectors.cell(cellId));
   const { type, data } = cell;
-  const { prepare, AppComponent } = getAppInfo(type)
+  const { prepare, AppComponent } = getAppInfo(type) || unsupportedApp(type);
   const prepareResult = useRef<PrepareResult | null>(null);
-  
+
   if (prepareResult.current === null) {
     prepareResult.current = prepare(data)
   }
