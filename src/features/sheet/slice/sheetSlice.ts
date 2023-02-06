@@ -47,6 +47,7 @@ export interface LocalState {
   sheetId: string,
   cellIdCounter: number,
   undoRedoCounter: number,
+  lastCreatedCellId?: number,
 }
 
 export type SheetState = 'not_loaded' | 'loading' | 'loaded' | 'load_error';
@@ -127,9 +128,34 @@ export const sheetSlice = createSlice({
           sheetFile.cellsOrder.splice(action.payload.afterIndex + 1, 0, cell.id);
         }
         state.localState.cellIdCounter += 1;
+        state.localState.lastCreatedCellId = cell.id;
         updateHistory(action, `Created new cell of type '${type}'`)
       } else {
         console.log('Invalid afterIndex parameters for insertCell action. ' + action.payload);
+      }
+    },
+    duplicateCell: (state, action: PayloadAction<{cellId: number, cellIndex: number}>) => {
+      const { cellId, cellIndex } = action.payload;
+      const { sheetFile } = state;
+      if (sheetFile.cells[cellId] !== undefined) {
+        const srcCell = sheetFile.cells[cellId];
+        const { type } = srcCell;
+        const data = JSON.parse(JSON.stringify(srcCell.data))
+
+        const newCell: Cell = {
+          id: state.localState.cellIdCounter,
+          type, data,
+          idCounter: 0,
+          comments: commentsAdapter.getInitialState(),
+        };
+        state.localState.cellIdCounter += 1;
+
+        sheetFile.cells[newCell.id] = newCell;
+        sheetFile.cellsOrder.splice(cellIndex + 1, 0, newCell.id);
+
+        updateHistory(action, `Duplicated cell ${cellId}`)
+      } else {
+        console.log('Invalid cellId parameter for duplicateCell action. ' + action.payload);
       }
     },
     updateCellData: (state, action: PayloadAction<{ cellId: number, data: any }>) => {
@@ -193,15 +219,7 @@ export const sheetSlice = createSlice({
       } else {
         console.log('Invalid cellIndex parameters for moveDownCell action. ' + action.payload);
       }
-    },/*
-    setCellEdited: (state, action: PayloadAction<{ cellId: number, isEdited: boolean }>) => {
-      const { cellId, isEdited } = action.payload;
-      if (cellId in state.sheetFile.cells) {
-        state.sheetFile.cells[cellId].isEdited = isEdited
-      } else {
-        console.log('Invalid cellId parameters for setCellEdited action. ' + action.payload);
-      }
-    },*/
+    },
     deleteCell: (state, action: PayloadAction<{ cellId: number, cellIndex: number }>) => {
       const { localState } = state;
       const { cellId, cellIndex } = action.payload;
@@ -301,11 +319,13 @@ export const sheetSelectors = {
   lastCellId: (state: RootState) => state.sheet.present.sheetFile.cellsOrder.length === 0 ? -1 : state.sheet.present.sheetFile.cellsOrder[state.sheet.present.sheetFile.cellsOrder.length - 1],
   cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.present.sheetFile.cells[cellId].comments) },
   undoRedoCounter: (state: RootState) => state.sheet.present.localState.undoRedoCounter,
+  lastCreatedCellId: (state: RootState) => state.sheet.present.localState.lastCreatedCellId,
 }
 
 export default undoable(sheetSlice.reducer, {
   filter: includeAction([
     'sheet/insertCell',
+    'sheet/duplicateCell',
     'sheet/updateCellData',
     'sheet/addCellComment',
     'sheet/updateCellComment',

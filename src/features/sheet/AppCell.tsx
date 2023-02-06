@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
+import { BsExclamationTriangleFill } from 'react-icons/bs';
 
 export interface AppCellProps {
   cellId: number
@@ -11,47 +12,35 @@ export interface AppCellProps {
   onDataChanged: (getData: () => any) => void,
 }
 
-function AppCell(props: AppCellProps) {
-  //const dispatch = useAppDispatch();
-  const { cellId, isEdited, onDataChanged } = props;
+const unsupportedApp = (type: string) => {
+  return {
+    prepare: () => 0,
+    AppComponent: () => (
+      <div style={{textAlign: 'center'}}>
+      <BsExclamationTriangleFill color='red' size={70} />
+      <p>Unsupported app type: {type}</p>
+      </div>
+    )
+  }
+}
 
+function AppCell(props: AppCellProps) {
+  const { cellId, isEdited, onDataChanged } = props;
   const cell = useAppSelector(sheetSelectors.cell(cellId));
   const { type, data } = cell;
-
-  const { prepare, AppComponent } = getAppInfo(type)
-
-  //const lastState = useRef<any | null>(data);
+  const { prepare, AppComponent } = getAppInfo(type) || unsupportedApp(type);
   const prepareResult = useRef<PrepareResult | null>(null);
+
   if (prepareResult.current === null) {
     prepareResult.current = prepare(data)
   }
 
   const { instance, getState } = prepareResult.current;
   const getState1 = () => getState(instance);
-  //const stateChanged = useRef(false)
 
-  var onAppStateChanged = () => {
-    //stateChanged.current = true
+  const onAppStateChanged = () => {
     onDataChanged(getState1)
   }
-
-  
-  /* check for state change periodically */
-  /*
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (stateChanged.current) {
-        const newState = getState(instance);
-        if (lastState.current == null || (lastState.current !== null && JSON.stringify(newState) !== JSON.stringify(lastState.current))) {
-          lastState.current = newState;
-          console.log('saving state of ' + type + ' in cell ' + cellId);
-          dispatch(sheetActions.updateCellData({ cellId: cellId, data: newState }));
-        }
-        stateChanged.current = false
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);*/
 
   return (
     <div
