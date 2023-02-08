@@ -25,7 +25,7 @@ export const storageMiddleware: Middleware =
         message
       }
       api.dispatch(storageActions.enqueueChange(change));
-      if (state.sheetStorage.status === 'ready') {
+      if (state.sheetStorage.status === 'idle') {
         api.dispatch(processQueue())
       }
     } else {
@@ -42,7 +42,7 @@ export const storageMiddleware: Middleware =
       message: type.slice(-4)
     }
     api.dispatch(storageActions.enqueueChange(change));
-    if (state.sheetStorage.status === 'ready') {
+    if (state.sheetStorage.status === 'idle') {
       api.dispatch(processQueue())
     }
     return res;

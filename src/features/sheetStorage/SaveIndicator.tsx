@@ -26,8 +26,8 @@ export default function SaveIndicator(props: SaveIndicatorProps) {
   return (
     <div className={props.className} style={props.style}>
 
-      {storageStatus === 'ready' && queue.items.length > 0 && storageSynced && <>Changes saved <MdCheck /></>}
-      {storageStatus === 'processing' && <>Saving changes <Loading compact /></>}
+      {storageStatus === 'idle' && queue.items.length > 0 && storageSynced && <>Changes saved <MdCheck /></>}
+      {(storageStatus === 'processing' || storageStatus === 'task_finished') && <>Saving changes <Loading compact /></>}
       {storageStatus === 'error' && <div title={errorMessage}>Save error <BsExclamationTriangle /></div>}
       {storageStatus === 'offline_paused' && showOffline()}
     </div>

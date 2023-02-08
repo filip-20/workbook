@@ -4,7 +4,7 @@ import { AppDispatch, RootState } from "../../app/store";
 import { processRecord as ghProcessRecord, mergeChanges as ghSaveChanges, onResume as ghOnResume } from "./github/githubStorage";
 
 
-export type StorageStatus = 'not_initialized' | 'ready' | 'processing' | 'paused' | 'error' | 'offline_paused'
+export type StorageStatus = 'not_initialized' | 'idle' | 'task_finished' | 'processing' | 'paused' | 'error' | 'offline_paused'
 
 export interface HistoryRecord {
   id: number,
@@ -26,7 +26,7 @@ export interface SheetStorage {
   queue: HistoryQueue,
   online: boolean,
   storageEngine?: { type: string, state: any }
-  unsyncedChanges: {[key: string]: boolean},
+  unsyncedChanges: { [key: string]: boolean },
 }
 
 const initialState: SheetStorage = {
@@ -65,7 +65,7 @@ const storageSlice = createSlice({
       if (errorMessage === undefined) {
         state.queue.items[state.queue.nextIndex].synced = true;
         state.queue.nextIndex++;
-        state.status = 'ready';
+        state.status = 'task_finished';
       } else {
         state.errorMessage = errorMessage;
         state.status = 'error';
@@ -76,7 +76,7 @@ const storageSlice = createSlice({
     },
     resume: (state) => {
       if (state.status === 'error' || state.status === 'paused') {
-        state.status = 'ready';
+        state.status = 'task_finished';
         state.errorMessage = undefined;
         onResume(state);
       } else {
@@ -95,7 +95,7 @@ const storageSlice = createSlice({
     },
     init: (state, action: PayloadAction<{ type: string, initialState: any }>) => {
       const { type, initialState } = action.payload;
-      state.status = 'ready';
+      state.status = 'idle';
       state.unsyncedChanges = {};
       state.storageEngine = {
         type,
@@ -105,8 +105,8 @@ const storageSlice = createSlice({
     setErrorMessage: (state, action: PayloadAction<string | undefined>) => {
       state.errorMessage = action.payload;
     },
-    unsyncedChange: (state, action: PayloadAction<{key: string, unsynced: boolean}>) => {
-      const { key, unsynced } = action.payload; 
+    unsyncedChange: (state, action: PayloadAction<{ key: string, unsynced: boolean }>) => {
+      const { key, unsynced } = action.payload;
       if (unsynced === true) {
         state.unsyncedChanges[key] = true;
       } else {
@@ -130,21 +130,24 @@ export const storageSelectors = {
   queue: (state: RootState) => state.sheetStorage.queue,
   storageEngine: (state: RootState) => state.sheetStorage.storageEngine,
   errorMessage: (state: RootState) => state.sheetStorage.errorMessage,
-  storageSynced: (state: RootState) => {console.log(` computing storage synced: ${Object.values(state.sheetStorage.unsyncedChanges)}`); return !(state.sheetStorage.queue.items.length - state.sheetStorage.queue.nextIndex > 0 || Object.values(state.sheetStorage.unsyncedChanges).some(b => b === true))},
+  storageSynced: (state: RootState) => { console.log(` computing storage synced: ${Object.values(state.sheetStorage.unsyncedChanges)}`); return !(state.sheetStorage.queue.items.length - state.sheetStorage.queue.nextIndex > 0 || Object.values(state.sheetStorage.unsyncedChanges).some(b => b === true)) },
 }
 
+/* This thunk is automatically dispatched by storageMiddleware */
 export function processQueue() {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
-    if (state.sheetStorage.status === 'ready' || (state.sheetStorage.status === 'offline_paused' && state.sheetStorage.online === true)) {
+    if (state.sheetStorage.status === 'idle'
+      || state.sheetStorage.status === 'task_finished'
+      || (state.sheetStorage.status === 'offline_paused' && state.sheetStorage.online === true)) {
       // pause history saving when offline
       if (state.sheetStorage.online === false) {
         dispatch(storageActions.updateStatus('offline_paused'))
-        return ;
+        return;
       }
       // resume history
       if (state.sheetStorage.status === 'offline_paused' && state.sheetStorage.online === true) {
-        dispatch(storageActions.updateStatus('ready'))
+        dispatch(storageActions.updateStatus('task_finished'))
       }
 
       const { queue } = state.sheetStorage;
@@ -158,6 +161,8 @@ export function processQueue() {
         if (state.sheetStorage.storageEngine.type === 'github') {
           dispatch(ghProcessRecord(record));
         }
+      } else {
+        dispatch(storageActions.updateStatus('idle'))
       }
     }
   }
