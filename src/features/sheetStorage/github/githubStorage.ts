@@ -14,6 +14,7 @@ import sha1 from 'sha1';
 import { Base64 } from 'js-base64';
 import { HistoryRecord, storageActions } from "../sheetStorage"
 import { ActionCreators as UndoActionCreators } from 'redux-undo'
+import { TruckFlatbed } from "react-bootstrap-icons"
 
 export interface GithubFileLocation {
   owner: string,
@@ -69,14 +70,14 @@ export function ghClearSessionBranch() {
 function listAllRepoBranches(owner: string, repo: string) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const perPage = 100;
-    const headers = await reposApi.endpoints.reposListBranchesHeaders.initiate({ owner, repo, perPage })(dispatch, getState, null)
+    const headers = await reposApi.endpoints.reposListBranchesHeaders.initiate({ owner, repo, perPage }, {forceRefetch: true})(dispatch, getState, null)
     if (headers.isError) {
       throw Error('unexpected response');
     }
     const lastPage = githubApiParseLastPage(headers.data?.link);
     let branches: ReposListBranchesApiResponse = [];
     for (let page = 1; page <= lastPage; page++) {
-      const response = await reposApi.endpoints.reposListBranches.initiate({ owner, repo, perPage, page })(dispatch, getState, null)
+      const response = await reposApi.endpoints.reposListBranches.initiate({ owner, repo, perPage, page }, {forceRefetch: true})(dispatch, getState, null)
       if (response.data !== undefined) {
         branches = branches.concat(response.data)
       } else {
@@ -241,7 +242,7 @@ export function mergeChanges() {
       mergeState: 'merging'
     }));
 
-    const r1 = await pullsApi.endpoints.pullsList.initiate({ owner, repo, state: 'open', perPage: 100 })(dispatch, getState, null);
+    const r1 = await pullsApi.endpoints.pullsList.initiate({ owner, repo, state: 'open', perPage: 100 }, {forceRefetch: true})(dispatch, getState, null);
     if (!('data' in r1) || r1.data === undefined) {
       // Listing pulls failed
       const mergeError: GhMergeError = {
@@ -361,9 +362,9 @@ function createSessionBranch() {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const engineState: GhStorageState = getState().sheetStorage.storageEngine!.state
     const { location, baseCommitSha } = engineState;
-    console.log('createing new session branch')
     const { owner, repo } = location;
     const sessionBranchName = `refs/heads/${getSessionBranchName(location)}`;
+
     const response = await gitDbApi.endpoints.gitCreateRef.initiate({ owner, repo, body: { ref: sessionBranchName, sha: baseCommitSha } })(dispatch, getState, null);
     if ('data' in response) {
       // success
@@ -423,19 +424,6 @@ function isSessionBranchMerged() {
       }
     }
     return {result: false};
-
-    /*
-    const { baseBranch, sessionBranch } = ghState;
-    const { owner, repo } = ghState.location;
-    const basehead = `${sessionBranch}...${baseBranch}`;
-    const r = await reposApi.endpoints.reposCompareCommits.initiate({owner, repo, basehead})(dispatch, getState, null);
-    if (r.data !== undefined) {
-      if (r.data.total_commits === 0) {
-        console.log('Session branch is merged');
-      } else {
-        console.log('Session branch is NOT merged');
-      }
-    }*/
   }
 }
 
