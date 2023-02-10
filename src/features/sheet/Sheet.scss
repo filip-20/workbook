@@ -1,0 +1,14 @@
+@import '~bootstrap/scss/bootstrap-utilities';
+
+/* Overrides of CodeMirror style to match with Bootstrap */
+.cm-editor {
+  border-radius: $input-border-radius;
+  border: solid $input-border-width $input-border-color;
+  transition: $input-transition;
+}
+
+.cm-editor.cm-focused {
+  outline: none !important;
+  border-color: $input-focus-border-color;
+  box-shadow: $input-focus-box-shadow;
+}

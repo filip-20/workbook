@@ -1,4 +1,4 @@
-import { Button, ButtonProps, Dropdown } from "react-bootstrap";
+import { Row, Col, Dropdown } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { CellComment, sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import Moment from "react-moment";
@@ -9,6 +9,8 @@ import { BsThreeDots } from "react-icons/bs";
 import React, { useState } from "react";
 import { CommentEditor } from "./AddComment";
 import FormattedTextRenderer from "../../components/FormattedTextRenderer";
+import classNames from 'classnames/dedupe';
+import styles from "./Comments.module.scss";
 
 function EditCommentMenu(props: { onDelete: () => void, onEdit: () => void }) {
   const MenuButton = React.forwardRef<HTMLButtonElement, ButtonProps>(({ children, onClick }, ref) => (
@@ -39,7 +41,7 @@ function EditCommentMenu(props: { onDelete: () => void, onEdit: () => void }) {
 
 interface CommentProps {
   cellId: number,
-  comment: CellComment
+  comment: CellComment,
 }
 
 function Comment(props: CommentProps) {
@@ -60,7 +62,10 @@ function Comment(props: CommentProps) {
   }
 
   return (
-    <div key={comment.id} className="border p-2 mb-1">
+    <div key={comment.id}
+      className={classNames('border rounded p-2 mb-2 small',
+        styles.commentWrapper, {[styles.isEdited]: isEdited})}
+    >
       <div className="small" style={{ display: 'flex' }}>
         <UserAvatar username={comment.author} className="border border-secondary my-auto" style={{ height: '3em' }} />
         <div className="ms-2" style={{ flexGrow: '1' }}>
@@ -76,16 +81,15 @@ function Comment(props: CommentProps) {
           isEdited ?
             <CommentEditor
               content={comment.text}
-              title=""
+              title="Upraviť komentár"
               saveText="Uložiť"
-              hideCancel
               unsyncedKey={`editedCellComment/${cellId}/${comment.id}`}
               onCancel={() => setIsEdited(false)}
               onSave={handleCommentUpdate}
+              idPrefix={`cell-${cellId}-comment-${comment.id}`}
             />
             :
             <FormattedTextRenderer
-              className="small"
               text={comment.text}
             />
         }

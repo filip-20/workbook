@@ -1,17 +1,25 @@
-.cellWrapper {
-  margin-bottom: 0;
-  padding: 1rem;
-  width: 100%;
-  height: fit-content;
-  /*display: inline-block;*/
-  /*vertical-align: top;*/
-  box-shadow: none;
-  transition: box-shadow 300ms;
+@use 'sass:map';
+@import '~bootstrap/scss/bootstrap-utilities';
+@import './_shadows';
+
+.cellRow {
+  --bs-gutter-x: 0.5rem;
+  row-gap: 0.5rem; /* in case comments are wrapped to the next row */
 }
 
-.cellWrapper:hover {
-  -webkit-box-shadow: 0px 4px 10px 5px rgba(0,0,0,0.3); 
-  box-shadow: 0px 4px 10px 5px rgba(0,0,0,0.3);
+.cellWrapper {
+  height: fit-content;
+  box-shadow: none;
+  transition: box-shadow .15s;
+
+  &:hover,
+  &.isEdited {
+    box-shadow: $worksheet-shadow-sm;
+  }
+  
+  &.isEdited:focus-within {
+    box-shadow: $worksheet-shadow-lg;
+  }
 }
 
 .lockIcon {

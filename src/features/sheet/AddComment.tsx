@@ -1,12 +1,14 @@
-import { Button, Form } from "react-bootstrap";
-import CodeMirror from '@uiw/react-codemirror';
+import { Button, Form, Row, Col } from "react-bootstrap";
+import CodeMirror, {ReactCodeMirrorRef} from '@uiw/react-codemirror';
 import RemarkMathPlugin from 'remark-math';
 import rehypeKatex from "rehype-katex";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useRef, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useAppDispatch } from "../../app/hooks";
 import { sheetActions } from "./slice/sheetSlice";
 import sheetStorage, { storageActions } from "../sheetStorage/sheetStorage";
+import classNames from 'classnames/dedupe';
+import styles from "./Comments.module.scss";
 
 export interface CommentEditorProps {
   content?: string,
@@ -15,14 +17,17 @@ export interface CommentEditorProps {
   hideCancel?: boolean,
   unsyncedKey: string,
   onCancel: () => void,
-  onSave: (text: string) => void
+  onSave: (text: string) => void,
+  idPrefix?: string,
+  className?: string,
 }
 
 export function CommentEditor(props: CommentEditorProps) {
-  const { content, title, saveText, hideCancel, unsyncedKey, onSave, onCancel } = props;
+  const { content, title, saveText, hideCancel, unsyncedKey, onSave, onCancel, idPrefix, className } = props;
   const initialContent = content || '';
   const [text, setText] = useState(initialContent);
   const [preview, setPreview] = useState(false);
+  const cmRef = useRef<ReactCodeMirrorRef>(null);
 
   const dispatch = useAppDispatch();
 
@@ -43,30 +48,49 @@ export function CommentEditor(props: CommentEditorProps) {
   }
 
   return (
-    <>
-      <div>
-        <div className="d-inline-block">{title}</div>
-        <Form.Check className="d-inline-block float-end" onChange={(e) => setPreview(e.target.checked)} type="switch" label="Náhľad" />
-      </div>
-      <div className="my-2">
+    <div className={classNames('clearfix', className)}>
+      <Form.Group className='mb-2'>
+        <Form.Label
+          htmlFor={`${idPrefix}-editor`}
+          onClick={() => cmRef.current?.view?.focus()}
+          className='mb-1'
+        >
+          {title}
+        </Form.Label>
         <CodeMirror
           value={text}
           onChange={(value, viewUpdate) => {
             setText(value);
           }}
+          autoFocus
+          ref={cmRef}
+          id={`${idPrefix}-editor`}
         />
-        {preview && <ReactMarkdown
-          className={"border"}
-          children={text}
-          remarkPlugins={[RemarkMathPlugin]}
-          rehypePlugins={[rehypeKatex]}
-        />}
+      </Form.Group>
+      <Form.Group className="mb-2">
+        <Form.Check type="switch" label="Náhľad"
+          id={`${idPrefix}-preview-switch`}
+          className={classNames({'float-start width-auto': !preview})}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setPreview(e.target.checked)} />
+        {preview && <>
+          <div className=""/>
+          <ReactMarkdown
+            className={"small"}
+            children={text}
+            remarkPlugins={[RemarkMathPlugin]}
+            rehypePlugins={[rehypeKatex]}
+          />
+        </>}
+      </Form.Group>
+      <div className="float-end">
+        {hideCancel ||
+          <Button className="ms-2 my-0" size="sm" onClick={cancelHandler}
+            variant="outline-secondary">Zrušiť</Button>}
+        <Button className="ms-2 my-0" size="sm" onClick={saveHandler}
+          variant="primary">{saveText}</Button>
       </div>
-      <div className="text-end">
-        {hideCancel === true ? <></> : <Button className="me-1 my-0" size="sm" onClick={cancelHandler} variant="secondary">Zrušiť</Button>}
-        <Button className="me-1 my-0" size="sm" onClick={saveHandler} variant="primary">{saveText}</Button>
-      </div>
-    </>
+    </div>
   )
 }
 
@@ -85,16 +109,17 @@ export default function AddComment(props: AddCommentProps) {
 
   return (
     <div className={className} style={style}>
-      <div className="border p-2">
-
-      <CommentEditor
-        title="Pridať komentár"
-        saveText="Pridať"
-        unsyncedKey={unsyncedKey}
-        onCancel={onCancel}
-        onSave={(text) => {dispatch(sheetActions.addCellComment({ cellId, text })); onSave()} }
-      />
-
+      <div className={classNames('small border rounded p-2',
+        styles.commentWrapper, styles.isEdited)}
+      >
+        <CommentEditor
+          title="Pridať komentár"
+          saveText="Pridať"
+          unsyncedKey={unsyncedKey}
+          onCancel={onCancel}
+          onSave={(text) => {dispatch(sheetActions.addCellComment({ cellId, text })); onSave()} }
+          idPrefix={`cell-${cellId}-add-comment`}
+        />
       </div>
     </div>
   )
