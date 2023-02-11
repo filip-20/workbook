@@ -4,6 +4,7 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import classNames from 'classnames/dedupe';
 
 import 'katex/dist/katex.min.css';
 import styles from './FormattedTextRenderer.module.css'
@@ -34,7 +35,7 @@ export default function FormattedTextRenderer(props: FormattedTextRendererProps)
 
   return (
     <ReactMarkdown
-      className={`${className} ${styles.formattedText}`}
+      className={classNames(styles.formattedText,className)}
       children={text}
       remarkPlugins={[remarkMath, remarkGfm]}
       rehypePlugins={[rehypeRaw, [rehypeSanitize, rehypeSanitizeOptions], [rehypeKatex, rehypeKatexOptions]]}
