@@ -12,32 +12,15 @@ import FormattedTextRenderer from "../../components/FormattedTextRenderer";
 import classNames from 'classnames/dedupe';
 import styles from "./Comments.module.scss";
 
-function EditCommentMenu(props: { onDelete: () => void, onEdit: () => void }) {
-  const MenuButton = React.forwardRef<HTMLButtonElement, ButtonProps>(({ children, onClick }, ref) => (
-    <Button variant="secondary" size="sm"
-      ref={ref}
-      onClick={e => {
-        e.preventDefault();
-        onClick !== undefined && onClick(e)
-      }}
-    >
-      {children}
-    </Button>
-  ));
-
-  return (
-    <Dropdown>
-      <Dropdown.Toggle as={MenuButton}>
-        <BsThreeDots />
-      </Dropdown.Toggle>
-
-      <Dropdown.Menu>
-        <Dropdown.Item onClick={props.onEdit}>Upraviť</Dropdown.Item>
-        <Dropdown.Item onClick={props.onDelete}>Zmazať</Dropdown.Item>
-      </Dropdown.Menu>
-    </Dropdown>
-  )
-}
+const EditCommentMenu = (props: { onDelete: () => void, onEdit: () => void }) =>
+  <Dropdown>
+    <Dropdown.Toggle variant="secondary" size="sm"
+      className="pt-1 pb-0"/>
+    <Dropdown.Menu>
+      <Dropdown.Item onClick={props.onEdit}>Upraviť</Dropdown.Item>
+      <Dropdown.Item onClick={props.onDelete}>Zmazať</Dropdown.Item>
+    </Dropdown.Menu>
+  </Dropdown>
 
 interface CommentProps {
   cellId: number,
@@ -66,17 +49,30 @@ function Comment(props: CommentProps) {
       className={classNames('border rounded p-2 mb-2 small',
         styles.commentWrapper, {[styles.isEdited]: isEdited})}
     >
-      <div className="small" style={{ display: 'flex' }}>
-        <UserAvatar username={comment.author} className="border border-secondary my-auto" style={{ height: '3em' }} />
-        <div className="ms-2" style={{ flexGrow: '1' }}>
-          <div>{comment.author}</div>
-          <Moment className="small" date={new Date(comment.timestamp)} locale='sk' fromNow />
-        </div>
-        <div style={{ float: 'right' }}>
-          {canEdit && <EditCommentMenu onEdit={() => setIsEdited(true)} onDelete={handleDelete} />}
-        </div>
-      </div>
-      <div style={{ marginTop: '0.5rem' }}>
+      <Row className="g-2 flex-nowrap mb-1">
+        <Col xs='auto'>
+          <UserAvatar username={comment.author}
+            className={classNames('border', styles.commentAvatar)} />
+        </Col>
+        <Col className='align-self-stretch flex-shrink-1
+                        d-flex flex-column justify-content-center'>
+            <div className="overflow-hidden">{comment.author}</div>
+            <Moment className="text-muted overflow-hidden"
+              date={new Date(comment.timestamp)}
+              withTitle
+              titleFormat='ddd, MMM D, YYYY \a\t H:mm'
+              format='MMM D'
+              locale='en' fromNowDuring={7*24*3600000} />
+        </Col>
+        <Col xs='auto'>
+          {canEdit &&
+            <EditCommentMenu
+              onEdit={() => setIsEdited(true)}
+              onDelete={handleDelete}
+            />}
+        </Col>
+      </Row>
+      <div>
         {
           isEdited ?
             <CommentEditor
