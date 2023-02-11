@@ -12,6 +12,8 @@ import { storageActions } from '../sheetStorage/sheetStorage';
 import styles from './CellContainer.module.scss';
 import classNames from 'classnames/dedupe';
 
+import config from '../../config.json';
+
 export type CellContainerProps = {
   className?: string,
   cellId: number,
@@ -107,7 +109,8 @@ export default function CellContainer(props: CellContainerProps) {
       //dispatch(storageActions.addUnsyncedChange())
       dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: true}))
       finishUpdate.current = {
-        timeout: setTimeout(updateData, 10000), 
+        timeout: setTimeout(updateData,
+                  config.frontend.cellUpdateIntervalSec * 1000), 
         getData
       }
     } else {
