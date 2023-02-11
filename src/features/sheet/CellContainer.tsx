@@ -156,13 +156,14 @@ export default function CellContainer(props: CellContainerProps) {
         </Col>
         {hasComments || addComment
           ? <Col xs={4} xl={3}>
-              <Comments cellId={cellId} />
+              <Comments cellId={cellId} katexMacros={katexMacros} />
               {addComment &&
                 <AddComment
                   unsyncedKey={`newCellComment/${cellId}`}
                   cellId={cellId}
                   onSave={() => setAddComment(false)}
                   onCancel={() => setAddComment(false)}
+                  katexMacros={katexMacros}
                 />}
             </Col>
           : null

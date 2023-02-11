@@ -101,10 +101,11 @@ export interface AddCommentProps {
   unsyncedKey: string,
   onSave: () => void,
   onCancel: () => void,
+  katexMacros?: object,
 }
 
 export default function AddComment(props: AddCommentProps) {
-  const { className, style, cellId, unsyncedKey, onSave, onCancel } = props;
+  const { className, style, cellId, unsyncedKey, onSave, onCancel, katexMacros } = props;
   const dispatch = useAppDispatch();
 
   return (
@@ -119,6 +120,7 @@ export default function AddComment(props: AddCommentProps) {
           onCancel={onCancel}
           onSave={(text) => {dispatch(sheetActions.addCellComment({ cellId, text })); onSave()} }
           idPrefix={`cell-${cellId}-add-comment`}
+          katexMacros={katexMacros}
         />
       </div>
     </div>

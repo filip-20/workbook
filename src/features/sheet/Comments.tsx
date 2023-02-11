@@ -25,10 +25,11 @@ const EditCommentMenu = (props: { onDelete: () => void, onEdit: () => void }) =>
 interface CommentProps {
   cellId: number,
   comment: CellComment,
+  katexMacros?: object,
 }
 
 function Comment(props: CommentProps) {
-  const { cellId, comment } = props;
+  const { cellId, comment, katexMacros } = props;
 
   const [isEdited, setIsEdited] = useState(false);
 
@@ -82,11 +83,13 @@ function Comment(props: CommentProps) {
               unsyncedKey={`editedCellComment/${cellId}/${comment.id}`}
               onCancel={() => setIsEdited(false)}
               onSave={handleCommentUpdate}
+              katexMacros={katexMacros}
               idPrefix={`cell-${cellId}-comment-${comment.id}`}
             />
             :
             <FormattedTextRenderer
               text={comment.text}
+              katexMacros={katexMacros}
             />
         }
 
@@ -99,11 +102,13 @@ export interface CommentsProps {
   className?: string,
   style?: React.CSSProperties,
   cellId: number,
+  katexMacros?: object,
 }
 
 export default function Comments(props: CommentsProps) {
-  const { className, style, cellId } = props;
+  const { className, style, cellId, katexMacros } = props;
   const comments = useAppSelector(sheetSelectors.cellComments(cellId));
+  const commonCommentProps = { cellId, katexMacros };
 
   if (comments.length === 0) {
     return (<></>)
@@ -111,7 +116,7 @@ export default function Comments(props: CommentsProps) {
 
   return (
     <div className={className} style={style}>
-      {comments.map(c => <Comment cellId={cellId} comment={c} />)}
+      {comments.map(c => <Comment comment={c} {...commonCommentProps} />)}
     </div>
   )
 }
