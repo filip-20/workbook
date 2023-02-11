@@ -5,8 +5,7 @@ import AddToolbar from "./AddToolbar";
 import { sheetSelectors } from "./slice/sheetSlice";
 import { useMemo, useState } from "react";
 
-import styles from "./Sheet.module.css";
-import "./Sheet.scss";
+import styles from "./Sheet.module.scss";
 import katex from "katex";
 
 export interface SheetProps {

@@ -19,6 +19,8 @@ import SaveErrorModal from "../features/sheetStorage/github/SaveErrorModal";
 import { BiRedo, BiUndo } from "react-icons/bi";
 import { ActionCreators as UndoActionCreators } from 'redux-undo'
 import UndoRedoButtonGroup from "../features/sheet/UndoRedo";
+import classNames from 'classnames/dedupe';
+import styles from './SheetPage.module.scss';
 
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
@@ -54,13 +56,13 @@ function SheetPage() {
     } else {
       ghLocation.current = { owner, repo, path: path, ref: branch };
       return (
-        <Container fluid className="w-100 m-0 p-0" style={{ minHeight: 'calc(100vh - var(--workbook-nav-height))', background: 'white' }}>
+        <Container fluid className={classNames("w-100 m-0 p-0 bg-body",styles.sheetContainer)}>
 
           <MergeSheetModal show={mergeSheetModal} onClose={() => setMergeSheetModal(false)} />
           <SheetSettingsModal tab={settingsTab} onClose={() => setSettingsTab('NONE')} />
           <SaveErrorModal />
 
-          <div style={{top: '0px', position: 'sticky', zIndex: 999, background: 'white'}} className="p-3 border-bottom d-flex align-items-center flex-wrap">
+          <div className={classNames("p-3 border-bottom d-flex align-items-center flex-wrap position-sticky bg-body",styles.sheetToolbar)}>
             <div style={{ fontSize: '1.5rem' }}>
               <MdMenuBook />
               <BranchLabel branch={branch} />

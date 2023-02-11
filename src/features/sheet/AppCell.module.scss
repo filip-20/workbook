@@ -1,0 +1,12 @@
+@import '~bootstrap/scss/bootstrap-utilities';
+
+.appOverlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: $zindex-dropdown - 30;
+  // background-color: rgba($body-bg, 0.35);
+}
+  
