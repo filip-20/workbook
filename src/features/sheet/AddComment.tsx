@@ -3,7 +3,7 @@ import CodeMirror, {ReactCodeMirrorRef} from '@uiw/react-codemirror';
 import RemarkMathPlugin from 'remark-math';
 import rehypeKatex from "rehype-katex";
 import React, { useCallback, useRef, useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import FormattedTextRendered from "../../components/FormattedTextRenderer";
 import { useAppDispatch } from "../../app/hooks";
 import { sheetActions } from "./slice/sheetSlice";
 import sheetStorage, { storageActions } from "../sheetStorage/sheetStorage";
@@ -20,10 +20,11 @@ export interface CommentEditorProps {
   onSave: (text: string) => void,
   idPrefix?: string,
   className?: string,
+  katexMacros?: object,
 }
 
 export function CommentEditor(props: CommentEditorProps) {
-  const { content, title, saveText, hideCancel, unsyncedKey, onSave, onCancel, idPrefix, className } = props;
+  const { content, title, saveText, hideCancel, unsyncedKey, onSave, onCancel, idPrefix, className, katexMacros } = props;
   const initialContent = content || '';
   const [text, setText] = useState(initialContent);
   const [preview, setPreview] = useState(false);
@@ -74,13 +75,12 @@ export function CommentEditor(props: CommentEditorProps) {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setPreview(e.target.checked)} />
         {preview && <>
-          <div className=""/>
-          <ReactMarkdown
-            className={"small"}
-            children={text}
-            remarkPlugins={[RemarkMathPlugin]}
-            rehypePlugins={[rehypeKatex]}
-          />
+          <div className="text-break">
+            <FormattedTextRendered
+              text={text}
+              katexMacros={katexMacros}
+            />
+          </div>
         </>}
       </Form.Group>
       <div className="float-end">
