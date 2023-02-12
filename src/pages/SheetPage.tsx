@@ -63,7 +63,7 @@ function SheetPage() {
           <SaveErrorModal />
 
           <div className={classNames("p-3 border-bottom d-flex align-items-center flex-wrap position-sticky bg-body",styles.sheetToolbar)}>
-            <div style={{ fontSize: '1.5rem' }}>
+            <div style={{}}>
               <MdMenuBook />
               <BranchLabel branch={branch} />
               <Pathbar style={{ color: 'white !important' }} owner={owner} path={path} branch={branch} repoName={repo} makeLink={makeRepoLink} />

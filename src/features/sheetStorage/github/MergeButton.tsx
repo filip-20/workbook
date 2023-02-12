@@ -30,10 +30,10 @@ export default function MergeButton() {
   })()
 
   return (
-    <Button variant={variant} title="Merge changes" disabled={ghState.sessionBranch === undefined} onClick={() => dispatch(storageActions.saveChanges())}>
-      <IoMdGitMerge />Merge changes
-      {state === 'merging' && <Loading compact />}
-      {state === 'success' && <MdCheck />}
+    <Button variant={variant} title="Merge changes" disabled={ghState.sessionBranch === undefined || state === 'merging'} onClick={() => dispatch(storageActions.saveChanges())}>
+      <IoMdGitMerge />&nbsp;Merge changes
+      {state === 'merging' && <>&nbsp;<Loading compact /></>}
+      {state === 'success' && <>&nbsp;<MdCheck /></>}
     </Button>
   )
 }

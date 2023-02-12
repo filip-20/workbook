@@ -6,10 +6,16 @@
 }
 
 /* Overrides of CodeMirror style to match with Bootstrap */
+
 :global(.cm-editor) {
   border-radius: $input-border-radius;
   border: solid $input-border-width $input-border-color;
   transition: $input-transition;
+
+  :global(.cm-gutters) {
+    border-start-start-radius: $input-border-radius;
+    border-end-start-radius: $input-border-radius;
+  }
 
   &:global(.cm-focused) {
     outline: none !important;

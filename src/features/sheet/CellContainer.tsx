@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Row, Col } from 'react-bootstrap';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
@@ -131,15 +131,15 @@ export default function CellContainer(props: CellContainerProps) {
   return (
     <div className={className}>
       <Row
-        className={styles.cellRow}
+        className='g-2'
         onMouseEnter={() => setCellHovered(true)}
         onMouseLeave={() => setCellHovered(false)}
       >
-        <Col>
+        <Col xs={!(hasComments || addComment) || 8} xl={!(hasComments || addComment) || 9}>
           <div
             onDoubleClick={toggleEditHandler}
             className={classNames(styles.cellWrapper,
-              'border rounded py-3 w-100 position-relative',
+              'border w-100 position-relative',
               {[styles.isEdited]: isEdited})}
             tabIndex={0}
           >
@@ -157,25 +157,24 @@ export default function CellContainer(props: CellContainerProps) {
             </div>
           </div>
         </Col>
-        {hasComments || addComment
-          ? <Col xs={4} xl={3}>
-              <Comments cellId={cellId} katexMacros={katexMacros} />
-              {addComment &&
-                <AddComment
-                  unsyncedKey={`newCellComment/${cellId}`}
-                  cellId={cellId}
-                  onSave={() => setAddComment(false)}
-                  onCancel={() => setAddComment(false)}
-                  katexMacros={katexMacros}
-                />}
-            </Col>
-          : null
+        {(hasComments || addComment) &&
+          <Col xs={4} xl={3}>
+            <Comments cellId={cellId} katexMacros={katexMacros} />
+            {addComment &&
+              <AddComment
+                unsyncedKey={`newCellComment/${cellId}`}
+                cellId={cellId}
+                onSave={() => setAddComment(false)}
+                onCancel={() => setAddComment(false)}
+                katexMacros={katexMacros}
+              />}
+          </Col>
         }
       </Row>
       <div
         onMouseEnter={() => toggleVisibility(true, dropdownOpened.current)}
         onMouseLeave={() => toggleVisibility(false, dropdownOpened.current)}
-        style={{ height: '20px', display: 'flex' }}
+        className={classNames('d-flex', styles.addToolbarContainer)}
       >
         <AddToolbar
           className={styles.addToolbar}

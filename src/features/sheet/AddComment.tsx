@@ -86,7 +86,7 @@ export function CommentEditor(props: CommentEditorProps) {
       <div className="float-end">
         {hideCancel ||
           <Button className="ms-2 my-0" size="sm" onClick={cancelHandler}
-            variant="outline-secondary">Zrušiť</Button>}
+            variant="secondary">Zrušiť</Button>}
         <Button className="ms-2 my-0" size="sm" onClick={saveHandler}
           variant="primary">{saveText}</Button>
       </div>
