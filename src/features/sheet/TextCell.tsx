@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Row, Col } from 'react-bootstrap';
 import styles from './TextCell.module.scss'
-import CodeMirror from '@uiw/react-codemirror';
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
-import { markdown } from '@codemirror/lang-markdown';
 import FormattedTextRenderer from "../../components/FormattedTextRenderer";
+import TextEditor from "../../components/TextEditor";
 import classNames from 'classnames/dedupe';
 
 export interface TextCellProps {
@@ -23,9 +22,7 @@ function TextCell({ data, isEdited, katexMacros, onDataChanged }: TextCellProps)
       className={`${styles.textEdit} ${styles.cmMinHeight}`}
       onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
-      <CodeMirror
-        autoFocus
-        extensions={[markdown()]}
+      <TextEditor
         value={content}
         onChange={(value, viewUpdate) => {
           setContent(value);

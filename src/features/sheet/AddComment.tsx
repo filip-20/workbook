@@ -1,7 +1,5 @@
 import { Button, Form, Row, Col } from "react-bootstrap";
-import CodeMirror, {ReactCodeMirrorRef} from '@uiw/react-codemirror';
-import RemarkMathPlugin from 'remark-math';
-import rehypeKatex from "rehype-katex";
+import TextEditor, { ReactCodeMirrorRef } from '../../components/TextEditor';
 import React, { useCallback, useRef, useEffect, useState } from "react";
 import FormattedTextRendered from "../../components/FormattedTextRenderer";
 import { useAppDispatch } from "../../app/hooks";
@@ -58,7 +56,7 @@ export function CommentEditor(props: CommentEditorProps) {
         >
           {title}
         </Form.Label>
-        <CodeMirror
+        <TextEditor
           value={text}
           onChange={(value, viewUpdate) => {
             setText(value);
