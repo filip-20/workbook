@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import { BsExclamationTriangleFill } from 'react-icons/bs';
 import styles from './CellContainer.module.scss';
+import { authSelectors } from '../auth/authSlice';
 
 export interface AppCellProps {
   cellId: number
@@ -27,13 +28,14 @@ const unsupportedApp = (type: string) => {
 
 function AppCell(props: AppCellProps) {
   const { cellId, isEdited, onDataChanged } = props;
+  const ghAccessToken = useAppSelector(authSelectors.accessToken);
   const cell = useAppSelector(sheetSelectors.cell(cellId));
   const { type, data } = cell;
   const { prepare, AppComponent } = getAppInfo(type) || unsupportedApp(type);
   const prepareResult = useRef<PrepareResult | null>(null);
 
   if (prepareResult.current === null) {
-    prepareResult.current = prepare(data)
+    prepareResult.current = prepare(data, { ghAccessToken })
   }
 
   const { instance, getState } = prepareResult.current;

@@ -7,7 +7,8 @@ interface PrepareResult {
   getState: (instance: any) => any,
 }
 type PrepareFunction = (
-  initialState: any
+  initialState: any,
+  additionalArgs?: any,
 ) => PrepareResult
 
 interface EmeddedApp {
