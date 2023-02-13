@@ -1,3 +1,0 @@
-.formattedText > :is(p,ul,ol,dl,table):last-child {
-  margin-bottom: 0px;
-}

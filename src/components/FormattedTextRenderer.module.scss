@@ -1,0 +1,15 @@
+.formattedText > :is(p,ul,ol,dl,table):last-child {
+  margin-bottom: 0px;
+}
+
+.formattedText > div[class] > :is(p,ul,ol,dl,table):last-child {
+  margin-bottom: 0px;
+}
+
+.formattedText > :global(.math-display):last-child > :global(.katex-display) {
+  margin-bottom: 0px;
+}
+
+.formattedText > div[class] > :global(.math-display):last-child > :global(.katex-display) {
+  margin-bottom: 0px;
+}

@@ -3,11 +3,15 @@ import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import remarkGfm from "remark-gfm";
+import remarkDirective from "remark-directive";
+import remarkDirectiveRehype from "remark-directive-rehype";
+import { remarkDefinitionList, defListHastHandlers } from "remark-definition-list";
 import remarkMath from "remark-math";
 import classNames from 'classnames/dedupe';
 
 import 'katex/dist/katex.min.css';
-import styles from './FormattedTextRenderer.module.css'
+import styles from './FormattedTextRenderer.module.scss'
+import mdDirectives from './md-directives';
 
 export interface FormattedTextRendererProps {
   className?: string,
@@ -18,13 +22,20 @@ export interface FormattedTextRendererProps {
 export default function FormattedTextRenderer(props: FormattedTextRendererProps) {
   const { className, text, katexMacros } = props;
   
-  let rehypeSanitizeOptions = {
+  const rehypeSanitizeOptions = {
     ...defaultSchema,
+    tagNames: [
+      ...(defaultSchema.tagNames ?? []),
+      ...(Object.getOwnPropertyNames(mdDirectives))
+    ],
     attributes: {
       ...defaultSchema.attributes,
       '*': [
-        ...(defaultSchema.attributes !== undefined ? defaultSchema.attributes['*'] || [] : []),
-        'className'
+        ...(defaultSchema.attributes !== undefined
+            ? (defaultSchema.attributes['*'] ?? [])
+            : []),
+        'className',
+        'style',
       ]
     }
   }
@@ -37,8 +48,21 @@ export default function FormattedTextRenderer(props: FormattedTextRendererProps)
     <ReactMarkdown
       className={classNames(styles.formattedText,className)}
       children={text}
-      remarkPlugins={[remarkMath, remarkGfm]}
-      rehypePlugins={[rehypeRaw, [rehypeSanitize, rehypeSanitizeOptions], [rehypeKatex, rehypeKatexOptions]]}
+      remarkPlugins={[
+        remarkMath,
+        remarkGfm,
+        remarkDefinitionList,
+        remarkDirective,
+        remarkDirectiveRehype,
+      ]}
+      remarkRehypeOptions={{handlers: defListHastHandlers}}
+      rehypePlugins={[
+        rehypeRaw,
+        [rehypeSanitize, rehypeSanitizeOptions],
+        [rehypeKatex, rehypeKatexOptions],
+      ]}
+      // @ts-ignore
+      components={mdDirectives}
     />
   )
 }
