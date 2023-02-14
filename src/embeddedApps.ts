@@ -1,6 +1,7 @@
 import ResolutionEditor from '@fmfi-uk-1-ain-412/resolution-editor'
 import StructureExplorer from '@fmfi-uk-1-ain-412/fol-graphexplorer'
 import TableauEditor from '@fmfi-uk-1-ain-412/tableaueditor'
+import FormalizationCheckerConf from 'formalization-checker'
 
 interface PrepareResult {
   instance: any,
@@ -35,6 +36,11 @@ const embeddedApps: EmeddedApp[] =
       typeName: 'resolutionEditor',
       ...ResolutionEditor
     },
+    {
+      name: 'Formalization checker',
+      typeName: 'formalizationChecker',
+      ...FormalizationCheckerConf('http://localhost:4001')
+    }
   ]
 
 var appType2AppInfo: { [key: string]: EmeddedApp} = {};
