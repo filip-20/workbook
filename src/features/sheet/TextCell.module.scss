@@ -1,0 +1,115 @@
+@use 'sass:map';
+@import '~bootstrap/scss/bootstrap-utilities';
+
+.textCell {
+  .textPreview {
+    width: 100%;
+    max-width: 42em;
+    padding: map.get($spacers, 3);
+  }
+
+  &.isEdited {
+    .textPreview {
+      padding-top: map.get($spacers, 2);
+    }
+  }
+}
+
+.textEditCol {
+  border-bottom: 1px solid $border-color;
+}
+
+.textEdit {
+  width: 100%;
+  padding: map.get($spacers, 3);
+  padding-bottom: map.get($spacers, 2);
+}
+
+@include media-breakpoint-up(lg) {
+  .textCell.isEdited {
+    .textPreview {
+      padding-top: map.get($spacers, 3);
+      padding-left: map.get($spacers, 2);
+    }
+  }
+
+  .textEditCol {
+    border-bottom: none;
+    border-right: 1px solid $border-color;
+  }
+  
+  .textEdit {
+    padding-bottom: map.get($spacers, 3);
+    padding-right: map.get($spacers, 2);
+  }
+}
+
+
+/* CodeMirror Tweaks */
+
+.cmMinHeight {
+  :global .cm-content {
+    min-height: 5em;
+  }
+  :global .cm-gutter  {
+    min-height: 5em;
+  }
+  :global .cm-gutters {
+    // margin: 1px;
+    border-start-start-radius: $input-border-radius;
+    border-end-start-radius: $input-border-radius;
+  }
+  :global .cm-scroller {
+    overflow: auto;
+  }
+  // :global .cm-wrap {
+  //   border: 1px solid silver
+  // }
+}
+
+/*
+.textEdit {
+  flex-grow: 1;
+  flex-shrink: 1;
+  display: inline-block;
+  // width: calc(100% - 45rem);
+  vertical-align: top;
+  border-right-style: solid;
+  border-right-width: 1px;
+  padding-right: 0.5rem;
+  padding-bottom: initial;
+  border-bottom-style: initial;
+  border-bottom-width: initial;
+}
+
+.textCellRenderer {
+  flex-shrink: 1;
+  // display: inline-block;
+  max-width: 40rem;
+  vertical-align: top;
+  padding-left: 0.5rem;
+  padding-top: initial;
+}
+
+@media only screen and (max-width: 70rem) {
+  .textEdit {
+    display: block;
+    width: 100%;
+    margin-right: 2rem;
+    padding-bottom: 0.5rem;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+
+    padding-right: initial;
+    border-right-style: initial;
+    border-right-width: initial;
+  }
+  .textCellRenderer {
+    flex-shrink: 0;
+    display: block;
+    max-width: 40rem;
+    padding-top: 0.5rem;
+    padding-left: initial;
+  }
+}
+*/

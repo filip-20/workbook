@@ -1,0 +1,21 @@
+@import './_shadows';
+
+.commentWrapper {
+  box-shadow: none;
+  transition: box-shadow .15s;
+
+  &.isEdited {
+    box-shadow: $worksheet-shadow-sm;
+  }
+
+  &:focus-within,
+  &:has(:active),
+  &:has(:global(.dropdown-menu.show)),
+  &:has(button:focus, input:focus) {
+    box-shadow: $worksheet-shadow-lg;
+  }
+}
+
+.commentAvatar {
+  height: $spacer * 3;
+}

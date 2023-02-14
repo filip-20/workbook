@@ -1,4 +1,4 @@
-import { Button, ButtonProps, Dropdown } from "react-bootstrap";
+import { Row, Col, Dropdown } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { CellComment, sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import Moment from "react-moment";
@@ -9,41 +9,27 @@ import { BsThreeDots } from "react-icons/bs";
 import React, { useState } from "react";
 import { CommentEditor } from "./AddComment";
 import FormattedTextRenderer from "../../components/FormattedTextRenderer";
+import classNames from 'classnames/dedupe';
+import styles from "./Comments.module.scss";
 
-function EditCommentMenu(props: { onDelete: () => void, onEdit: () => void }) {
-  const MenuButton = React.forwardRef<HTMLButtonElement, ButtonProps>(({ children, onClick }, ref) => (
-    <Button variant="secondary" size="sm"
-      ref={ref}
-      onClick={e => {
-        e.preventDefault();
-        onClick !== undefined && onClick(e)
-      }}
-    >
-      {children}
-    </Button>
-  ));
-
-  return (
-    <Dropdown>
-      <Dropdown.Toggle as={MenuButton}>
-        <BsThreeDots />
-      </Dropdown.Toggle>
-
-      <Dropdown.Menu>
-        <Dropdown.Item onClick={props.onEdit}>Upraviť</Dropdown.Item>
-        <Dropdown.Item onClick={props.onDelete}>Zmazať</Dropdown.Item>
-      </Dropdown.Menu>
-    </Dropdown>
-  )
-}
+const EditCommentMenu = (props: { onDelete: () => void, onEdit: () => void }) =>
+  <Dropdown>
+    <Dropdown.Toggle variant="secondary" size="sm"
+      className="pt-1 pb-0"/>
+    <Dropdown.Menu>
+      <Dropdown.Item onClick={props.onEdit}>Upraviť</Dropdown.Item>
+      <Dropdown.Item onClick={props.onDelete}>Zmazať</Dropdown.Item>
+    </Dropdown.Menu>
+  </Dropdown>
 
 interface CommentProps {
   cellId: number,
-  comment: CellComment
+  comment: CellComment,
+  katexMacros?: object,
 }
 
 function Comment(props: CommentProps) {
-  const { cellId, comment } = props;
+  const { cellId, comment, katexMacros } = props;
 
   const [isEdited, setIsEdited] = useState(false);
 
@@ -60,33 +46,50 @@ function Comment(props: CommentProps) {
   }
 
   return (
-    <div key={comment.id} className="border p-2 mb-1">
-      <div className="small" style={{ display: 'flex' }}>
-        <UserAvatar username={comment.author} className="border border-secondary my-auto" style={{ height: '3em' }} />
-        <div className="ms-2" style={{ flexGrow: '1' }}>
-          <div>{comment.author}</div>
-          <Moment className="small" date={new Date(comment.timestamp)} locale='sk' fromNow />
-        </div>
-        <div style={{ float: 'right' }}>
-          {canEdit && <EditCommentMenu onEdit={() => setIsEdited(true)} onDelete={handleDelete} />}
-        </div>
-      </div>
-      <div style={{ marginTop: '0.5rem' }}>
+    <div key={comment.id}
+      className={classNames('border rounded p-2 mb-2 small',
+        styles.commentWrapper, {[styles.isEdited]: isEdited})}
+    >
+      <Row className="g-2 flex-nowrap mb-1">
+        <Col xs='auto'>
+          <UserAvatar username={comment.author}
+            className={classNames('border', styles.commentAvatar)} />
+        </Col>
+        <Col className='align-self-stretch flex-shrink-1
+                        d-flex flex-column justify-content-center'>
+            <div className="overflow-hidden">{comment.author}</div>
+            <Moment className="text-muted overflow-hidden"
+              date={new Date(comment.timestamp)}
+              withTitle
+              titleFormat='ddd, MMM D, YYYY \a\t H:mm'
+              format='MMM D'
+              locale='en' fromNowDuring={7*24*3600000} />
+        </Col>
+        <Col xs='auto'>
+          {canEdit &&
+            <EditCommentMenu
+              onEdit={() => setIsEdited(true)}
+              onDelete={handleDelete}
+            />}
+        </Col>
+      </Row>
+      <div>
         {
           isEdited ?
             <CommentEditor
               content={comment.text}
-              title=""
+              title="Upraviť komentár"
               saveText="Uložiť"
-              hideCancel
               unsyncedKey={`editedCellComment/${cellId}/${comment.id}`}
               onCancel={() => setIsEdited(false)}
               onSave={handleCommentUpdate}
+              katexMacros={katexMacros}
+              idPrefix={`cell-${cellId}-comment-${comment.id}`}
             />
             :
             <FormattedTextRenderer
-              className="small"
               text={comment.text}
+              katexMacros={katexMacros}
             />
         }
 
@@ -99,11 +102,13 @@ export interface CommentsProps {
   className?: string,
   style?: React.CSSProperties,
   cellId: number,
+  katexMacros?: object,
 }
 
 export default function Comments(props: CommentsProps) {
-  const { className, style, cellId } = props;
+  const { className, style, cellId, katexMacros } = props;
   const comments = useAppSelector(sheetSelectors.cellComments(cellId));
+  const commonCommentProps = { cellId, katexMacros };
 
   if (comments.length === 0) {
     return (<></>)
@@ -111,7 +116,7 @@ export default function Comments(props: CommentsProps) {
 
   return (
     <div className={className} style={style}>
-      {comments.map(c => <Comment cellId={cellId} comment={c} />)}
+      {comments.map(c => <Comment comment={c} {...commonCommentProps} />)}
     </div>
   )
 }

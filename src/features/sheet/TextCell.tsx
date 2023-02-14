@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import styles from './TextCell.module.css'
-import CodeMirror from '@uiw/react-codemirror';
+import { Row, Col } from 'react-bootstrap';
+import styles from './TextCell.module.scss'
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
-import { markdown } from '@codemirror/lang-markdown';
 import FormattedTextRenderer from "../../components/FormattedTextRenderer";
+import TextEditor from "../../components/TextEditor";
+import classNames from 'classnames/dedupe';
 
 export interface TextCellProps {
   katexMacros: object,
@@ -21,9 +22,7 @@ function TextCell({ data, isEdited, katexMacros, onDataChanged }: TextCellProps)
       className={`${styles.textEdit} ${styles.cmMinHeight}`}
       onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
-      <CodeMirror
-        autoFocus
-        extensions={[markdown()]}
+      <TextEditor
         value={content}
         onChange={(value, viewUpdate) => {
           setContent(value);
@@ -35,13 +34,19 @@ function TextCell({ data, isEdited, katexMacros, onDataChanged }: TextCellProps)
   );
 
   return (
-    <div>
-      {isEdited && editText}
-      <FormattedTextRenderer
-        className={styles.textCell}
-        katexMacros={katexMacros}
-        text={content}
-      />
+    <div className={classNames(styles.textCell, {[styles.isEdited]: isEdited})}>
+      <Row className="g-0 align-items-stretch">
+        {isEdited &&
+          <Col xs={12} lg={6} className={styles.textEditCol}>{editText}</Col>
+        }
+        <Col xs={12} lg={isEdited ? 6 : 12}>
+          <FormattedTextRenderer
+            className={styles.textPreview}
+            katexMacros={katexMacros}
+            text={content}
+          />
+        </Col>
+      </Row>
     </div>
   )
 }

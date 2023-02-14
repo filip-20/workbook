@@ -1,14 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { Row, Col } from 'react-bootstrap';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
 import AppCell from './AppCell';
 import TextCell from './TextCell';
-import styles from './CellContainer.module.css';
 import AddComment from './AddComment';
 import Comments from './Comments';
 import { storageActions } from '../sheetStorage/sheetStorage';
+import styles from './CellContainer.module.scss';
+import classNames from 'classnames/dedupe';
+
+import config from '../../config.json';
 
 export type CellContainerProps = {
   className?: string,
@@ -36,6 +40,7 @@ export default function CellContainer(props: CellContainerProps) {
   const [cellHovered, setCellHovered] = useState(false);
   const addToolbarHovered = useRef(false);
   const dropdownOpened = useRef(false);
+  const hasComments = useAppSelector(sheetSelectors.cellComments(cellId)).length > 0;
 
   const lastData = useRef<any>(data);
   const finishUpdate = useRef<{timeout: ReturnType<typeof setTimeout>, getData: () => any} | undefined>(undefined);
@@ -104,7 +109,8 @@ export default function CellContainer(props: CellContainerProps) {
       //dispatch(storageActions.addUnsyncedChange())
       dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: true}))
       finishUpdate.current = {
-        timeout: setTimeout(updateData, 10000), 
+        timeout: setTimeout(updateData,
+                  config.frontend.cellUpdateIntervalSec * 1000), 
         getData
       }
     } else {
@@ -124,37 +130,51 @@ export default function CellContainer(props: CellContainerProps) {
 
   return (
     <div className={className}>
-      <div className='d-flex'
+      <Row
+        className='g-2'
         onMouseEnter={() => setCellHovered(true)}
         onMouseLeave={() => setCellHovered(false)}
       >
-        <div
-          onDoubleClick={toggleEditHandler}
-          className={`${styles.cellWrapper} border`}
-          style={{ position: 'relative' }}
-        >
-          <EditToolbar
-            className={styles.editToolbar}
-            style={cellHovered ? { display: 'initial' } : { display: 'none' }}
-            cellId={cellId} cellIndex={cellIndex}
-            isEdited={isEdited}
-            onAddComment={() => setAddComment(prev => !prev)}
-            onToggleFullscreen={(isFullscreen) => onFullscreenToggleClick(isFullscreen)}
-            onToggleEdit={toggleEditHandler}
-          />
-          <div className="pt-3" style={{ overflowY: 'auto' }}>
-            {createCell(cellId, type, onDataChangedHandler)}
+        <Col xs={!(hasComments || addComment) || 8} xl={!(hasComments || addComment) || 9}>
+          <div
+            onDoubleClick={toggleEditHandler}
+            className={classNames(styles.cellWrapper,
+              'border w-100 position-relative',
+              {[styles.isEdited]: isEdited})}
+            tabIndex={0}
+          >
+            <EditToolbar
+              className={styles.editToolbar}
+              style={cellHovered ? { display: 'initial' } : { display: 'none' }}
+              cellId={cellId} cellIndex={cellIndex}
+              isEdited={isEdited}
+              onAddComment={() => setAddComment(prev => !prev)}
+              onToggleFullscreen={(isFullscreen) => onFullscreenToggleClick(isFullscreen)}
+              onToggleEdit={toggleEditHandler}
+            />
+            <div className={styles.cellContent}>
+              {createCell(cellId, type, onDataChangedHandler)}
+            </div>
           </div>
-        </div>
-        <div>
-          <Comments className='ms-2' style={{ width: '20rem' }} cellId={cellId} />
-          {addComment && <AddComment className='ms-2' style={{ width: '20rem' }} unsyncedKey={`newCellComment/${cellId}`} cellId={cellId} onSave={() => setAddComment(false)} onCancel={() => setAddComment(false)} />}
-        </div>
-      </div>
+        </Col>
+        {(hasComments || addComment) &&
+          <Col xs={4} xl={3}>
+            <Comments cellId={cellId} katexMacros={katexMacros} />
+            {addComment &&
+              <AddComment
+                unsyncedKey={`newCellComment/${cellId}`}
+                cellId={cellId}
+                onSave={() => setAddComment(false)}
+                onCancel={() => setAddComment(false)}
+                katexMacros={katexMacros}
+              />}
+          </Col>
+        }
+      </Row>
       <div
         onMouseEnter={() => toggleVisibility(true, dropdownOpened.current)}
         onMouseLeave={() => toggleVisibility(false, dropdownOpened.current)}
-        style={{ height: '20px', display: 'flex' }}
+        className={classNames('d-flex', styles.addToolbarContainer)}
       >
         <AddToolbar
           className={styles.addToolbar}

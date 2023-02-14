@@ -20,11 +20,6 @@ interface EmeddedApp {
 const embeddedApps: EmeddedApp[] = 
   [
     {
-      name: 'Resolution editor',
-      typeName: 'resolutionEditor',
-      ...ResolutionEditor
-    },
-    {
       name: 'Structure explorer',
       typeName: 'structureExplorer',
       ...StructureExplorer
@@ -33,6 +28,11 @@ const embeddedApps: EmeddedApp[] =
       name: 'Tableau editor',
       typeName: 'tableauEditor',
       ...TableauEditor
+    },
+    {
+      name: 'Resolution editor',
+      typeName: 'resolutionEditor',
+      ...ResolutionEditor
     },
   ]
 

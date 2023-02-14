@@ -1,0 +1,10 @@
+@import '~bootstrap/scss/bootstrap-utilities';
+
+.sheetContainer {
+    minHeight: calc(100vh - var(--workbook-nav-height));
+}
+
+.sheetToolbar {
+  top: 0;
+  z-index: $zindex-dropdown - 10;
+}

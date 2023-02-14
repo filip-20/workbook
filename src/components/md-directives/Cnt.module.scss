@@ -1,0 +1,40 @@
+@use "sass:list";
+
+$counters: a, b, c, d, e;
+
+@function prefix-all($prefix, $items) {
+  $prefixed-items: ();
+  @each $item in $items {
+    $prefixed-items: list.append($prefixed-items, #{$prefix}#{$item});
+  }
+  @return $prefixed-items;
+}
+
+body {
+  counter-reset: katexEqnNo mmlEqnNo prefix-all(counter-, $counters);
+}
+
+@each $counter in $counters {
+
+  :global(.counter-#{$counter}.use)::before,
+  :global(.counter-#{$counter}:not(.use,.inc,.reset,.set,.set-0)::before) {
+    content: counter(counter-#{$counter});
+  }
+
+  :global(.counter-#{$counter}.inc),
+  :global(.counter-#{$counter}:not(.use,.inc,.reset,.set,.set-0)) {
+    counter-increment: counter-#{$counter};
+  }
+
+  :global(.counter-#{$counter}.reset) {
+    counter-reset: counter-#{$counter};
+  }
+
+  :global(.counter-#{$counter}.set-0) {
+    counter-set: counter-#{$counter} 0;
+  }
+
+  :global(.counter-#{$counter}.set[data]) {
+    counter-set: counter-#{$counter} attr(data);
+  }
+}
