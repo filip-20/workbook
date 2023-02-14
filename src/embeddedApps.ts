@@ -39,7 +39,7 @@ const embeddedApps: EmeddedApp[] =
     {
       name: 'Formalization checker',
       typeName: 'formalizationChecker',
-      ...FormalizationCheckerConf('http://localhost:4001')
+      ...FormalizationCheckerConf('https://student.dai.fmph.uniba.sk/services/formalization-checker')
     }
   ]
 
