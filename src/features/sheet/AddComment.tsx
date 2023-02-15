@@ -32,7 +32,7 @@ export function CommentEditor(props: CommentEditorProps) {
 
   const unsynced = text !== initialContent
   useEffect(() => { 
-    dispatch(storageActions.unsyncedChange({key: unsyncedKey, unsynced})) 
+    dispatch(storageActions.unsyncedChange({key: unsyncedKey, unsynced: unsynced ? (() => 0) : false})) 
   }, [unsynced])
 
   const saveHandler = () => {

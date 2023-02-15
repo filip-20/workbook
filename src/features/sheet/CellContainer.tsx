@@ -107,7 +107,7 @@ export default function CellContainer(props: CellContainerProps) {
     if (finishUpdate.current === undefined) {
       console.log('onupdatehandler ', cellId, ': creating timeout')
       //dispatch(storageActions.addUnsyncedChange())
-      dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: true}))
+      dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: updateData}))
       finishUpdate.current = {
         timeout: setTimeout(updateData,
                   config.frontend.cellUpdateIntervalSec * 1000), 

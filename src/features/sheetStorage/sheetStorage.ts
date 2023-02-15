@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AppDispatch, RootState } from "../../app/store";
+import { AppDispatch, RootState, store } from "../../app/store";
 
 import { processRecord as ghProcessRecord, mergeChanges as ghSaveChanges, onResume as ghOnResume } from "./github/githubStorage";
 
@@ -26,7 +26,7 @@ export interface SheetStorage {
   queue: HistoryQueue,
   online: boolean,
   storageEngine?: { type: string, state: any }
-  unsyncedChanges: { [key: string]: boolean },
+  unsyncedChanges: { [key: string]: () => void },
 }
 
 const initialState: SheetStorage = {
@@ -105,12 +105,12 @@ const storageSlice = createSlice({
     setErrorMessage: (state, action: PayloadAction<string | undefined>) => {
       state.errorMessage = action.payload;
     },
-    unsyncedChange: (state, action: PayloadAction<{ key: string, unsynced: boolean }>) => {
+    unsyncedChange: (state, action: PayloadAction<{ key: string, unsynced: (() => void) | false }>) => {
       const { key, unsynced } = action.payload;
-      if (unsynced === true) {
-        state.unsyncedChanges[key] = true;
-      } else {
+      if (unsynced === false) {
         delete state.unsyncedChanges[key];
+      } else {
+        state.unsyncedChanges[key] = unsynced;
       }
     },
   },
@@ -130,7 +130,7 @@ export const storageSelectors = {
   queue: (state: RootState) => state.sheetStorage.queue,
   storageEngine: (state: RootState) => state.sheetStorage.storageEngine,
   errorMessage: (state: RootState) => state.sheetStorage.errorMessage,
-  storageSynced: (state: RootState) => { console.log(` computing storage synced: ${Object.values(state.sheetStorage.unsyncedChanges)}`); return !(state.sheetStorage.queue.items.length - state.sheetStorage.queue.nextIndex > 0 || Object.values(state.sheetStorage.unsyncedChanges).some(b => b === true)) },
+  storageSynced: (state: RootState) => { console.log(` computing storage synced: ${Object.values(state.sheetStorage.unsyncedChanges)}`); return !(state.sheetStorage.queue.items.length - state.sheetStorage.queue.nextIndex > 0 || Object.values(state.sheetStorage.unsyncedChanges).length > 0) },
 }
 
 /* This thunk is automatically dispatched by storageMiddleware */
@@ -175,6 +175,12 @@ export function saveChanges() {
       console.error('Storage engine not initialized');
       return;
     }
+
+    // force enqueue of all delayed updates
+    for (let sync of Object.values(state.sheetStorage.unsyncedChanges)) {
+      sync();
+    }
+
     if (state.sheetStorage.storageEngine.type === 'github') {
       dispatch(ghSaveChanges());
     }
