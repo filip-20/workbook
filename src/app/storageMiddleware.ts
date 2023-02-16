@@ -11,7 +11,6 @@ export const storageMiddleware: Middleware =
     message = msg;
   }
 
-  console.log('storagemiddleware action: ', action);
   const type = action.type as string;
   if (type.startsWith('sheet/')) {
     message = undefined;

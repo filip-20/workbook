@@ -130,7 +130,7 @@ export const storageSelectors = {
   queue: (state: RootState) => state.sheetStorage.queue,
   storageEngine: (state: RootState) => state.sheetStorage.storageEngine,
   errorMessage: (state: RootState) => state.sheetStorage.errorMessage,
-  storageSynced: (state: RootState) => { console.log(` computing storage synced: ${Object.values(state.sheetStorage.unsyncedChanges)}`); return !(state.sheetStorage.queue.items.length - state.sheetStorage.queue.nextIndex > 0 || Object.values(state.sheetStorage.unsyncedChanges).length > 0) },
+  storageSynced: (state: RootState) => !(state.sheetStorage.queue.items.length - state.sheetStorage.queue.nextIndex > 0 || Object.values(state.sheetStorage.unsyncedChanges).length > 0),
 }
 
 /* This thunk is automatically dispatched by storageMiddleware */

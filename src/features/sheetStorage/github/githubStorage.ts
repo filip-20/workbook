@@ -35,7 +35,7 @@ export interface GhMergeError {
   url?: string,
 }
 
-type MergeState = 'idle' | 'merging' | 'success' | 'error'
+type MergeState = 'idle' | 'merge_waiting' | 'merging' | 'success' | 'error'
 
 export interface GhStorageState {
   mergeState: MergeState,
@@ -235,14 +235,13 @@ export function openSheet(location: GithubFileLocation) {
 export function mergeChanges() {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const getEngineState = () => getState().sheetStorage.storageEngine!.state as GhStorageState;
-    const engineState = getEngineState();
-    const { owner, repo } = engineState.location;
-    const sourceBranch = engineState.sessionBranch!;
-    const targetBranch = engineState.baseBranch;
+    const { owner, repo } = getEngineState().location;
+    const sourceBranch = getEngineState().sessionBranch!;
+    const targetBranch = getEngineState().baseBranch;
 
     dispatch(ghUpdateState({
-      ...engineState,
-      mergeState: 'merging'
+      ...getEngineState(),
+      mergeState: 'merge_waiting'
     }));
 
     try {
@@ -258,6 +257,11 @@ export function mergeChanges() {
       }))
       return false;
     }
+
+    dispatch(ghUpdateState({
+      ...getEngineState(),
+      mergeState: 'merging'
+    }));
 
     const r1 = await pullsApi.endpoints.pullsList.initiate({ owner, repo, state: 'open', perPage: 100 }, { forceRefetch: true })(dispatch, getState, null);
     if (!('data' in r1) || r1.data === undefined) {
@@ -492,15 +496,41 @@ export function onResume(state: GhStorageState) {
   state.saveError = undefined;
 }
 
+function waitForMerge() {
+  return new Promise<void>((resolve, reject) => {
+    const processState = () => {
+      const state = (store.getState().sheetStorage.storageEngine!.state as GhStorageState).mergeState
+      if (state === 'idle' || state === 'success' || state === 'merge_waiting') {
+        resolve()
+        return true;
+      } else if (state === 'error') {
+        reject()
+        return true;
+      }
+      return false;
+    }
+    if (processState() === false) {
+      const unsubscribe = store.subscribe(() => {
+        if (processState()) {
+          unsubscribe()
+        }
+      })
+    }
+  })
+}
+
 export function processRecord(record: HistoryRecord) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
-    const state = getState();
-    const engineState: GhStorageState = state.sheetStorage.storageEngine!.state;
-    if (engineState.sessionBranch === undefined) {
+    try {
+      await waitForMerge();
+    } catch (e) {}
+
+    const getEngineState = () => getState().sheetStorage.storageEngine!.state;
+    if (getEngineState().sessionBranch === undefined) {
       const r = await createSessionBranch()(dispatch, getState);
       if (r.saveError !== undefined) {
         const newEngineState: GhStorageState = {
-          ...engineState,
+          ...getEngineState(),
           saveError: r.saveError
         }
         dispatch(storageActions.processResult({
@@ -513,9 +543,9 @@ export function processRecord(record: HistoryRecord) {
 
       console.log('created session branch ', r.response);
       const newEngineState: GhStorageState = {
-        ...engineState,
+        ...getEngineState(),
         sessionBranch: {
-          name: getSessionBranchName(engineState.location),
+          name: getSessionBranchName(getEngineState().location),
           commitSha: r.response.object.sha
         }
       }
@@ -525,7 +555,7 @@ export function processRecord(record: HistoryRecord) {
     const merged = await isSessionBranchMerged()(dispatch, getState);
     if (merged.error !== undefined) {
       const newEngineState: GhStorageState = {
-        ...engineState,
+        ...getEngineState(),
         saveError: {
           type: 'unknown_error',
           message: `API call failed: ${githubApiErrorMessage(merged.error)}`
@@ -540,7 +570,7 @@ export function processRecord(record: HistoryRecord) {
     }
     if (merged.result === true) {
       const newEngineState: GhStorageState = {
-        ...engineState,
+        ...getEngineState(),
         saveError: {
           type: 'merged_session',
           message: 'Merged session branch must be deleted'
@@ -559,7 +589,7 @@ export function processRecord(record: HistoryRecord) {
     const r = await commitRecord(record)(dispatch, getState);
     if (r.saveError !== undefined) {
       const newEngineState: GhStorageState = {
-        ...engineState,
+        ...getEngineState(),
         saveError: r.saveError
       }
       dispatch(storageActions.processResult({
