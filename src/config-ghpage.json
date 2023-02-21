@@ -7,6 +7,7 @@
   },
   "frontend": {
     "basePath": "/workbook",
-    "baseUrl": "https://fmfi-uk-1-ain-412.github.io/workbook"
+    "baseUrl": "https://fmfi-uk-1-ain-412.github.io/workbook",
+    "cellUpdateIntervalSec": 30
   }
 }

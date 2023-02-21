@@ -643,7 +643,7 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
       extraOptions: {maxRetries: 0},
-      invalidatesTags: ['Files']
+      invalidatesTags: ['Files', 'Refs']
     }),
     reposDeleteFile: build.mutation<
       ReposDeleteFileApiResponse,

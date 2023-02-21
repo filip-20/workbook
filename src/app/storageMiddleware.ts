@@ -11,7 +11,6 @@ export const storageMiddleware: Middleware =
     message = msg;
   }
 
-  console.log('storagemiddleware action: ', action);
   const type = action.type as string;
   if (type.startsWith('sheet/')) {
     message = undefined;
@@ -25,7 +24,7 @@ export const storageMiddleware: Middleware =
         message
       }
       api.dispatch(storageActions.enqueueChange(change));
-      if (state.sheetStorage.status === 'ready') {
+      if (state.sheetStorage.status === 'idle') {
         api.dispatch(processQueue())
       }
     } else {
@@ -42,7 +41,7 @@ export const storageMiddleware: Middleware =
       message: type.slice(-4)
     }
     api.dispatch(storageActions.enqueueChange(change));
-    if (state.sheetStorage.status === 'ready') {
+    if (state.sheetStorage.status === 'idle') {
       api.dispatch(processQueue())
     }
     return res;

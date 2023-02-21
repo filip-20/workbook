@@ -45,7 +45,14 @@ export default function MergeSheetModal(props: MergeSheetModalProps) {
         </>
       )
     }
-    return (<p>Unknown error</p>)
+    if (error.type === 'sync_fail') {
+      return (
+        <>
+          <p>Failed to sync unsaved changes to repository before merge. Merge was not successful</p>
+        </>
+      )
+    }
+    return (<p>Unknown error{error.message && <>: {error.message}</>}</p>)
   }
 
   return (

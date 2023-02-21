@@ -1,0 +1,15 @@
+:global(.enum-a) > ol { 
+  list-style-type: lower-alpha;
+}
+
+:global(.enum-i) > ol { 
+  list-style-type: lower-roman;
+}
+
+:global(.enum-A) > ol { 
+  list-style-type: upper-alpha;
+}
+
+:global(.enum-I) > ol { 
+  list-style-type: upper-roman;
+}

@@ -5,6 +5,7 @@ import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import { BsExclamationTriangleFill } from 'react-icons/bs';
+import styles from './CellContainer.module.scss';
 
 export interface AppCellProps {
   cellId: number
@@ -44,11 +45,13 @@ function AppCell(props: AppCellProps) {
 
   return (
     <div
-      style={{ position: 'relative' }}
+      className={`${styles.appCell} ${styles[`${type}Cell`]}`}
       onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
-      {!isEdited && <div style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 999 }}></div>}
-      <AppComponent isEdited={isEdited} instance={instance} onStateChange={onAppStateChanged} />
+      {!isEdited && <div className={styles.appOverlay}/>}
+      <div className={styles.appContainer}>
+        <AppComponent isEdited={isEdited} instance={instance} onStateChange={onAppStateChanged} />
+      </div>
     </div>
   )
 }
