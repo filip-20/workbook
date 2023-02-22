@@ -137,6 +137,12 @@ $table-striped-columns-order: even;
   :global(.table-truth) {
     font-size: $font-size-sm;
     overflow-x: auto;
+
+    > table {
+      > :not(caption) > * > th {
+        white-space: nowrap;
+      }
+    }
   }
 
 }
