@@ -1,5 +1,6 @@
 @use "sass:list";
 
+$counter-prefix: fol-wb-counter-;
 $counters: a, b, c, d, e;
 
 @function prefix-all($prefix, $items) {
@@ -11,30 +12,53 @@ $counters: a, b, c, d, e;
 }
 
 body {
-  counter-reset: katexEqnNo mmlEqnNo prefix-all(counter-, $counters);
+  counter-reset: katexEqnNo mmlEqnNo prefix-all($counter-prefix, $counters);
 }
 
 @each $counter in $counters {
 
-  :global(.counter-#{$counter}.use)::before,
-  :global(.counter-#{$counter}:not(.use,.inc,.reset,.set,.set-0)::before) {
-    content: counter(counter-#{$counter});
+  .cnt-#{$counter} {
+
+    &.use,
+    &:not(.use,.inc,.reset) {
+
+      &::before {
+        content: counter(#{$counter-prefix}#{$counter});
+      }
+      &.a::before {
+        content: counter(#{$counter-prefix}#{$counter}, lower-alpha);
+      }
+      &.i::before {
+        content: counter(#{$counter-prefix}#{$counter}, lower-roman);
+      }
+      &.A::before {
+        content: counter(#{$counter-prefix}#{$counter}, upper-alpha);
+      }
+      &.I::before {
+        content: counter(#{$counter-prefix}#{$counter}, upper-roman);
+      }
+
+    }
+
+    &.inc,
+    &:not(.use,.inc,.reset) {
+      counter-increment: #{$counter-prefix}#{$counter};
+    }
+
+    &.reset {
+      counter-reset: #{$counter-prefix}#{$counter};
+    }
+
   }
 
-  :global(.counter-#{$counter}.inc),
-  :global(.counter-#{$counter}:not(.use,.inc,.reset,.set,.set-0)) {
-    counter-increment: counter-#{$counter};
-  }
+  // counter-set doesn't work in Safari :-(
+  // If it worked, we'd also need to add .set-0 and .set[data] to :not()s above.
 
-  :global(.counter-#{$counter}.reset) {
-    counter-reset: counter-#{$counter};
-  }
+  // :global(.cnt-#{$counter}.set-0) {
+  //   counter-set: #{$counter-prefix}#{$counter} 0;
+  // }
 
-  :global(.counter-#{$counter}.set-0) {
-    counter-set: counter-#{$counter} 0;
-  }
-
-  :global(.counter-#{$counter}.set[data]) {
-    counter-set: counter-#{$counter} attr(data);
-  }
+  // :global(.cnt-#{$counter}.set[data]) {
+  //   counter-set: #{$counter-prefix}#{$counter} attr(data);
+  // }
 }
