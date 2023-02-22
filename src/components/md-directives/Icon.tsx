@@ -77,6 +77,10 @@ const wbIcons:{ [key: string]: {icon: string, className: string} } = {
     icon: 'calendar-check-fill',
     className: 'text-primary'
   },
+  'homework': {
+    icon: 'house-fill',
+    className: 'text-primary'
+  },
   'submission': {
     icon: 'file-earmark-arrow-up-fill',
     className: 'text-primary'
