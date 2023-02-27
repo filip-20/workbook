@@ -13,6 +13,7 @@ import styles from './CellContainer.module.scss';
 import classNames from 'classnames/dedupe';
 
 import config from '../../config.json';
+import { renderCellComponent } from './cellFactory';
 
 export type CellContainerProps = {
   className?: string,
@@ -119,15 +120,6 @@ export default function CellContainer(props: CellContainerProps) {
     }
   }
 
-  const createCell = (id: number, type: string, onDataChanged: (data: any) => void) => {
-    // When undoRedoCounter changes, cells are recreated so they are synced with changed sheet state in redux
-    if (type === 'text') {
-      return (<TextCell key={undoRedoCounter} katexMacros={katexMacros} isEdited={isEdited} data={cell.data} onDataChanged={onDataChanged} />)
-    } else {
-      return (<AppCell key={undoRedoCounter} cellId={id} isEdited={isEdited} onDataChanged={onDataChangedHandler} />)
-    }
-  }
-
   return (
     <div className={className}>
       <Row
@@ -153,7 +145,15 @@ export default function CellContainer(props: CellContainerProps) {
               onToggleEdit={toggleEditHandler}
             />
             <div className={styles.cellContent}>
-              {createCell(cellId, type, onDataChangedHandler)}
+              {renderCellComponent({
+                cellLoc: {id: cellId, index: cellIndex},
+                /* When undoRedoCounter changes, cells are recreated so they are synced with changed sheet state in redux */
+                key: undoRedoCounter,
+                katexMacros,
+                isEdited,
+                onDataChanged: onDataChangedHandler,
+                typeName: type,
+              })}
             </div>
           </div>
         </Col>
@@ -179,7 +179,7 @@ export default function CellContainer(props: CellContainerProps) {
         <AddToolbar
           className={styles.addToolbar}
           style={cellHovered || addToolbarVisible ? { display: 'initial' } : { display: 'none' }}
-          cellIndex={cellIndex}
+          cellLoc={{id: cellId, index: cellIndex}}
           onDropdownToggled={(isOpen) => toggleVisibility(addToolbarHovered.current, isOpen)}
         />
       </div>

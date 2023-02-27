@@ -3,26 +3,23 @@ import { Plus } from "react-bootstrap-icons";
 
 import { embeddedApps } from "../../embeddedApps";
 import { useAppDispatch } from "../../app/hooks";
-import { sheetActions } from "./slice/sheetSlice";
+import { CellLocator, sheetActions } from "./slice/sheetSlice";
+import { addCell } from "./cellFactory";
 
 
 export interface AddToolbarProps {
   className?: string, 
   style?: React.CSSProperties,
-  cellIndex: number,
+  cellLoc: CellLocator,
   onDropdownToggled?: (isOpen: boolean) => void,
 }
 
 export default function AddToolbar(props: AddToolbarProps) {
-  const { cellIndex } = props;
+  const { cellLoc } = props;
   const dispatch = useAppDispatch();
 
   const addCellHandler = (typeName: string) => {
-    if (typeName.startsWith('app/')) {
-      dispatch(sheetActions.insertAppCell(typeName.slice(4), null, cellIndex))
-    } else {
-      dispatch(sheetActions.insertTextCell('', cellIndex))
-    }
+    addCell({dispatch, typeName, afterCell: cellLoc})
   }
 
   return (

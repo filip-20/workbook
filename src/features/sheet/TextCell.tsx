@@ -8,13 +8,14 @@ import TextEditor from "../../components/TextEditor";
 import classNames from 'classnames/dedupe';
 
 export interface TextCellProps {
+  cellId: number,
   katexMacros: object,
   isEdited: boolean,
-  data: string,
   onDataChanged: (getData: () => string) => void,
 }
 
-function TextCell({ data, isEdited, katexMacros, onDataChanged }: TextCellProps) {
+function TextCell({ cellId, isEdited, katexMacros, onDataChanged }: TextCellProps) {
+  const data = useAppSelector(sheetSelectors.cell(cellId)).data as string;
   const [ content, setContent ] = useState(data);
   const contentMutable = useRef(data);
   const editText = (

@@ -14,6 +14,11 @@ const commentsAdapter = createEntityAdapter({
   sortComparer: (a: CellComment, b: CellComment) => a.timestamp - b.timestamp
 });
 
+export interface CellLocator {
+  id: number,
+  index: number,
+}
+
 export interface Cell {
   id: number,
   type: string,
