@@ -17,6 +17,14 @@ $table-striped-columns-order: even;
     > :global(.math-display):last-child > :global(.katex-display) {
       margin-bottom: 0 !important;
     }
+    // Possibly replace with:
+    // &::after {
+    //   content: '';
+    //   height: 0;
+    //   width: 100%;
+    //   display: block;
+    //   margin-top: - map.get($spacers, 3);
+    // }
   }
 
   > *:last-child,
@@ -24,6 +32,14 @@ $table-striped-columns-order: even;
   > :global(.math-display):last-child > :global(.katex-display) {
     margin-bottom: 0 !important;
   }
+  // Possibly replace with:
+  // &::after {
+  //   content: '';
+  //   height: 0;
+  //   width: 100%;
+  //   display: block;
+  //   margin-top: - map.get($spacers, 3);
+  // }
 
   /* Shamelessly copied from Bootstrap */
   :global(.table) {
@@ -137,6 +153,12 @@ $table-striped-columns-order: even;
   :global(.table-truth) {
     font-size: $font-size-sm;
     overflow-x: auto;
+
+    &:global(.table) > table {
+      // overflow-x causes the table's margin not to collapse
+      // with the parent's margin
+      margin-bottom: 0;
+    }
 
     > table {
       > :not(caption) > * > th {
