@@ -52,7 +52,7 @@ export default function Sheet(props: SheetProps) {
             />
           ))
         }
-        {cellsOrder.length === 0 && <AddToolbar className="justify-content-center" cellIndex={-1} />}
+        {cellsOrder.length === 0 && <AddToolbar className="justify-content-center" cellLoc={{id: -1, index: -1}} />}
       </>
     )
   }
