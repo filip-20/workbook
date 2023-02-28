@@ -61,7 +61,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "(ln -sf config-ghpage.json src/config.json && npm run build) ; ln -sf config-local.json src/config.json",
-    "deploy": "ln -s index.html build/404.html && gh-pages -d build"
+    "deploy": "ln -s index.html build/404.html && gh-pages -d build -m \"Deploying $(git log -1 --format='%h %s')\""
   },
   "eslintConfig": {
     "extends": [
