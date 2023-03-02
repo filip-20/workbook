@@ -140,16 +140,16 @@ function loadFile(fileInfo: { owner: string, repo: string, path: string, ref: st
     fileInfo.path = pathURIEncode(fileInfo.path);
     const r = await reposApi.endpoints.reposGetContent.initiate(fileInfo, { forceRefetch: true })(dispatch, getState, null)
     if (!r.isSuccess) {
-      return { error: r.error ? githubApiErrorMessage(r.error) : 'Chyba pri volaní github API' };
+      return { error: r.error ? githubApiErrorMessage(r.error) : 'GitHub API call error while loading the worksheet' };
     }
     const { data } = r;
     if (!('content' in data)) {
-      return { error: 'Cesta k hárku neodkazuje na súbor' };
+      return { error: 'Worksheet path does not refer to a file.' };
     }
     try {
       return { content: Base64.decode(data.content), sha: data.sha };
     } catch (e) {
-      return { error: 'Dekódovanie base64 obsahu zlyhalo' };
+      return { error: 'Base64 content decoding failed' };
     }
   }
 }
@@ -165,7 +165,7 @@ export function openSheet(location: GithubFileLocation) {
       branches = await listAllRepoBranches(owner, repo)(dispatch, getState);
     } catch (e) {
       console.log('branch listing error ', branches)
-      dispatch(sheetActions.setErrorMessage({ message: `API volanie zlyhalo, skúste to znovu`, newState: "load_error" }))
+      dispatch(sheetActions.setErrorMessage({ message: `API call (listAllRepoBranches) failed, try again.`, newState: "load_error" }))
       return;
     }
 
@@ -177,7 +177,7 @@ export function openSheet(location: GithubFileLocation) {
     if (sheetBranch === undefined) {
       // given fileInfo that comes from URL is not valid
       // Error 404 may be returned
-      dispatch(sheetActions.setErrorMessage({ message: `Hárok sa nenachádza v repozitáry`, newState: "load_error" }))
+      dispatch(sheetActions.setErrorMessage({ message: `The requested work sheet was not found in the repository. Check the file name, path, and branch.`, newState: "load_error" }))
       return;
     }
 
@@ -290,7 +290,7 @@ export function mergeChanges() {
       // this should not happen, github wont allow creation of same PR twice
       const mergeError: GhMergeError = {
         type: 'multiple_pulls',
-        message: 'Repozitár je v nekonzistentnom stave: existuje viacero otvorených pull requestov z vetvy sedenia do hlavnej vetvy',
+        message: 'The repository is in an inconsistent state. There are multiple pull requests open from the session branch to the base branch.',
       }
       dispatch(ghUpdateState({
         ...getEngineState(),
@@ -473,7 +473,7 @@ function commitRecord(record: HistoryRecord) {
         && isGithubErrorResponse(error.data)
         && error.status === 409
       ) {
-        // file was probably updated by another workbook instance or in github 
+        // file was probably updated by another workbook instance or in github
         const saveError: GhSaveError = {
           type: 'background_update',
           message: error.data.message
