@@ -1,7 +1,7 @@
 import ResolutionEditor from '@fmfi-uk-1-ain-412/resolution-editor'
 import StructureExplorer from '@fmfi-uk-1-ain-412/fol-graphexplorer'
 import TableauEditor from '@fmfi-uk-1-ain-412/tableaueditor'
-import FormalizationCheckerConf from 'formalization-checker-front-end'
+import FormalizationCheckerConf from '@fmfi-uk-1-ain-412/formalization-checker'
 
 interface PrepareResult {
   instance: any,
