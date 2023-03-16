@@ -44,8 +44,8 @@ const WbXRef:React.FC<WbXRefProps> =
     </a>
 
 const wbXRefBases:{ [key: string]: string } = {
-  'exbook': 'https://fmfi-uk-1-ain-412.github.io/lpi/teoreticke-ain/zbierka.pdf#exparagraph.',
-  'lec': 'https://fmfi-uk-1-ain-412.github.io/lpi/prednasky/poznamky-z-prednasok.pdf#theorem.'
+  'exbook': 'https://fmfi-uk-1-ain-412.github.io/lpi/teoreticke-ain/zbierka.pdf#nameddest=exparagraph.',
+  'lec': 'https://fmfi-uk-1-ain-412.github.io/lpi/prednasky/poznamky-z-prednasok.pdf#nameddest=theorem.'
 }
 
 export default XRef;
