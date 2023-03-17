@@ -1,6 +1,7 @@
-import { AnyAction, createEntityAdapter, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
+import { AnyAction, createEntityAdapter, createSelector, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
 import undoable, { includeAction } from "redux-undo";
 import { AppDispatch, RootState } from '../../../app/store'
+import { LogicContext, cellContext } from "./logicContext";
 import { testSheetIntegrity } from "./sheetVersions";
 
 export interface CellComment {
@@ -25,6 +26,7 @@ export interface Cell {
   idCounter: number,
   comments: EntityState<CellComment>,
   data: any,
+  contextExtension? :LogicContext,
 }
 
 export interface SheetSettings {
@@ -67,7 +69,11 @@ export interface SheetSlice {
 const initialState: SheetSlice = {
   state: 'not_loaded',
   sheetFile: emptySheet,
-  localState: { cellIdCounter: 0, undoRedoCounter: 0, sheetId: 'initial' },
+  localState: {
+    cellIdCounter: 0,
+    undoRedoCounter: 0,
+    sheetId: 'initial',
+  },
 }
 
 export const sheetSlice = createSlice({
@@ -88,7 +94,10 @@ export const sheetSlice = createSlice({
       const { json, sheetId } = action.payload;
 
       state.sheetFile = emptySheet;
-      state.localState = { sheetId, undoRedoCounter: 0, cellIdCounter: 0 }
+      state.localState = {
+        ...initialState.localState,
+        sheetId
+      }
 
       let sheetFile = null;
       try {
@@ -110,12 +119,17 @@ export const sheetSlice = createSlice({
           // initialize cellIdCounter with max cell id + 1
           localState.cellIdCounter = Object.entries(sf.cells).map(e => e[1].id).reduce((prev, cur) => Math.max(prev, cur), 0) + 1
 
+          /*
+          for (let id of sf.cellsOrder) {
+            localState.logicContext[id] = undefined;
+          }*/
+
           state.sheetFile = sheetFile;
           state.state = 'loaded';
         }
       }
     },
-    insertCell: (state, action: PayloadAction<{ afterIndex: number, type: string, data: string }>) => {
+    insertCell: (state, action: PayloadAction<{ afterIndex: number, type: string, data: any }>) => {
       const { afterIndex, type, data } = action.payload;
       const { sheetFile } = state;
       if (afterIndex >= -2 && afterIndex < sheetFile.cellsOrder.length) {
@@ -139,7 +153,7 @@ export const sheetSlice = createSlice({
         console.log('Invalid afterIndex parameters for insertCell action. ' + action.payload);
       }
     },
-    duplicateCell: (state, action: PayloadAction<{cellId: number, cellIndex: number}>) => {
+    duplicateCell: (state, action: PayloadAction<{ cellId: number, cellIndex: number }>) => {
       const { cellId, cellIndex } = action.payload;
       const { sheetFile } = state;
       if (sheetFile.cells[cellId] !== undefined) {
@@ -258,6 +272,13 @@ export const sheetSlice = createSlice({
     syncUndoRedoCounter: (state, action: PayloadAction<number>) => {
       state.localState.undoRedoCounter = action.payload;
     },
+    extendLogicContext: (state, action: PayloadAction<{ cellLoc: CellLocator, logicContext: LogicContext }>) => {
+      const { cellLoc, logicContext } = action.payload;
+      if (JSON.stringify(state.sheetFile.cells[cellLoc.id].contextExtension) !== JSON.stringify(logicContext)) {
+        state.sheetFile.cells[cellLoc.id].contextExtension = logicContext;
+        console.log('updating context of ', cellLoc);
+      }
+    },
   }
 });
 
@@ -311,6 +332,12 @@ const remmoveCellComment = function (payload: { cellId: number, commentId: numbe
 const insertTextCell = (text: string, afterIndex: number) => sheetActions.insertCell({ afterIndex, type: 'text', data: text })
 const insertAppCell = (type: string, state: any, afterIndex: number) => sheetActions.insertCell({ afterIndex, type, data: state })
 export const sheetActions = { ...sheetSlice.actions, addCellComment, remmoveCellComment, insertTextCell, insertAppCell };
+
+export interface CellLocator {
+  id: number,
+  index: number,
+}
+
 /* Selectors */
 export const sheetSelectors = {
   state: (state: RootState) => state.sheet.present.state,
@@ -325,6 +352,7 @@ export const sheetSelectors = {
   cellComments: (cellId: number) => { return (state: RootState) => commentsAdapter.getSelectors().selectAll(state.sheet.present.sheetFile.cells[cellId].comments) },
   undoRedoCounter: (state: RootState) => state.sheet.present.localState.undoRedoCounter,
   lastCreatedCellId: (state: RootState) => state.sheet.present.localState.lastCreatedCellId,
+  logicContext: (cell: CellLocator) => cellContext(cell),
 }
 
 export default undoable(sheetSlice.reducer, {

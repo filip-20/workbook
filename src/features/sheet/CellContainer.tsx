@@ -4,16 +4,14 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
-import AppCell from './AppCell';
-import TextCell from './TextCell';
 import AddComment from './AddComment';
 import Comments from './Comments';
 import { storageActions } from '../sheetStorage/sheetStorage';
 import styles from './CellContainer.module.scss';
 import classNames from 'classnames/dedupe';
+import { renderCellComponent } from './cellFactory';
 
 import config from '../../config.json';
-import { renderCellComponent } from './cellFactory';
 
 export type CellContainerProps = {
   className?: string,
@@ -115,7 +113,6 @@ export default function CellContainer(props: CellContainerProps) {
         getData
       }
     } else {
-      console.log('onupdatehandler', cellId,': timeout exists')
       finishUpdate.current.getData = getData;
     }
   }

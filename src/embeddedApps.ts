@@ -1,5 +1,5 @@
 import ResolutionEditor from '@fmfi-uk-1-ain-412/resolution-editor'
-import StructureExplorer from '@fmfi-uk-1-ain-412/fol-graphexplorer'
+import StructureExplorer from 'fol-graphexplorer'
 import TableauEditor from '@fmfi-uk-1-ain-412/tableaueditor'
 
 interface PrepareResult {

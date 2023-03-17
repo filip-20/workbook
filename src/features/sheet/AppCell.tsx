@@ -1,14 +1,14 @@
 // TODO put interface into separate package
-import { PrepareResult } from '@fmfi-uk-1-ain-412/fol-graphexplorer';
-import { useEffect, useRef } from 'react';
+import { PrepareResult } from '@fmfi-uk-1-ain-412/tableaueditor';
+import { useEffect, useMemo, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
+import { CellLocator, sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import { BsExclamationTriangleFill } from 'react-icons/bs';
 import styles from './CellContainer.module.scss';
 
 export interface AppCellProps {
-  cellId: number
+  cellLoc: CellLocator
   isEdited: boolean,
   onDataChanged: (getData: () => any) => void,
 }
@@ -25,12 +25,14 @@ const unsupportedApp = (type: string) => {
   }
 }
 
-function AppCell(props: AppCellProps) {
-  const { cellId, isEdited, onDataChanged } = props;
-  const cell = useAppSelector(sheetSelectors.cell(cellId));
+function AppCell({ cellLoc, isEdited, onDataChanged }: AppCellProps) {
+  const cell = useAppSelector(sheetSelectors.cell(cellLoc.id));
   const { type, data } = cell;
+  const context = useAppSelector(sheetSelectors.logicContext(cellLoc))
   const { prepare, AppComponent } = getAppInfo(type) || unsupportedApp(type);
   const prepareResult = useRef<PrepareResult | null>(null);
+
+  useMemo(() => console.error('App cell context changed', context), [context]);
 
   if (prepareResult.current === null) {
     prepareResult.current = prepare(data)
@@ -50,7 +52,7 @@ function AppCell(props: AppCellProps) {
     >
       {!isEdited && <div className={styles.appOverlay}/>}
       <div className={styles.appContainer}>
-        <AppComponent isEdited={isEdited} instance={instance} onStateChange={onAppStateChanged} />
+        <AppComponent isEdited={isEdited} context={context} instance={instance} onStateChange={onAppStateChanged} />
       </div>
     </div>
   )

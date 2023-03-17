@@ -1,6 +1,11 @@
 import React from "react";
+import { BsExclamationTriangleFill } from "react-icons/bs";
 import { useAppDispatch } from "../../app/hooks";
 import AppCell from "./AppCell";
+import AddFormulasCell, { initialAddFormulasCellData } from "./logic-context/AddFormulasCell";
+import DisplayContextCell from "./logic-context/DisplayContextCell";
+import LanguageCell, { initialLanguageCellData } from "./logic-context/LanguageCell";
+import { emptyContext } from "./slice/logicContext";
 import { CellLocator, sheetActions } from "./slice/sheetSlice";
 import TextCell from "./TextCell";
 
@@ -31,31 +36,69 @@ const cells: Array<CellFactory> = [
   {
     name: 'Text',
     typeName: 'text',
-    renderComponent: ({cellLoc, key, onDataChanged, isEdited, katexMacros}) => (
+    renderComponent: ({ cellLoc, key, onDataChanged, isEdited, katexMacros }) => (
       <TextCell cellId={cellLoc.id} key={key} katexMacros={katexMacros} isEdited={isEdited} onDataChanged={onDataChanged} />
     ),
-    addCell: ({dispatch, afterCell}) => dispatch(sheetActions.insertTextCell('', afterCell.index)),
+    addCell: ({ dispatch, afterCell }) => dispatch(sheetActions.insertTextCell('', afterCell.index)),
   },
   {
     name: 'App',
     typeName: 'app',
-    renderComponent: ({cellLoc, key, onDataChanged, isEdited}) => (
-      <AppCell key={key} cellId={cellLoc.id} isEdited={isEdited} onDataChanged={onDataChanged} />
+    renderComponent: (props) => (
+      <AppCell {...props} />
     ),
-    addCell: ({dispatch, afterCell, typeName}) => dispatch(sheetActions.insertAppCell(typeName.slice(4) /* ??? */, null, afterCell.index)),
-  }
+    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertAppCell(typeName.slice(4) /* ??? */, null, afterCell.index)),
+  },
+  {
+    name: 'Language',
+    typeName: 'context/language',
+    renderComponent: (payload) => (
+      <LanguageCell {...payload} />
+    ),
+    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialLanguageCellData }))
+  },
+  {
+    name: 'Display context',
+    typeName: 'context/display',
+    renderComponent: (payload) => (
+      <DisplayContextCell {...payload} />
+    ),
+    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialLanguageCellData }))
+  },
+  {
+    name: 'Add axioms',
+    typeName: 'context/addAxioms',
+    renderComponent: (payload) => (
+      <AddFormulasCell
+        makeContextExtension={formulas => ({...emptyContext, axioms: formulas})}
+        {...payload}
+      />
+    ),
+    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialAddFormulasCellData }))
+  },
+  {
+    name: 'Add formulas',
+    typeName: 'context/addFormulas',
+    renderComponent: (payload) => (
+      <AddFormulasCell
+        makeContextExtension={formulas => ({...emptyContext, formulas: formulas})}
+        {...payload}
+      />
+    ),
+    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialAddFormulasCellData }))
+  },
 ]
 
-const typeName2factory: {[key: string]: CellFactory} = {}
-cells.forEach( f => {
+const typeName2factory: { [key: string]: CellFactory } = {}
+cells.forEach(f => {
   typeName2factory[f.typeName] = f
 });
 
 export function renderCellComponent(payload: RenderPayload): JSX.Element {
-  if (payload.typeName.startsWith('app')) {
+  if (typeName2factory[payload.typeName] === undefined) {
     return typeName2factory['app'].renderComponent(payload)
   }
-  return typeName2factory[payload.typeName].renderComponent(payload)
+  return typeName2factory[payload.typeName]!.renderComponent(payload);
 }
 
 export function addCell(payload: AddPayload): void {
@@ -64,3 +107,5 @@ export function addCell(payload: AddPayload): void {
   }
   return typeName2factory[payload.typeName].addCell(payload);
 }
+
+export const contextCells = cells.filter(f => f.typeName.startsWith('context'));
