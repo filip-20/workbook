@@ -16,15 +16,20 @@ interface AddAxiomsCellProps {
   onDataChanged: (getData: () => any) => void,
 }
 
-export const initialAddFormulasCellData: Array<{ name: string, formula: string }> = []
+type LocalState = Array<Formula>
+type LocalActions =
+  { type: 'add', payload:  FormulaItem }
+  | { type: 'change', payload: { index: number, item: FormulaItem } }
+  | { type: 'delete', payload: { index: number, count: number } };
+export const initialAddFormulasCellData : LocalState = [];
 
 export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeContextExtension, onDataChanged }: AddAxiomsCellProps) {
-  const data = useAppSelector(sheetSelectors.cell(cellLoc.id)).data as typeof initialAddFormulasCellData;
+  const data = useAppSelector(sheetSelectors.cell(cellLoc.id)).data as LocalState;
   const context = useAppSelector(sheetSelectors.logicContext(cellLoc))
   const dispatch = useDispatch();
 
   const [parsed, setParsed] = useState<Array<Formula | undefined>>([])
-  const [formulas, dispatch1] = useReducer((state: Array<FormulaItem>, action: any) => {
+  const [formulas, localDispatch] = useReducer((state: LocalState, action: LocalActions) => {
     const newState = [...state];
     switch (action.type) {
       case 'add':
@@ -70,9 +75,9 @@ export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeCo
         <FormulaAdder
           context={context}
           formulas={formulas}
-          onChange={(index, item) => dispatch1({ type: 'change', payload: { index, item } })}
-          onAdd={item => dispatch1({ type: 'add', payload: item })}
-          onDelete={(index, count) => dispatch1({ type: 'delete', payload: { index, count } })}
+          onChange={(index, item) => localDispatch({ type: 'change', payload: { index, item } })}
+          onAdd={item => localDispatch({ type: 'add', payload: item })}
+          onDelete={(index, count) => localDispatch({ type: 'delete', payload: { index, count } })}
         />
         :
         <FormattedTextRenderer
@@ -87,7 +92,7 @@ export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeCo
   )
 }
 
-interface FormulaItem { name: string, formula: string }
+export interface FormulaItem { name: string, formula: string }
 interface FormulaAdderProps {
   context: CellContext,
   formulas: Array<FormulaItem>,
@@ -173,7 +178,8 @@ function FormulaAdder({ context, formulas, onChange, onAdd, onDelete }: FormulaA
           key={index}
           isNameUsed={(name) => nameMap.isUsed(name, index)}
           item={item}
-          last={index === formulas.length}
+          empty={index === formulas.length}
+          showDelete={!(index === formulas.length)}
           onChange={item => handleChange(index, item)}
           onDelete={() => handleDelete(index)}
         />)}
@@ -251,6 +257,11 @@ function FormulaAdder({ context, initialFormulas, onChange, onAdd, onDelete }: F
   )
 }*/
 
+export function formula2Tex(context: CellContext, formula: Formula) {
+  const f = parseFormulaStrict(formula.formula, context, texFactory(context));
+  return f === undefined ? undefined : `\\text{\\textsf{${formula.name}}} = ${f}`;
+}
+
 const stringFactory = (context: CellContext) => {
   const testArity = (symbol: string, args: any[], ee: ErrorExpected) => {
     const a = context.symbolArity(symbol)
@@ -310,13 +321,14 @@ const texFactory = (context: CellContext) => {
 interface FormulaInputProps {
   context: CellContext,
   item: FormulaItem,
-  last: boolean,
+  empty: boolean,
+  showDelete: boolean,
   isNameUsed: (name: string) => boolean,
-  onChange: (item: FormulaItem) => void
+  onChange: (item: FormulaItem, correct: boolean) => void
   onDelete?: () => void
 }
 
-function FormulaInput({ context, item, last, isNameUsed, onChange, onDelete }: FormulaInputProps) {
+export function FormulaInput({ context, item, empty, showDelete, isNameUsed, onChange, onDelete }: FormulaInputProps) {
   const [parseError, setParseError] = useState<string | undefined>(undefined);
   const [nameError, setNameError] = useState<string | undefined>(undefined);
 
@@ -334,55 +346,59 @@ function FormulaInput({ context, item, last, isNameUsed, onChange, onDelete }: F
   const testName = (name: string) => {
     if (name.trim() === '' && item.formula !== '') {
       setNameError('Name is empty. ')
+      return false;
     } else if (isNameUsed(name)) {
       setNameError('Symbol name is already used. ')
+      return false;
     } else {
       setNameError(undefined)
+      return true;
     }
   }
 
+  
   useEffect(() => {
-    if (last) {
+    if (empty) {
       nameError && setNameError(undefined);
       parseError && setParseError(undefined);
-    } else {
-      testName(item.name)
-      parse(item.formula)
     }
-  }, [item.name, item.formula, last]);
-
-  /*
-  if (parseError === undefined && item.parsed === undefined && !last) {
-    parse(item.formula);
-  }*/
+  }, [item.name, item.formula, empty]);
 
   const formulaChanged = (value: string) => {
-    onChange({ ...item, formula: value });
+    let correct = true;
+    if (!empty) {
+      correct = parse(value) !== undefined && nameError === undefined;
+    }
+    onChange({ ...item, formula: value }, correct);
   }
   const nameChanged = (value: string) => {
-    onChange({ ...item, name: value })
+    let correct = true;
+    if (!empty) {
+      correct = testName(item.name) && parseError === undefined;
+    }
+    onChange({ ...item, name: value }, correct);
   }
 
   return (
     <>
-        <InputGroup className="mb-2" hasValidation>
-          <Form.Control
-            style={{ flexBasis: "5rem", flexGrow: "0", flexShrink: '0' }}
-            isInvalid={nameError !== undefined}
-            value={item.name}
-            onChange={e => nameChanged(e.target.value)}
-          />
-          <InputGroup.Text>=</InputGroup.Text>
-          <Form.Control
-            isInvalid={parseError !== undefined}
-            value={item.formula}
-            onChange={e => formulaChanged(e.target.value)}
-          />
-          {!last &&
-            <Button variant="danger" tabIndex={-1} onClick={() => onDelete && onDelete()}><BiTrash /></Button>
-          }
-          <Form.Control.Feedback type="invalid">{nameError && nameError} {parseError && parseError}</Form.Control.Feedback>
-        </InputGroup>
+      <InputGroup className="mb-2" hasValidation>
+        <Form.Control
+          style={{ flexBasis: "5rem", flexGrow: "0", flexShrink: '0' }}
+          isInvalid={nameError !== undefined}
+          value={item.name}
+          onChange={e => nameChanged(e.target.value)}
+        />
+        <InputGroup.Text>=</InputGroup.Text>
+        <Form.Control
+          isInvalid={parseError !== undefined}
+          value={item.formula}
+          onChange={e => formulaChanged(e.target.value)}
+        />
+        {!showDelete &&
+          <Button variant="danger" tabIndex={-1} onClick={() => onDelete && onDelete()}><BiTrash /></Button>
+        }
+        <Form.Control.Feedback type="invalid">{nameError && nameError} {parseError && parseError}</Form.Control.Feedback>
+      </InputGroup>
     </>
   )
 }

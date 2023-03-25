@@ -5,6 +5,7 @@ import AppCell from "./AppCell";
 import AddFormulasCell, { initialAddFormulasCellData } from "./logic-context/AddFormulasCell";
 import DisplayContextCell from "./logic-context/DisplayContextCell";
 import LanguageCell, { initialLanguageCellData } from "./logic-context/LanguageCell";
+import ProoveTheoremCell, { initialProoveTheoremCellState } from "./logic-context/ProoveTheoremCell";
 import { emptyContext } from "./slice/logicContext";
 import { CellLocator, sheetActions } from "./slice/sheetSlice";
 import TextCell from "./TextCell";
@@ -13,6 +14,7 @@ import TextCell from "./TextCell";
 interface RenderPayload {
   cellLoc: CellLocator,
   typeName: string,
+  data: any,
   key: React.Key,
   onDataChanged: (data: any) => void,
   isEdited: boolean,
@@ -86,6 +88,14 @@ const cells: Array<CellFactory> = [
       />
     ),
     addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialAddFormulasCellData }))
+  },
+  {
+    name: 'Proove theorem',
+    typeName: 'context/theorem',
+    renderComponent: (payload) => (
+      <ProoveTheoremCell {...payload} />
+    ),
+    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialProoveTheoremCellState }))
   },
 ]
 

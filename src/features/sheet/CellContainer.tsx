@@ -150,6 +150,7 @@ export default function CellContainer(props: CellContainerProps) {
                 isEdited,
                 onDataChanged: onDataChangedHandler,
                 typeName: type,
+                data: cell.data,
               })}
             </div>
           </div>

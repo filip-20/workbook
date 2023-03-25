@@ -1,8 +1,8 @@
-import ResolutionEditor from '@fmfi-uk-1-ain-412/resolution-editor'
+import ResolutionEditor from 'resolution-editor'
 import StructureExplorer from 'fol-graphexplorer'
 import TableauEditor from '@fmfi-uk-1-ain-412/tableaueditor'
 
-interface PrepareResult {
+export interface PrepareResult {
   instance: any,
   getState: (instance: any) => any,
 }
@@ -13,24 +13,28 @@ type PrepareFunction = (
 interface EmeddedApp {
   name: string,
   typeName: string,
+  supportsProofs: boolean,
   prepare: PrepareFunction,
   AppComponent: (props: any) => JSX.Element,
 }
 
-const embeddedApps: EmeddedApp[] = 
+export const embeddedApps: EmeddedApp[] = 
   [
     {
       name: 'Structure explorer',
       typeName: 'structureExplorer',
+      supportsProofs: false,
       ...StructureExplorer
     },
     {
       name: 'Tableau editor',
       typeName: 'tableauEditor',
+      supportsProofs: true,
       ...TableauEditor
     },
     {
       name: 'Resolution editor',
+      supportsProofs: true,
       typeName: 'resolutionEditor',
       ...ResolutionEditor
     },
@@ -42,8 +46,6 @@ embeddedApps.forEach( app => {
   appType2AppInfo[app.typeName] = app
 });
 
-function getAppInfo(typeName: string): EmeddedApp {
+export function getAppInfo(typeName: string): EmeddedApp {
   return appType2AppInfo[typeName];
 }
-
-export { embeddedApps, getAppInfo }

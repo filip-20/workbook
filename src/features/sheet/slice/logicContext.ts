@@ -8,6 +8,11 @@ export interface Formula {
   formula: string,
 }
 
+export interface Theorem {
+  theorem: Formula,
+  prooved: boolean,
+}
+
 export interface LogicContext {
   constants: Array<string>,
   predicates: Array<SymbolWithArity>,
@@ -54,6 +59,10 @@ export class CellContext implements LogicContext {
   public get formulas() { return this.context.formulas }
   public get axioms() { return this.context.axioms }
   public get theorems() { return this.context.theorems }
+
+  public get constantsExpr() { return this.context.constants.join(', ') }
+  public get predicatesExpr() { return this.context.predicates.map(s => `${s.name}/${s.arity}`).join(', ') }
+  public get functionsExpr() { return this.context.functions.map(s => `${s.name}/${s.arity}`).join(', ') }
 
   constructor(context: LogicContext) {
     this.context = context;
@@ -113,7 +122,7 @@ export class CellContext implements LogicContext {
 
 const contextSelectorMemo: { [key: string]: (state: RootState) => CellContext } = {}
 export function cellContext(cell: CellLocator): (state: RootState) => CellContext {
-  const key = JSON.stringify(cell);
+  const key = JSON.stringify({id: cell.id, index: cell.index});
   if (contextSelectorMemo[key] === undefined) {
     contextSelectorMemo[key] = createSelector(
       [

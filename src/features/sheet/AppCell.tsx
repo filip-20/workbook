@@ -1,15 +1,17 @@
-// TODO put interface into separate package
-import { PrepareResult } from '@fmfi-uk-1-ain-412/tableaueditor';
 import { useEffect, useMemo, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { CellLocator, sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import { BsExclamationTriangleFill } from 'react-icons/bs';
 import styles from './CellContainer.module.scss';
+import { PrepareResult } from '../../embeddedApps';
 
 export interface AppCellProps {
   cellLoc: CellLocator
   isEdited: boolean,
+  typeName: string,
+  data: any,
+  proof?: any,
   onDataChanged: (getData: () => any) => void,
 }
 
@@ -25,11 +27,10 @@ const unsupportedApp = (type: string) => {
   }
 }
 
-function AppCell({ cellLoc, isEdited, onDataChanged }: AppCellProps) {
+function AppCell({ cellLoc, isEdited, typeName, data, proof, onDataChanged }: AppCellProps) {
   const cell = useAppSelector(sheetSelectors.cell(cellLoc.id));
-  const { type, data } = cell;
   const context = useAppSelector(sheetSelectors.logicContext(cellLoc))
-  const { prepare, AppComponent } = getAppInfo(type) || unsupportedApp(type);
+  const { prepare, AppComponent } = getAppInfo(typeName) || unsupportedApp(typeName);
   const prepareResult = useRef<PrepareResult | null>(null);
 
   useMemo(() => console.error('App cell context changed', context), [context]);
@@ -47,12 +48,12 @@ function AppCell({ cellLoc, isEdited, onDataChanged }: AppCellProps) {
 
   return (
     <div
-      className={`${styles.appCell} ${styles[`${type}Cell`]}`}
+      className={`${styles.appCell} ${styles[`${typeName}Cell`]}`}
       onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
       {!isEdited && <div className={styles.appOverlay}/>}
       <div className={styles.appContainer}>
-        <AppComponent isEdited={isEdited} context={context} instance={instance} onStateChange={onAppStateChanged} />
+        <AppComponent isEdited={isEdited} context={context} proof={proof} instance={instance} onStateChange={onAppStateChanged} />
       </div>
     </div>
   )
