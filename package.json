@@ -9,7 +9,7 @@
     "@fmfi-uk-1-ain-412/fol-graphexplorer": "^5.6.13",
     "@fmfi-uk-1-ain-412/formalization-checker": "^0.1.0",
     "@fmfi-uk-1-ain-412/resolution-editor": "^1.0.2",
-    "@fmfi-uk-1-ain-412/tableaueditor": "^1.0.2",
+    "@fmfi-uk-1-ain-412/tableaueditor": "^1.0.3",
     "@reduxjs/toolkit": "^1.8.0",
     "@testing-library/jest-dom": "^5.15.1",
     "@testing-library/react": "^11.2.7",
