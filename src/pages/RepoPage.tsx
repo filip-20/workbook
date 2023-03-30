@@ -109,7 +109,7 @@ function RepoPage() {
 
   return (
     <Container>
-      <h1 className="mt-2 mb-3">{params.owner}/{params.repo!!}</h1>
+      <h1 className="my-3">{params.owner}/{params.repo!!}</h1>
       {body}
     </Container>
   )
