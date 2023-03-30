@@ -28,18 +28,18 @@ function RepoListPage() {
   }
 
   if (authState !== "authenticated") {
-    return <LoginPage msg="Pre pokračovanie sa musíte prihlásiť" readirectTo={location.pathname} />
+    return <LoginPage msg="You have to be logged in to continue" readirectTo={location.pathname} />
   }
   const makePageLink = (page: number) => page === 1 ? '/' : `/repos/${page}`;
 
   return (
     <Container>
-      <h1>Zoznam repozitárov</h1>
+      <h1>Repositories</h1>
 
       <Container>
         <Row>
           <Col className="my-1" md xs={12}>
-            <FormControl type="text" placeholder="Hľadať repozitáre" style={{ display: 'inline-block', width: '100%' }} onChange={e => {
+            <FormControl type="text" placeholder="Search repositories" style={{ display: 'inline-block', width: '100%' }} onChange={e => {
               console.log(e.target.value);
               q.current = e.target.value;
               if (time.current === false) {
@@ -50,18 +50,18 @@ function RepoListPage() {
             } />
           </Col>
           <Col className="text-center my-1" md="auto" xs={6}>
-            <PopoverButton className="" title="Zoradenie">
+            <PopoverButton className="" title="Sort">
               <OptionList selected={sortBy} onSelectedChange={selected => setSortBy(selected)}>
-                <OptionList.Item name="full_name">Názov</OptionList.Item>
-                <OptionList.Item name="pushed">Dátum úpravy</OptionList.Item>
+                <OptionList.Item name="full_name">Name</OptionList.Item>
+                <OptionList.Item name="pushed">Last updated</OptionList.Item>
               </OptionList>
             </PopoverButton>
           </Col>
           <Col className="text-center my-1" md="auto" xs={6}>
-            <PopoverButton className="" title="Repozitáre">
+            <PopoverButton className="" title="Repositories">
               <CheckList onCheckedChange={(arr) => { console.log(arr); setAffiliation(arr) }} checked={affiliation}>
-                <CheckList.Item name="owner">Vlastné</CheckList.Item>
-                <CheckList.Item name="organization_member">Organizačné</CheckList.Item>
+                <CheckList.Item name="owner">Yours</CheckList.Item>
+                <CheckList.Item name="organization_member">Organizational</CheckList.Item>
               </CheckList>
             </PopoverButton>
           </Col>

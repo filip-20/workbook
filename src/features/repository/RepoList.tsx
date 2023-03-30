@@ -33,7 +33,7 @@ function RepoList(props: RepoListProps) {
 
   const renderListItem = (item: RepoInfo) => {
     return (
-      <Col key={item.id} md={6} style={{ padding: '0.5rem' }}>
+      <Col key={item.id} md={6} className="p-2">
         <RepoListItem placeholder={repos.isFetching} item={item} makeRepoLink={props.makeRepoLink} />
       </Col>
     )

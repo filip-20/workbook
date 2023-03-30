@@ -14,7 +14,9 @@ export interface PathbarProps {
 
 function Pathbar(props: PathbarProps) {
   const items = [{
-    name: props.repoName,
+    name: <span title={`${props.owner}/${props.repoName}`}>
+      {props.repoName}
+    </span>,
     path: '',
     link: props.makeLink('', 'dir', props.owner, props.repoName, props.branch),
     active: '' === props.path
@@ -25,7 +27,7 @@ function Pathbar(props: PathbarProps) {
       const p = path === '' ? item : `${path}/${item}`;
       path += path === '' ? item : '/' + item
       items.push({
-        name: item,
+        name: <>{item}</>,
         path: p,
         link: props.makeLink(path, 'dir', props.owner, props.repoName, props.branch),
         active: p === props.path,
