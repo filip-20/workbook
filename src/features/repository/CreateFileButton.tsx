@@ -47,7 +47,7 @@ function CreateFileButton(props: CreateFileButtonProps) {
     createFile({
       owner, repo, path: pathURIEncode(filepath),
       body: {
-        message: commitMessage,
+        message: `${path ? path + ": " : ""}${commitMessage} ${filename}`,
         content: btoa(withContent || ''),
         branch
       }

@@ -235,7 +235,8 @@ export function openSheet(location: GithubFileLocation) {
 export function mergeChanges() {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const getEngineState = () => getState().sheetStorage.storageEngine!.state as GhStorageState;
-    const { owner, repo } = getEngineState().location;
+    const { owner, repo, path } = getEngineState().location;
+    const filename = path.replace(/^([^/]*\/)*([^/]+)\.workbook$/, '$2');
     const sourceBranch = getEngineState().sessionBranch!;
     const targetBranch = getEngineState().baseBranch;
 
@@ -307,7 +308,15 @@ export function mergeChanges() {
       pullNumber = pr[0].number;
       pullUrl = pr[0].html_url;
     } else {
-      const r2 = await pullsApi.endpoints.pullsCreate.initiate({ owner, repo, body: { title: 'Merged session', head: `refs/heads/${sourceBranch.name}`, base: `refs/heads/${targetBranch}` } })(dispatch, getState, null);
+      const r2 = await pullsApi.endpoints.pullsCreate.initiate({
+        owner,
+        repo,
+        body: {
+          title: `${filename}: Worksheet session`,
+          head: `refs/heads/${sourceBranch.name}`,
+          base: `refs/heads/${targetBranch}`
+        }
+      })(dispatch, getState, null);
       if (!('data' in r2)) {
         // pull request creation failed
         const mergeError: GhMergeError = {
@@ -328,7 +337,16 @@ export function mergeChanges() {
       pullUrl = r2.data.html_url;
     }
 
-    const r3 = await pullsApi.endpoints.pullsMerge.initiate({ owner, repo, pullNumber, body: { merge_method: "squash" } })(dispatch, getState, null);
+    const r3 = await pullsApi.endpoints.pullsMerge.initiate({
+      owner,
+      repo,
+      pullNumber,
+      body: {
+        commit_title: `${filename}: Worksheet session ${owner}/${repo}#${pullNumber}`,
+        commit_message: `See https://github.com/${owner}/${repo}/pull/${pullNumber}`,
+        merge_method: "squash"
+      }
+    })(dispatch, getState, null);
     if (!('data' in r3)) {
       // merging request failed
       const { error } = r3;

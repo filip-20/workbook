@@ -175,7 +175,7 @@ function RepoExplorer(props: RepoExplorerProps) {
             owner={owner} repo={repo} path={path} branch={branch}
             existingFilenames={existingFilenames.current}
             transformFilename={(filename: string) => `${filename}.workbook`}
-            commitMessage="new workbook"
+            commitMessage="Created"
             withContent={JSON.stringify(emptySheet)}
           >
             <HiDocumentAdd /> Vytvoriť zošit
