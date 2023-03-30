@@ -1,4 +1,4 @@
-import { Alert, Badge, Card, ListGroup, Placeholder, Spinner } from "react-bootstrap";
+import { Alert, Badge, Card, ListGroup, Placeholder, Spinner, Row, Col } from "react-bootstrap";
 import { FileEarmark, FileEarmarkPlusFill, FolderFill, SlashCircle } from 'react-bootstrap-icons';
 import { Link } from "react-router-dom";
 import Pathbar from "./Pathbar";
@@ -164,25 +164,29 @@ function RepoExplorer(props: RepoExplorerProps) {
   }
 
   return (
-    <Card>
-      <Card.Header className="h5">
-        <BranchSelect owner={owner} repo={repo} path={path} branch={branch} makeLink={makeLink} />
-        <Pathbar className="ms-2" owner={owner} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
-        <div style={{ float: 'right' }}>
-          <CreateFileButton
-            owner={owner} repo={repo} path={path} branch={branch}
-            existingFilenames={existingFilenames.current}
-            transformFilename={(filename: string) => `${filename}.workbook`}
-            commitMessage="Created"
-            withContent={JSON.stringify(emptySheet)}
-          >
-            <FileEarmarkPlusFill /> New worksheet
-          </CreateFileButton>
-        </div>
+    <Card className="mb-5">
+      <Card.Header className="h6">
+        <Row className="g-2 align-items-baseline">
+          <Col xs="auto">
+            <BranchSelect owner={owner} repo={repo} path={path} branch={branch} makeLink={makeLink} />
+          </Col>
+          <Col>
+            <Pathbar owner={owner} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
+          </Col>
+          <Col xs="auto">
+            <CreateFileButton
+              owner={owner} repo={repo} path={path} branch={branch}
+              existingFilenames={existingFilenames.current}
+              transformFilename={(filename: string) => `${filename}.workbook`}
+              commitMessage="Created"
+              withContent={JSON.stringify(emptySheet)}
+            >
+              <FileEarmarkPlusFill /> New worksheet
+            </CreateFileButton>
+          </Col>
+        </Row>
       </Card.Header>
-      <Card.Body>
-        {displayLoadable(content, loading, renderFiles, emptyOrError)}
-      </Card.Body>
+      {displayLoadable(content, loading, renderFiles, emptyOrError)}
     </Card>
   )
 }
