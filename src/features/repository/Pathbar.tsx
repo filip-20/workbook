@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import styles from './styles.module.css';
 
 export interface PathbarProps {
-  style?: React.CSSProperties,
+  className?: string,
   owner: string,
   repoName: string,
   branch?: string,
@@ -34,7 +34,7 @@ function Pathbar(props: PathbarProps) {
   }
 
   return (
-    <Breadcrumb className={styles.pathBreadcrumb} style={{ display: 'inline-block', ...props.style }}>
+    <Breadcrumb className={`${styles.pathBreadcrumb} d-inline-block ${props.className ?? ""}`}>
       {
         items.map(item => (
           <Breadcrumb.Item

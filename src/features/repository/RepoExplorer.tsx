@@ -167,7 +167,7 @@ function RepoExplorer(props: RepoExplorerProps) {
     <Card>
       <Card.Header className="h5">
         <BranchSelect owner={owner} repo={repo} path={path} branch={branch} makeLink={makeLink} />
-        <Pathbar style={{ marginLeft: '1rem' }} owner={owner} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
+        <Pathbar className="ms-2" owner={owner} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
         <div style={{ float: 'right' }}>
           <CreateFileButton
             owner={owner} repo={repo} path={path} branch={branch}

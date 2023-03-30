@@ -64,7 +64,7 @@ function SheetPage() {
             <div style={{}}>
               <FileEarmarkRuledFill />
               <BranchLabel branch={branch} />
-              <Pathbar style={{ color: 'white !important' }} owner={owner} path={path} branch={branch} repoName={repo} makeLink={makeRepoLink} />
+              <Pathbar owner={owner} path={path} branch={branch} repoName={repo} makeLink={makeRepoLink} />
             </div>
             <div><SaveIndicator style={{ marginLeft: '1rem' }} /></div>
             <div style={{ flexGrow: '1' }}></div>
