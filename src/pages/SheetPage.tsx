@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import {  Button, ButtonGroup, ButtonToolbar, Container, Dropdown } from "react-bootstrap";
+import { ButtonGroup, ButtonToolbar, Container, Dropdown } from "react-bootstrap";
 import { useLocation, useParams } from "react-router-dom";
-import { MdMenuBook, MdSettings } from "react-icons/md";
+import { FileEarmarkRuledFill, GearFill } from "react-bootstrap-icons";
 import { authSelectors } from "../features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { makeRepoLink, parseFilepath, parseGithubUrlPath } from "./RepoPage";
@@ -16,8 +16,6 @@ import { GithubFileLocation, openSheet } from "../features/sheetStorage/github/g
 import SaveIndicator from "../features/sheetStorage/SaveIndicator";
 import MergeButton from "../features/sheetStorage/github/MergeButton";
 import SaveErrorModal from "../features/sheetStorage/github/SaveErrorModal";
-import { BiRedo, BiUndo } from "react-icons/bi";
-import { ActionCreators as UndoActionCreators } from 'redux-undo'
 import UndoRedoButtonGroup from "../features/sheet/UndoRedo";
 import classNames from 'classnames/dedupe';
 import styles from './SheetPage.module.scss';
@@ -64,7 +62,7 @@ function SheetPage() {
 
           <div className={classNames("p-3 border-bottom d-flex align-items-center flex-wrap position-sticky bg-body",styles.sheetToolbar)}>
             <div style={{}}>
-              <MdMenuBook />
+              <FileEarmarkRuledFill />
               <BranchLabel branch={branch} />
               <Pathbar style={{ color: 'white !important' }} owner={owner} path={path} branch={branch} repoName={repo} makeLink={makeRepoLink} />
             </div>
@@ -78,7 +76,7 @@ function SheetPage() {
               <ButtonGroup>
                 <Dropdown>
                   <Dropdown.Toggle title="Workbook settings" variant="secondary">
-                    <MdSettings />
+                    <GearFill />
                   </Dropdown.Toggle>
                   <Dropdown.Menu>
                     <Dropdown.Item onClick={() => setSettingsTab('KATEX_MACROS')}>Katex macros</Dropdown.Item>

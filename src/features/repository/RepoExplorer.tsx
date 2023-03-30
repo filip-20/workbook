@@ -1,5 +1,5 @@
 import { Alert, Badge, Card, ListGroup, Placeholder, Spinner } from "react-bootstrap";
-import { File, FolderFill } from 'react-bootstrap-icons';
+import { FileEarmark, FileEarmarkPlusFill, FolderFill, SlashCircle } from 'react-bootstrap-icons';
 import { Link } from "react-router-dom";
 import Pathbar from "./Pathbar";
 import { ContentDirectory, ReposGetContentApiResponse, useReposGetContentQuery, useReposGetQuery, useReposListBranchesQuery } from "../../api/githubApi/endpoints/repos";
@@ -9,8 +9,6 @@ import { displayLoadable } from "./displayLoadable";
 import styles from './styles.module.css';
 import { SerializedError } from "@reduxjs/toolkit";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/dist/query";
-import { BsSlashCircle } from "react-icons/bs";
-import { HiDocumentAdd } from 'react-icons/hi'
 import CreateFileButton from "./CreateFileButton";
 import { useRef } from "react";
 import { emptySheet } from "../sheet/slice/sheetSlice";
@@ -75,7 +73,7 @@ function RepoExplorer(props: RepoExplorerProps) {
   }
 
   const folderIcon = <FolderFill />
-  const fileIcon = <File />
+  const fileIcon = <FileEarmark />
 
   const loading = <div style={{ width: '100%', textAlign: 'center' }}><Spinner animation="grow" role="status" /></div>
   const err = (message: string) => {
@@ -86,8 +84,8 @@ function RepoExplorer(props: RepoExplorerProps) {
     if (isEmptyRepoError(error)) {
       return (
         <div className="text-center text-muted">
-          <BsSlashCircle style={{ margin: '5em', marginBottom: '2em' }} size={'10em'} />
-          <h3>Prázdny repozitár</h3>
+          <SlashCircle style={{ margin: '5em', marginBottom: '2em' }} size={'10em'} />
+          <h3>The repository is empty</h3>
         </div>
       )
     }
@@ -178,7 +176,7 @@ function RepoExplorer(props: RepoExplorerProps) {
             commitMessage="Created"
             withContent={JSON.stringify(emptySheet)}
           >
-            <HiDocumentAdd /> Vytvoriť zošit
+            <FileEarmarkPlusFill /> New worksheet
           </CreateFileButton>
         </div>
       </Card.Header>

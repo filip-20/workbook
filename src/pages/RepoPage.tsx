@@ -1,5 +1,5 @@
 import { Container } from "react-bootstrap";
-import { BsFillStarFill } from "react-icons/bs";
+import { FileEarmarkRuledFill } from 'react-bootstrap-icons';
 import { useLocation, useParams } from "react-router-dom";
 import { authSelectors } from "../features/auth/authSlice";
 import { useAppSelector } from "../app/hooks";
@@ -81,7 +81,7 @@ function RepoPage() {
   const transformFileItem = (filepath: string, type: 'file' | 'dir') => {
     const { extension } = parseFilepath(filepath);
     if (extension === 'workbook') {
-      return {changeIcon: <BsFillStarFill style={{strokeWidth: '1px', fill: 'yellow'}} />}
+      return {changeIcon: <FileEarmarkRuledFill/>}
     }
     return {}
   }
