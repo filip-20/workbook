@@ -2,24 +2,25 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { Button, Form, InputGroup } from "react-bootstrap";
 import { BiTrash } from "react-icons/bi";
 import { useAppSelector } from "../../../app/hooks";
-import { CellContext, emptyContext, Formula, LogicContext } from "../slice/logicContext";
+import { CellContext, ContextExtension, NamedFormula } from "../slice/logicContext";
 import { CellLocator, sheetActions, sheetSelectors } from "../slice/sheetSlice";
-import { ErrorExpected, FormulaFactories, parseFormulaStrict, SyntaxError } from "@fmfi-uk-1-ain-412/js-fol-parser"
+import { ErrorExpected, FormulaFactories, parseFormulaWithPrecedence, SyntaxError } from "@fmfi-uk-1-ain-412/js-fol-parser"
 import { useDispatch } from "react-redux";
 import FormattedTextRenderer from "../../../components/FormattedTextRenderer";
+import { asciiFactory, texFactory, unicodeFactory } from "../../../utils/formulaUtils/stringify";
 
 interface AddAxiomsCellProps {
   cellLoc: CellLocator,
   isEdited: boolean,
   katexMacros: object,
-  makeContextExtension: (formulas: Formula[]) => LogicContext
+  makeContextExtension: (formulas: NamedFormula[]) => ContextExtension
   onDataChanged: (getData: () => any) => void,
 }
 
-type LocalState = Array<Formula>
+type LocalState = Array<NamedFormula>
 type LocalActions =
-  { type: 'add', payload:  FormulaItem }
-  | { type: 'change', payload: { index: number, item: FormulaItem } }
+  { type: 'add', payload:  NamedFormula }
+  | { type: 'change', payload: { index: number, item: NamedFormula } }
   | { type: 'delete', payload: { index: number, count: number } };
 export const initialAddFormulasCellData : LocalState = [];
 
@@ -28,7 +29,7 @@ export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeCo
   const context = useAppSelector(sheetSelectors.logicContext(cellLoc))
   const dispatch = useDispatch();
 
-  const [parsed, setParsed] = useState<Array<Formula | undefined>>([])
+  const [parsed, setParsed] = useState<Array<NamedFormula | undefined>>([])
   const [formulas, localDispatch] = useReducer((state: LocalState, action: LocalActions) => {
     const newState = [...state];
     switch (action.type) {
@@ -49,7 +50,7 @@ export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeCo
 
   useEffect(() => {
     if (!isEdited) {
-      const newParsed: Array<Formula | undefined> = [];
+      const newParsed: Array<NamedFormula | undefined> = [];
       for (const { name, formula } of formulas) {
         const names = new Set<string>();
         try {
@@ -57,14 +58,14 @@ export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeCo
             console.log('name exists')
             newParsed.push(undefined);
           } else {
-            newParsed.push({ name, formula: parseFormulaStrict(formula, context, stringFactory(context)) })
+            newParsed.push({ name, formula: parseFormulaWithPrecedence(formula, context, asciiFactory(context)) })
           }
         } catch (e) {
           console.log('parse error', e, context)
           newParsed.push(undefined);
         }
       }
-      dispatch(sheetActions.extendLogicContext({ cellLoc, logicContext: makeContextExtension(newParsed.filter(i => i !== undefined) as Formula[]) }));
+      dispatch(sheetActions.extendLogicContext({ cellLoc, contextExtension: makeContextExtension(newParsed.filter(i => i !== undefined) as NamedFormula[]) }));
       setParsed(newParsed);
     }
   }, [isEdited, context])
@@ -83,7 +84,7 @@ export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeCo
         <FormattedTextRenderer
           katexMacros={katexMacros}
           text={parsed.map((item, index) =>
-            item ? `$$\\text{\\textsf{${item.name}}} = ${parseFormulaStrict(item.formula, context, texFactory(context))}$$`
+            item ? `$$\\text{\\textsf{${item.name}}} = ${parseFormulaWithPrecedence(item.formula, context, texFactory(context))}$$`
               : `<span style='color: red'> ${formulas[index].name} = ${formulas[index].formula} </span>`).join('\n\n')
           }
         />
@@ -92,17 +93,16 @@ export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeCo
   )
 }
 
-export interface FormulaItem { name: string, formula: string }
 interface FormulaAdderProps {
   context: CellContext,
-  formulas: Array<FormulaItem>,
-  onChange: (index: number, item: FormulaItem) => void,
-  onAdd: (item: FormulaItem) => void,
+  formulas: Array<NamedFormula>,
+  onChange: (index: number, item: NamedFormula) => void,
+  onAdd: (item: NamedFormula) => void,
   onDelete: (index: number, count: number) => void,
 }
 
 function FormulaAdder({ context, formulas, onChange, onAdd, onDelete }: FormulaAdderProps) {
-  const isEmpty = (f: FormulaItem) => f.name === '' && f.formula === ''
+  const isEmpty = (f: NamedFormula) => f.name === '' && f.formula === ''
 
   const nameMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -137,7 +137,7 @@ function FormulaAdder({ context, formulas, onChange, onAdd, onDelete }: FormulaA
     onDelete(index + 1, formulas.length - index + 1);
   }
 
-  const handleChange = (index: number, item: FormulaItem) => {
+  const handleChange = (index: number, item: NamedFormula) => {
     if (isEmpty(item) && index === formulas.length - 1) {
       deleteLast()
     } else if (index === formulas.length && !isEmpty(item)) {
@@ -159,14 +159,14 @@ function FormulaAdder({ context, formulas, onChange, onAdd, onDelete }: FormulaA
     }
   }
 
-  const gen = function* (formulas: Array<FormulaItem>) {
-    let last: FormulaItem | null = null;
+  const gen = function* (formulas: Array<NamedFormula>) {
+    let last: NamedFormula | null = null;
     for (const f of formulas) {
       yield f;
       last = f;
     }
     if (!last || !isEmpty(last)) {
-      yield { name: '', formula: '', isValid: false } as FormulaItem
+      yield { name: '', formula: '', isValid: false } as NamedFormula
     }
   }
 
@@ -257,74 +257,18 @@ function FormulaAdder({ context, initialFormulas, onChange, onAdd, onDelete }: F
   )
 }*/
 
-export function formula2Tex(context: CellContext, formula: Formula) {
-  const f = parseFormulaStrict(formula.formula, context, texFactory(context));
+export function formula2Tex(context: CellContext, formula: NamedFormula) {
+  const f = parseFormulaWithPrecedence(formula.formula, context, texFactory(context));
   return f === undefined ? undefined : `\\text{\\textsf{${formula.name}}} = ${f}`;
-}
-
-const stringFactory = (context: CellContext) => {
-  const testArity = (symbol: string, args: any[], ee: ErrorExpected) => {
-    const a = context.symbolArity(symbol)
-    a !== args.length && ee.expected(`${a} arguments for ${symbol}`);
-  }
-  const factory: FormulaFactories<string, string> = {
-    variable: (symbol: string, ee: ErrorExpected) => symbol,
-    constant: (symbol: string, ee: ErrorExpected) => symbol,
-    equalityAtom: (lhs: string, rhs: string, ee: ErrorExpected) => `${lhs} ≐ ${rhs}`,
-    negation: (subf: string, ee: ErrorExpected) => `¬${subf}`,
-    conjunction: (lhs: string, rhs: string, ee: ErrorExpected) => `(${lhs} ∧ ${rhs})`,
-    disjunction: (lhs: string, rhs: string, ee: ErrorExpected) => `(${lhs} ∨ ${rhs})`,
-    implication: (lhs: string, rhs: string, ee: ErrorExpected) => `(${lhs} ⇒ ${rhs})`,
-    equivalence: (lhs: string, rhs: string, ee: ErrorExpected) => `(${lhs} ⇔ ${rhs})`,
-    existentialQuant: (variable: string, subf: string, ee: ErrorExpected) => `∃ ${variable}: ${subf}`,
-    universalQuant: (variable: string, subf: string, ee: ErrorExpected) => `∀ ${variable}: ${subf}`,
-    functionApplication: (symbol: string, args: string[], ee: ErrorExpected) => {
-      testArity(symbol, args, ee);
-      return `${symbol}(${args.join(', ')})`
-    },
-    predicateAtom: (symbol: string, args: string[], ee: ErrorExpected) => {
-      testArity(symbol, args, ee);
-      return `${symbol}(${args.join(', ')})`
-    },
-  };
-  return factory;
-}
-
-const texFactory = (context: CellContext) => {
-  const testArity = (symbol: string, args: any[], ee: ErrorExpected) => {
-    const a = context.symbolArity(symbol)
-    a !== args.length && ee.expected(`${a} arguments for ${symbol}`);
-  }
-  const factory: FormulaFactories<string, string> = {
-    variable: (symbol: string, ee: ErrorExpected) => `\\text{\\textsf{${symbol}}}`,
-    constant: (symbol: string, ee: ErrorExpected) => `\\text{\\textsf{${symbol}}}`,
-    equalityAtom: (lhs: string, rhs: string, ee: ErrorExpected) => `${lhs} \\doteq ${rhs}`,
-    negation: (subf: string, ee: ErrorExpected) => `\\neg ${subf}`,
-    conjunction: (lhs: string, rhs: string, ee: ErrorExpected) => `(${lhs} \\land ${rhs})`,
-    disjunction: (lhs: string, rhs: string, ee: ErrorExpected) => `(${lhs} \\lor ${rhs})`,
-    implication: (lhs: string, rhs: string, ee: ErrorExpected) => `(${lhs} \\rarr ${rhs})`,
-    equivalence: (lhs: string, rhs: string, ee: ErrorExpected) => `(${lhs} \\lrarr ${rhs})`,
-    existentialQuant: (variable: string, subf: string, ee: ErrorExpected) => `\\exists ${variable} ${subf}`,
-    universalQuant: (variable: string, subf: string, ee: ErrorExpected) => `\\forall ${variable}: ${subf}`,
-    functionApplication: (symbol: string, args: string[], ee: ErrorExpected) => {
-      testArity(symbol, args, ee);
-      return `\\text{\\textsf{${symbol}}}(${args.map(a => `\\text{\\textsf{${a}}}`).join(', ')})`
-    },
-    predicateAtom: (symbol: string, args: string[], ee: ErrorExpected) => {
-      testArity(symbol, args, ee);
-      return `\\text{\\textsf{${symbol}}}(${args.map(a => `\\text{\\textsf{${a}}}`).join(', ')})`
-    },
-  };
-  return factory;
 }
 
 interface FormulaInputProps {
   context: CellContext,
-  item: FormulaItem,
+  item: NamedFormula,
   empty: boolean,
   showDelete: boolean,
   isNameUsed: (name: string) => boolean,
-  onChange: (item: FormulaItem, correct: boolean) => void
+  onChange: (item: NamedFormula, correct: boolean) => void
   onDelete?: () => void
 }
 
@@ -334,7 +278,7 @@ export function FormulaInput({ context, item, empty, showDelete, isNameUsed, onC
 
   const parse = (value: string) => {
     try {
-      const parsed = parseFormulaStrict(value, context, stringFactory(context))
+      const parsed = parseFormulaWithPrecedence(value, context, unicodeFactory(context))
       setParseError(undefined);
       return parsed;
     } catch (e: unknown) {

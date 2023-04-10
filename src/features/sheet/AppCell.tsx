@@ -11,29 +11,30 @@ export interface AppCellProps {
   isEdited: boolean,
   typeName: string,
   data: any,
-  proof?: any,
   onDataChanged: (getData: () => any) => void,
+  proof?: any,
+  updateProofVerdict?: (verdict: boolean) => void,
 }
 
 const unsupportedApp = (type: string) => {
   return {
     prepare: () => 0,
     AppComponent: () => (
-      <div style={{textAlign: 'center'}}>
-      <BsExclamationTriangleFill color='red' size={70} />
-      <p>Unsupported app type: {type}</p>
+      <div style={{ textAlign: 'center' }}>
+        <BsExclamationTriangleFill color='red' size={70} />
+        <p>Unsupported app type: {type}</p>
       </div>
     )
   }
 }
 
-function AppCell({ cellLoc, isEdited, typeName, data, proof, onDataChanged }: AppCellProps) {
+function AppCell({ cellLoc, isEdited, typeName, data, proof, onDataChanged, updateProofVerdict }: AppCellProps) {
   const cell = useAppSelector(sheetSelectors.cell(cellLoc.id));
   const context = useAppSelector(sheetSelectors.logicContext(cellLoc))
   const { prepare, AppComponent } = getAppInfo(typeName) || unsupportedApp(typeName);
   const prepareResult = useRef<PrepareResult | null>(null);
 
-  useMemo(() => console.error('App cell context changed', context), [context]);
+  useMemo(() => console.debug('App cell context changed', context), [context]);
 
   if (prepareResult.current === null) {
     prepareResult.current = prepare(data)
@@ -51,9 +52,16 @@ function AppCell({ cellLoc, isEdited, typeName, data, proof, onDataChanged }: Ap
       className={`${styles.appCell} ${styles[`${typeName}Cell`]}`}
       onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
-      {!isEdited && <div className={styles.appOverlay}/>}
+      {!isEdited && <div className={styles.appOverlay} />}
       <div className={styles.appContainer}>
-        <AppComponent isEdited={isEdited} context={context} proof={proof} instance={instance} onStateChange={onAppStateChanged} />
+        <AppComponent
+          isEdited={isEdited}
+          context={context}
+          proof={proof}
+          updateProofVerdict={updateProofVerdict}
+          instance={instance}
+          onStateChange={onAppStateChanged}
+        />
       </div>
     </div>
   )

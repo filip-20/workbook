@@ -49,13 +49,10 @@ export default function LanguageCell({ cellLoc, isEdited, onDataChanged }: Langu
   useEffect(() => {
     if (!isEdited) {
       dispatch(sheetActions.extendLogicContext({
-        cellLoc, logicContext: {
+        cellLoc, contextExtension: {
           constants: parseOrEmpty(constants, parseConstants),
           functions: parseOrEmpty(functions, v => parseFunctions(v)),
           predicates: parseOrEmpty(predicates, v => parsePredicates(v)),
-          formulas: [],
-          axioms: [],
-          theorems: [],
         }
       }))
     }

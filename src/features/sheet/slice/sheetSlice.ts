@@ -1,7 +1,7 @@
 import { AnyAction, createEntityAdapter, createSelector, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
 import undoable, { includeAction } from "redux-undo";
 import { AppDispatch, RootState } from '../../../app/store'
-import { LogicContext, cellContext } from "./logicContext";
+import { ContextExtension, LogicContext, cellContext } from "./logicContext";
 import { testSheetIntegrity } from "./sheetVersions";
 
 export interface CellComment {
@@ -26,7 +26,7 @@ export interface Cell {
   idCounter: number,
   comments: EntityState<CellComment>,
   data: any,
-  contextExtension? :LogicContext,
+  contextExtension?: ContextExtension,
 }
 
 export interface SheetSettings {
@@ -272,10 +272,10 @@ export const sheetSlice = createSlice({
     syncUndoRedoCounter: (state, action: PayloadAction<number>) => {
       state.localState.undoRedoCounter = action.payload;
     },
-    extendLogicContext: (state, action: PayloadAction<{ cellLoc: CellLocator, logicContext: LogicContext }>) => {
-      const { cellLoc, logicContext } = action.payload;
-      if (JSON.stringify(state.sheetFile.cells[cellLoc.id].contextExtension) !== JSON.stringify(logicContext)) {
-        state.sheetFile.cells[cellLoc.id].contextExtension = logicContext;
+    extendLogicContext: (state, action: PayloadAction<{ cellLoc: CellLocator, contextExtension: ContextExtension }>) => {
+      const { cellLoc, contextExtension } = action.payload;
+      if (JSON.stringify(state.sheetFile.cells[cellLoc.id].contextExtension) !== JSON.stringify(contextExtension)) {
+        state.sheetFile.cells[cellLoc.id].contextExtension = contextExtension;
         console.log('updating context of ', cellLoc);
       }
     },

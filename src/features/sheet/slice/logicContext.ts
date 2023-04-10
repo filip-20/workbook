@@ -3,13 +3,13 @@ import { createSelector } from "@reduxjs/toolkit";
 import { RootState } from "../../../app/store";
 import { CellLocator } from "./sheetSlice";
 
-export interface Formula {
+export interface NamedFormula {
   name: string,
   formula: string,
 }
 
 export interface Theorem {
-  theorem: Formula,
+  theorem: NamedFormula,
   prooved: boolean,
 }
 
@@ -18,23 +18,24 @@ export interface LogicContext {
   predicates: Array<SymbolWithArity>,
   functions: Array<SymbolWithArity>,
 
-  formulas: Array<Formula>,
-  axioms: Array<Formula>,
-  theorems: Array<Formula>,
+  formulas: Array<NamedFormula>,
+  axioms: Array<NamedFormula>,
+  theorems: Array<Theorem>,
 }
+export type ContextExtension = Partial<LogicContext>
 
 export const emptyContext: LogicContext = {
   constants: [], predicates: [], functions: [], formulas: [], axioms: [], theorems: []
 }
 
-function mergeContexts(l1: LogicContext, l2: LogicContext): LogicContext {
+function mergeContexts(l1: ContextExtension, l2: ContextExtension): LogicContext {
   return {
-    constants: l1.constants.concat(l2.constants),
-    predicates: l1.predicates.concat(l2.predicates),
-    functions: l1.functions.concat(l2.functions),
-    formulas: l1.formulas.concat(l2.formulas),
-    axioms: l1.axioms.concat(l2.axioms),
-    theorems: l1.theorems.concat(l2.theorems),
+    constants: (l1.constants || []).concat(l2.constants || []),
+    predicates: (l1.predicates || []).concat(l2.predicates || []),
+    functions: (l1.functions || []).concat(l2.functions || []),
+    formulas: (l1.formulas || []).concat(l2.formulas || []),
+    axioms: (l1.axioms || []).concat(l2.axioms || []),
+    theorems: (l1.theorems || []).concat(l2.theorems || []),
   }
 }
 function prevCell(cell: CellLocator | undefined) {
@@ -72,7 +73,7 @@ export class CellContext implements LogicContext {
     context.functions.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: s.arity, type: 'function', index }))
     context.axioms.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: 0, type: 'axiom', index }))
     context.formulas.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: 0, type: 'formula', index }))
-    context.theorems.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: 0, type: 'theorem', index }))
+    context.theorems.forEach((s, index) => this.symbolsLUT.set(s.theorem.name, { arity: 0, type: 'theorem', index }))
     console.log('SymbolsLut', this.symbolsLUT)
   }
   isConstant(symbol: string) {
@@ -106,7 +107,7 @@ export class CellContext implements LogicContext {
         return {
           type: 'theorem',
           name,
-          formula: this.theorems[s.index].formula
+          formula: this.theorems[s.index].theorem.formula
         }
       case 'formula':
         return {

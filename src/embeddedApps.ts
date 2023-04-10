@@ -1,6 +1,6 @@
 import ResolutionEditor from 'resolution-editor'
-import StructureExplorer from 'fol-graphexplorer'
-import TableauEditor from '@fmfi-uk-1-ain-412/tableaueditor'
+import StructureExplorer from '@fmfi-uk-1-ain-412/fol-graphexplorer'
+import TableauEditor from 'tableauEditor'
 
 export interface PrepareResult {
   instance: any,
