@@ -17,65 +17,71 @@ interface AddAxiomsCellProps {
   onDataChanged: (getData: () => any) => void,
 }
 
-type LocalState = Array<NamedFormula>
+type SavedState = NamedFormula[];
+type LocalState = {
+  formulas: NamedFormula[],
+  parsed: Array<string | undefined>,
+}
 type LocalActions =
-  { type: 'add', payload:  NamedFormula }
+  { type: 'add', payload: NamedFormula }
   | { type: 'change', payload: { index: number, item: NamedFormula } }
   | { type: 'delete', payload: { index: number, count: number } };
-export const initialAddFormulasCellData : LocalState = [];
+export const initialAddFormulasCellData: SavedState = [];
 
 export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeContextExtension, onDataChanged }: AddAxiomsCellProps) {
-  const data = useAppSelector(sheetSelectors.cell(cellLoc.id)).data as LocalState;
+  const data = useAppSelector(sheetSelectors.cell(cellLoc.id)).data as SavedState;
   const context = useAppSelector(sheetSelectors.logicContext(cellLoc))
   const dispatch = useDispatch();
 
-  const [parsed, setParsed] = useState<Array<NamedFormula | undefined>>([])
-  const [formulas, localDispatch] = useReducer((state: LocalState, action: LocalActions) => {
-    const newState = [...state];
+  const parse = (formula: string) => {
+    try {
+      return parseFormulaWithPrecedence(formula, context, asciiFactory(context));
+    } catch (_) {
+      return undefined;
+    }
+  }
+
+  const [localState, localDispatch] = useReducer((state: LocalState, action: LocalActions) => {
+    const newState = { formulas: [...state.formulas], parsed: [...state.parsed] };
     switch (action.type) {
       case 'add':
-        newState.push(action.payload);
+        newState.formulas.push(action.payload);
+        newState.parsed.push(parse(action.payload.formula));
         break;
       case 'change':
-        newState[action.payload.index] = action.payload.item;
+        newState.formulas[action.payload.index] = action.payload.item;
+        newState.parsed[action.payload.index] = parse(action.payload.item.formula);
         break;
       case 'delete':
         const { index, count } = action.payload;
-        newState.splice(index, count);
+        newState.formulas.splice(index, count);
+        newState.parsed.splice(index, count);
+        break;
     }
-    onDataChanged(() => newState.map(i => ({ name: i.name, formula: i.formula })));
+    onDataChanged(() => [...newState.formulas]);
     return newState;
-  }, data)
-
+  }, { formulas: [...data], parsed: data.map(f => parse(f.formula)) })
 
   useEffect(() => {
     if (!isEdited) {
-      const newParsed: Array<NamedFormula | undefined> = [];
-      for (const { name, formula } of formulas) {
-        const names = new Set<string>();
-        try {
-          if (names.has(name) || context.symbolExits(name)) {
-            console.log('name exists')
-            newParsed.push(undefined);
-          } else {
-            newParsed.push({ name, formula: parseFormulaWithPrecedence(formula, context, asciiFactory(context)) })
-          }
-        } catch (e) {
-          console.log('parse error', e, context)
-          newParsed.push(undefined);
-        }
-      }
-      dispatch(sheetActions.extendLogicContext({ cellLoc, contextExtension: makeContextExtension(newParsed.filter(i => i !== undefined) as NamedFormula[]) }));
-      setParsed(newParsed);
+      const contextExtension = makeContextExtension(
+        localState.formulas
+          .filter((_, index) => localState.parsed[index] !== undefined)
+          .map((_, index) => ({
+            name: localState.formulas[index].name,
+            formula: localState.parsed[index]!
+          }))
+      )
+      dispatch(sheetActions.extendLogicContext({ cellLoc, contextExtension }));
     }
-  }, [isEdited, context])
+  }, [isEdited])
 
   return (
     <div style={{ padding: '1rem' }}>
       {isEdited ?
         <FormulaAdder
           context={context}
-          formulas={formulas}
+          formulas={localState.formulas}
           onChange={(index, item) => localDispatch({ type: 'change', payload: { index, item } })}
           onAdd={item => localDispatch({ type: 'add', payload: item })}
           onDelete={(index, count) => localDispatch({ type: 'delete', payload: { index, count } })}
@@ -83,9 +89,9 @@ export default function AddFormulasCell({ cellLoc, isEdited, katexMacros, makeCo
         :
         <FormattedTextRenderer
           katexMacros={katexMacros}
-          text={parsed.map((item, index) =>
-            item ? `$$\\text{\\textsf{${item.name}}} = ${parseFormulaWithPrecedence(item.formula, context, texFactory(context))}$$`
-              : `<span style='color: red'> ${formulas[index].name} = ${formulas[index].formula} </span>`).join('\n\n')
+          text={localState.parsed.map((item, index) =>
+            item ? `$$\\text{\\textsf{${localState.formulas[index].name}}} = ${parseFormulaWithPrecedence(item, context, texFactory(context))}$$`
+              : `<span style='color: red'> ${localState.formulas[index].name} = ${localState.formulas[index].formula} </span>`).join('\n\n')
           }
         />
       }
@@ -103,62 +109,47 @@ interface FormulaAdderProps {
 
 function FormulaAdder({ context, formulas, onChange, onAdd, onDelete }: FormulaAdderProps) {
   const isEmpty = (f: NamedFormula) => f.name === '' && f.formula === ''
-
-  const nameMap = useMemo(() => {
-    const map = new Map<string, number>();
-    formulas.forEach((f, index) => map.has(f.name) || map.set(f.name, index))
-    return {
-      map,
-      change(from: string, to: string, index: number) {
-        this.map.get(from) === index && this.map.delete(from);
-        (to !== '' && this.map.get(to) === undefined) && this.map.set(to, index);
-      },
-      delete(name: string, index: number) {
-        this.map.get(name) === index && this.map.delete(name);
-        this.map.forEach((v, k) => v > index && this.map.set(k, v - 1));
-      },
-      add(name: string, index: number) {
-        (name !== '' && this.map.get(name) === undefined) && this.map.set(name, index);
-      },
-      isUsed(name: string, index: number) {
-        //console.log('namemap: ', this.map);
-        return context.symbolExits(name) || (this.map.has(name) && this.map.get(name) !== index)
-      }
-    }
-  }, []);
-
   const deleteLast = () => {
-    nameMap.delete(formulas[formulas.length - 1].name, formulas.length - 1)
     let index = formulas.length - 2;
     while (index >= 0 && isEmpty(formulas[index])) {
-      nameMap.delete(formulas[index].name, index);
       index--;
     }
     onDelete(index + 1, formulas.length - index + 1);
+  }
+
+  const nameMap = new Map<string, number>();
+  let i = 0;
+  for (let f of formulas) {
+    if (!nameMap.has(f.name)) {
+      nameMap.set(f.name, i);
+    }
+    i++;
+  }
+  
+  console.log('nameMap', nameMap);
+  const isNameUsed = (name: string, index: number) => {
+    const t = nameMap.get(name);
+    return (t !== undefined && t < index) || context.symbolExits(name);
   }
 
   const handleChange = (index: number, item: NamedFormula) => {
     if (isEmpty(item) && index === formulas.length - 1) {
       deleteLast()
     } else if (index === formulas.length && !isEmpty(item)) {
-      nameMap.add(item.name, index);
+      console.log('adding item ');
       onAdd(item);
     } else {
-      nameMap.change(formulas[index].name, item.name, index);
       onChange(index, item);
     }
-
   }
 
   const handleDelete = (index: number) => {
     if (index === formulas.length - 1) {
       deleteLast()
     } else {
-      nameMap.delete(formulas[index].name, index);
       onDelete(index, 1);
     }
   }
-
   const gen = function* (formulas: Array<NamedFormula>) {
     let last: NamedFormula | null = null;
     for (const f of formulas) {
@@ -172,90 +163,24 @@ function FormulaAdder({ context, formulas, onChange, onAdd, onDelete }: FormulaA
 
   return (
     <>
-      {Array.from(gen(formulas)).map((item, index) =>
-        <FormulaInput
+      {Array.from(gen(formulas)).map((item, index) => {
+
+        console.log('Rendering ', index, formulas.length, index === formulas.length, index !== formulas.length);
+
+        return <FormulaInput
           context={context}
           key={index}
-          isNameUsed={(name) => nameMap.isUsed(name, index)}
+          isNameUsed={(name) => isNameUsed(name, index)}
           item={item}
           empty={index === formulas.length}
-          showDelete={!(index === formulas.length)}
+          showDelete={index !== formulas.length}
           onChange={item => handleChange(index, item)}
           onDelete={() => handleDelete(index)}
-        />)}
+        />
+      })}
     </>
   )
 }
-
-/*
-interface FormulaItem { name: string, formula: string, parsed: string | undefined }
-interface FormulaAdderProps {
-  context: CellContext,
-  initialFormulas?: Array<FormulaItem>,
-  onChange: (index: number, item: FormulaItem) => void,
-  onAdd: (item: FormulaItem) => void,
-  onDelete: (index: number) => void,
-}
-
-function FormulaAdder({ context, initialFormulas, onChange, onAdd, onDelete }: FormulaAdderProps) {
-  const emptyFormula: FormulaItem = {
-    name: '', formula: '', parsed: undefined,
-  }
-  const tidyList = (n: Array<FormulaItem>) => {
-    if (!isEmptyFormula(n[n.length - 1])) {
-      n.push({ name: '', formula: '', parsed: undefined })
-    }
-    while (n.length - 2 >= 0 && isEmptyFormula(n[n.length - 2])) {
-      n.pop();
-      onDelete(n.length - 2);
-    }
-    return n;
-  }
-  const isEmptyFormula = (f: Formula) => f.name === '' && f.formula === '';
-  const [formulas, setFormulas] = useState(initialFormulas ?
-    tidyList([...initialFormulas])
-    : [{ name: '', formula: '', parsed: undefined }]
-  );
-
-  const formulaChanged = (index: number, item: FormulaItem) => {
-    setFormulas(p => {
-      const n = [...p];
-      n[index] = item;
-      if (index === n.length - 1) {
-        onAdd(item)
-      }
-      tidyList(n);
-      return n;
-    });
-  }
-
-  const handleDelete = (index: number) => {
-    setFormulas(p => {
-      const n = [...p]
-      n.splice(index, 1);
-      onDelete(index);
-      tidyList(n);
-      return n;
-    })
-  }
-
-  return (
-    <>
-      {
-        formulas.map((f, index) =>
-          <FormulaInput
-            context={context}
-            key={index}
-            name={f.name}
-            formula={f.formula}
-            showDelete={index !== formulas.length - 1}
-            onChange={(name, formula, parsed) => formulaChanged(index, {name, formula, parsed})}
-            onDelete={() => handleDelete(index)}
-          />)
-      }
-    </>
-  )
-}*/
 
 export function formula2Tex(context: CellContext, formula: NamedFormula) {
   const f = parseFormulaWithPrecedence(formula.formula, context, texFactory(context));
@@ -273,55 +198,48 @@ interface FormulaInputProps {
 }
 
 export function FormulaInput({ context, item, empty, showDelete, isNameUsed, onChange, onDelete }: FormulaInputProps) {
-  const [parseError, setParseError] = useState<string | undefined>(undefined);
-  const [nameError, setNameError] = useState<string | undefined>(undefined);
-
-  const parse = (value: string) => {
+  const getNameError = (name: string) => {
+    if (name.trim() === '') {
+      return 'Name is empty. '
+    } else if (isNameUsed(name)) {
+      return 'Symbol name is already used. '
+    }
+  }
+  const parse = (formula: string): { error?: string, parsed?: string } => {
     try {
-      const parsed = parseFormulaWithPrecedence(value, context, unicodeFactory(context))
-      setParseError(undefined);
-      return parsed;
+      const parsed = parseFormulaWithPrecedence(formula, context, unicodeFactory(context))
+      return { parsed };
     } catch (e: unknown) {
       const se = (e as SyntaxError)
-      setParseError(se.message);
-      return undefined;
+      return { error: se.message };
     }
   }
-  const testName = (name: string) => {
-    if (name.trim() === '' && item.formula !== '') {
-      setNameError('Name is empty. ')
-      return false;
-    } else if (isNameUsed(name)) {
-      setNameError('Symbol name is already used. ')
-      return false;
-    } else {
-      setNameError(undefined)
-      return true;
-    }
-  }
-
-  
-  useEffect(() => {
-    if (empty) {
-      nameError && setNameError(undefined);
-      parseError && setParseError(undefined);
-    }
-  }, [item.name, item.formula, empty]);
+  const [parseError, setParseError] = useState<string | undefined>(getNameError(item.name));
+  const [nameError, setNameError] = useState<string | undefined>(parse(item.formula).error);
 
   const formulaChanged = (value: string) => {
-    let correct = true;
-    if (!empty) {
-      correct = parse(value) !== undefined && nameError === undefined;
-    }
+    const correct = !nameError && !parse(value).error
     onChange({ ...item, formula: value }, correct);
   }
   const nameChanged = (value: string) => {
-    let correct = true;
-    if (!empty) {
-      correct = testName(item.name) && parseError === undefined;
-    }
+    const correct = !getNameError(value) && !parseError
     onChange({ ...item, name: value }, correct);
   }
+
+  useEffect(() => {
+    if (empty) {
+      setNameError(undefined);
+    } else {
+      setNameError(getNameError(item.name));
+    }
+  }, [item.name, empty])
+  useEffect(() => {
+    if (empty) {
+      setParseError(undefined);
+    } else {
+      setParseError(parse(item.formula).error);
+    }
+  }, [item.formula, empty])
 
   return (
     <>
@@ -330,7 +248,7 @@ export function FormulaInput({ context, item, empty, showDelete, isNameUsed, onC
           style={{ flexBasis: "5rem", flexGrow: "0", flexShrink: '0' }}
           isInvalid={nameError !== undefined}
           value={item.name}
-          onChange={e => nameChanged(e.target.value)}
+          onChange={e => { console.log('name change handler ', e); nameChanged(e.target.value) }}
         />
         <InputGroup.Text>=</InputGroup.Text>
         <Form.Control
@@ -338,7 +256,7 @@ export function FormulaInput({ context, item, empty, showDelete, isNameUsed, onC
           value={item.formula}
           onChange={e => formulaChanged(e.target.value)}
         />
-        {!showDelete &&
+        {showDelete &&
           <Button variant="danger" tabIndex={-1} onClick={() => onDelete && onDelete()}><BiTrash /></Button>
         }
         <Form.Control.Feedback type="invalid">{nameError && nameError} {parseError && parseError}</Form.Control.Feedback>

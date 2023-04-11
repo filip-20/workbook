@@ -85,10 +85,11 @@ export class CellContext implements LogicContext {
   isFunction(symbol: string) {
     return this.symbolsLUT.get(symbol)?.type === 'function'
   }
-  isVariable(symbol: string) {
+  isVariable(_: string) {
     return true;
   }
   symbolExits(symbol: string) {
+    console.log('symbols exists ? ', symbol, this.symbolsLUT.has(symbol));
     return this.symbolsLUT.has(symbol);
   }
   symbolArity(symbol: string) {

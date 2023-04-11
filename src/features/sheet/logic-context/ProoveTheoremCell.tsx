@@ -12,6 +12,7 @@ import { InlineMath } from 'react-katex';
 
 import styles from './ProoveTheoremCell.module.scss'
 import { useDispatch } from "react-redux";
+import produce, { Immer } from "immer";
 
 interface ProoveTheoremCellProps {
   cellLoc: CellLocator,
@@ -56,40 +57,37 @@ export default function ProoveTheoremCell({ cellLoc, isEdited, data, onDataChang
   const dispatch = useDispatch();
 
   const [localState, localDispatch] = useReducer((state: LocalState, action: LocalActions) => {
-    let newState = { ...state };
-    switch (action.type) {
-      case 'update_theorem':
-        newState.proof.theorem = action.payload.item;
-        newState.theoremCorrect = action.payload.correct;
-        break;
-      case 'set_proover':
-        newState.prooveWith = action.payload;
-        dispatch(sheetActions.extendLogicContext({
-          cellLoc,
-          contextExtension: { theorems: [{ theorem: state.proof.theorem, prooved: false }] }
-        }));
-        break;
-      case 'update_proover_data':
-        newState.getProoverData = action.payload;
-        break;
-      case 'update_verdict':
-        newState.verdict = action.payload;
-        dispatch(sheetActions.extendLogicContext({
-          cellLoc,
-          contextExtension: { theorems: [{ theorem: state.proof.theorem, prooved: newState.verdict }] }
-        }));
-        break;
-      case 'update_context':
-        const ctx = action.payload;
-        newState.context = ctx;
-        newState.proof = {
-          ...newState.proof,
-          axioms: ctx.axioms,
-          theorems: ctx.theorems,
-        }
-        break;
-    }
-
+    const newState = produce(state, state => {
+      switch (action.type) {
+        case 'update_theorem':
+          state.proof.theorem = action.payload.item;
+          state.theoremCorrect = action.payload.correct;
+          break;
+        case 'set_proover':
+          state.prooveWith = action.payload;
+          dispatch(sheetActions.extendLogicContext({
+            cellLoc,
+            contextExtension: { theorems: [{ theorem: state.proof.theorem, prooved: false }] }
+          }));
+          break;
+        case 'update_proover_data':
+          state.getProoverData = action.payload;
+          break;
+        case 'update_verdict':
+          state.verdict = action.payload;
+          dispatch(sheetActions.extendLogicContext({
+            cellLoc,
+            contextExtension: { theorems: [{ theorem: state.proof.theorem, prooved: state.verdict }] }
+          }));
+          break;
+        case 'update_context':
+          const ctx = action.payload;
+          state.context = ctx;
+          state.proof.axioms = ctx.axioms;
+          state.proof.theorems = ctx.theorems; 
+          break;
+      }
+    })
     onDataChanged(() => ({
       ...newState,
       prooverData: newState.getProoverData === undefined ? null : newState.getProoverData(),
