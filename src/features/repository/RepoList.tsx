@@ -33,7 +33,7 @@ function RepoList(props: RepoListProps) {
 
   const renderListItem = (item: RepoInfo) => {
     return (
-      <Col key={item.id} md={6} className="p-2">
+      <Col key={item.id} md={6}>
         <RepoListItem placeholder={repos.isFetching} item={item} makeRepoLink={props.makeRepoLink} />
       </Col>
     )
@@ -51,7 +51,7 @@ function RepoList(props: RepoListProps) {
         </div>
       )
     } else {
-      return <Row>{data.map(item => renderListItem(item))}</Row>
+      return <Row className="g-3 mb-3">{data.map(item => renderListItem(item))}</Row>
     }
   }
   const renderPagination = (data: { link?: string }) => {
@@ -87,9 +87,9 @@ function RepoList(props: RepoListProps) {
   }
 
   return (
-    <Container>
+    <>
       {body}
-    </Container>
+    </>
   )
 }
 

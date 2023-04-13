@@ -22,33 +22,47 @@ export interface RepoListProps {
 function RepoListItem(props: RepoListProps) {
   const { item, placeholder } = props;
   return (
-    <Card className="h-100">
-      <Card.Body>
-        <Card.Title as="h2" className="h5">
+    <Card as="article" className="h-100">
+      <Card.Body className="vstack">
+        <Card.Title>
           {
             placeholder
-              ? <Placeholder xs={2} bg="primary" />
-              : <Link to={props.makeRepoLink('/', 'dir', item.owner.login, item.name)}>{item.name}</Link>
+              ? <Placeholder xs={3} bg="primary" />
+              : <>
+                <Link to={props.makeRepoLink('/', 'dir', item.owner.login, item.name)}>
+                  {item.owner.login}/{item.name}
+                </Link>
+                {"  "}
+                <span className="d-inline-block align-baseline fs-6 text-weight-normal">
+                  <Badge pill bg="light" text="secondary" className="border align-bottom">
+                    {item.private ? 'Private' : 'Public'}
+                  </Badge>
+                </span>
+              </>
           }
-          <span className="d-inline-block align-baseline fs-6 text-weight-normal ms-2">
-            {
-              placeholder
-              ? <Placeholder xs={1} bg="secondary" size="sm" />
-              : <Badge pill bg="light" text="secondary" className="border align-bottom">
-                  {item.private ? 'Private' : 'Public'}
-                </Badge>
-            }
-          </span>
         </Card.Title>
-        <Card.Text className="small">
+        <Card.Text className="mb-2 flex-fill">
           {
             placeholder ? 
             <Placeholder xs={4} bg="secondary" />
-            : item.description || <span className="text-muted">Bez popisu</span>
+            : item.description || <span className="text-muted">No description</span>
+          }
+        </Card.Text>
+        <Card.Text className="text-muted">
+          {
+            placeholder
+            ? <Placeholder xs={3} bg="secondary" size="sm" />
+            : (item.updated_at &&
+              <small className="text-muted">
+                {"Updated "}
+                <Moment locale='en' fromNow>
+                  {item.pushed_at || item.updated_at}
+                </Moment>
+              </small>)
           }
         </Card.Text>
       </Card.Body>
-      <Card.Footer className="d-flex flex-wrap justify-content-between align-items-baseline g-2">
+      {/* <Card.Footer className="d-flex flex-wrap justify-content-between align-items-baseline g-2">
         {
           placeholder
           ? <Placeholder xs={2} bg="secondary" size="sm" className="me-2"/>
@@ -56,18 +70,7 @@ function RepoListItem(props: RepoListProps) {
               {item.owner.login}
             </span>
         }
-        {
-          placeholder
-          ? <Placeholder xs={3} bg="secondary" size="sm" />
-          : (item.updated_at &&
-            <span className="text-muted small">
-              {"Updated "}
-              <Moment locale='en' fromNow>
-                {item.pushed_at || item.updated_at}
-              </Moment>
-            </span>)
-        }
-      </Card.Footer>
+      </Card.Footer> */}
     </Card>
   )
 }

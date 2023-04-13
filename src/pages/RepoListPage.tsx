@@ -34,41 +34,38 @@ function RepoListPage() {
 
   return (
     <Container>
-      <h1>Repositories</h1>
+      <h1 className="my-3">Repositories</h1>
 
-      <Container>
-        <Row>
-          <Col className="my-1" md xs={12}>
-            <FormControl type="text" placeholder="Search repositories" style={{ display: 'inline-block', width: '100%' }} onChange={e => {
-              console.log(e.target.value);
-              q.current = e.target.value;
-              if (time.current === false) {
-                time.current = true;
-                setTimeout(() => { setQuery(q.current === '' ? undefined : q.current); time.current = false }, 1000)
-              }
+      <Row className="gx-3 gy-2 mb-3">
+        <Col md xs={12}>
+          <FormControl type="text" placeholder="Search repositories" style={{ display: 'inline-block', width: '100%' }} onChange={e => {
+            console.log(e.target.value);
+            q.current = e.target.value;
+            if (time.current === false) {
+              time.current = true;
+              setTimeout(() => { setQuery(q.current === '' ? undefined : q.current); time.current = false }, 1000)
             }
-            } />
-          </Col>
-          <Col className="text-center my-1" md="auto" xs={6}>
-            <PopoverButton className="" title="Sort">
-              <OptionList selected={sortBy} onSelectedChange={selected => setSortBy(selected)}>
-                <OptionList.Item name="full_name">Name</OptionList.Item>
-                <OptionList.Item name="pushed">Last updated</OptionList.Item>
-              </OptionList>
-            </PopoverButton>
-          </Col>
-          <Col className="text-center my-1" md="auto" xs={6}>
-            <PopoverButton className="" title="Repositories">
-              <CheckList onCheckedChange={(arr) => { console.log(arr); setAffiliation(arr) }} checked={affiliation}>
-                <CheckList.Item name="owner">Yours</CheckList.Item>
-                <CheckList.Item name="organization_member">Organizational</CheckList.Item>
-              </CheckList>
-            </PopoverButton>
-          </Col>
-        </Row>
-        <hr className="my-1" />
-      </Container>
-
+          }
+          } />
+        </Col>
+        <Col className="text-center" md="auto" xs={6}>
+          <PopoverButton className="" title="Sort">
+            <OptionList selected={sortBy} onSelectedChange={selected => setSortBy(selected)}>
+              <OptionList.Item name="full_name">Name</OptionList.Item>
+              <OptionList.Item name="pushed">Last updated</OptionList.Item>
+            </OptionList>
+          </PopoverButton>
+        </Col>
+        <Col className="text-center" md="auto" xs={6}>
+          <PopoverButton className="" title="Repositories">
+            <CheckList onCheckedChange={(arr) => { console.log(arr); setAffiliation(arr) }} checked={affiliation}>
+              <CheckList.Item name="owner">Yours</CheckList.Item>
+              <CheckList.Item name="organization_member">Organizational</CheckList.Item>
+            </CheckList>
+          </PopoverButton>
+        </Col>
+      </Row>
+      {/* <hr className="mb-3 mt-0" /> */}
 
       <RepoList
         user={user!.login}
