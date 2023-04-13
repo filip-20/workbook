@@ -1,5 +1,5 @@
 import { Image, Nav, Navbar } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { authSelectors } from "../features/auth/authSlice";
 import { useAppSelector } from "../app/hooks";
 import { getLoginUrl } from "./LoginPage";
@@ -16,7 +16,7 @@ function Navigation() {
       <Navbar.Toggle aria-controls="responsive-navbar-nav" />
       <Navbar.Collapse>
         <Nav>
-          <Nav.Link as={Link} to="/repos">Zoznam repozitárov</Nav.Link>
+          <Nav.Link as={NavLink} to="/repos">Repositories</Nav.Link>
         </Nav>
       </Navbar.Collapse>
       <Nav className="me-3">

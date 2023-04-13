@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -36,7 +36,7 @@ function App() {
       <Navigation />
       <Routes>
         <Route path='*' element={<Err404Page />} />
-        <Route path="/" element={<RepoListPage />} />
+        <Route path="/" element={<Navigate to="/repos" />} />
         <Route path="/login/*" element={<LoginPage />} />
         <Route path="/repos" element={<RepoListPage />} />
         <Route path="/repos/:page" element={<RepoListPage />} />
