@@ -277,4 +277,29 @@ $task-list-check-label-disabled-opacity: $task-list-check-input-disabled-opacity
       }
     }
   }
+
+  :global(.columns) {
+    --#{$variable-prefix}column-gap: #{$grid-gutter-width};
+
+    column-gap: var(--#{$variable-prefix}column-gap);
+    margin-bottom: $spacer;
+  }
+
+  @each $breakpoint in map-keys($grid-breakpoints) {
+    @include media-breakpoint-up($breakpoint) {
+      $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+
+      @each $count in (1,2,3,4,5,6) {
+        :global(.columns#{$infix}-#{$count}) {
+          column-count: $count;
+        }
+      }
+
+      @each $key, $value in $gutters {
+        :global(.columns-gap#{$infix}-#{$key}) {
+          --#{$variable-prefix}column-gap: #{$value};
+        }
+      }
+    }
+  }
 }
