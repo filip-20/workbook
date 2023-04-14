@@ -26,8 +26,13 @@ export default function FormattedTextRenderer(props: FormattedTextRendererProps)
     ...defaultSchema,
     tagNames: [
       ...(defaultSchema.tagNames ?? []),
+      'article',
       'aside',
+      'nav',
       'section',
+      'hgroup',
+      'header',
+      'footer',
       ...(Object.getOwnPropertyNames(mdDirectives))
     ],
     attributes: {
