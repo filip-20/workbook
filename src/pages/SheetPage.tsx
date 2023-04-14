@@ -85,9 +85,7 @@ function SheetPage() {
               </ButtonGroup>
             </ButtonToolbar>
           </div>
-          <div className="m-3 h-100">
-            <Sheet />
-          </div>
+          <Sheet />
         </Container>
       )
     }

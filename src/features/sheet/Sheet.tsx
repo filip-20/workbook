@@ -37,12 +37,12 @@ export default function Sheet(props: SheetProps) {
   }, [settings.katexMacros]);
 
   if (loadState === "not_loaded" || loadState === "loading") {
-    return (<Container><div style={{ width: '100%', textAlign: 'center' }}><Spinner animation="grow" role="status" /></div></Container>)
+    return (<Container className="p-3"><div style={{ width: '100%', textAlign: 'center' }}><Spinner animation="grow" role="status" /></div></Container>)
   } else if (loadState === 'load_error') {
-    return (<Container><Alert variant="danger">Načítanie hárku zlyhalo.{sheetError && <> ({sheetError})</>}</Alert></Container>)
+    return (<Container className="p-3"><Alert variant="danger">Načítanie hárku zlyhalo.{sheetError && <> ({sheetError})</>}</Alert></Container>)
   } else {
     return (
-      <>
+      <article className="m-3 h-100">
         {
           cellsOrder.map((cellId, index) => (
             <CellContainer key={cellId} cellId={cellId} cellIndex={index}
@@ -53,7 +53,7 @@ export default function Sheet(props: SheetProps) {
           ))
         }
         {cellsOrder.length === 0 && <AddToolbar className="justify-content-center" cellIndex={-1} />}
-      </>
+      </article>
     )
   }
 }
