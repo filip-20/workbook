@@ -13,8 +13,10 @@ $table-striped-columns-order: even;
     margin-bottom: map.get($spacers, 3);
 
     > *:last-child,
-    > :global(.table):last-child > table:last-child,
-    > :global(.math-display):last-child > :global(.katex-display) {
+    > *:last-child > *:last-child,
+    > *:last-child > *:last-child > *:last-child,
+    > *:last-child > *:last-child > *:last-child > *:last-child,
+    > *:last-child > *:last-child > *:last-child > *:last-child > *:last-child {
       margin-bottom: 0 !important;
     }
     // Possibly replace with:
@@ -28,8 +30,11 @@ $table-striped-columns-order: even;
   }
 
   > *:last-child,
-  > :global(.table):last-child > table:last-child,
-  > :global(.math-display):last-child > :global(.katex-display) {
+  > *:last-child > *:last-child,
+  > *:last-child > *:last-child > *:last-child,
+  > *:last-child > *:last-child > *:last-child > *:last-child,
+  > *:last-child > *:last-child > *:last-child > *:last-child > *:last-child
+  {
     margin-bottom: 0 !important;
   }
   // Possibly replace with:
