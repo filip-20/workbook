@@ -172,4 +172,36 @@ $table-striped-columns-order: even;
     }
   }
 
+  dt {
+    break-after: avoid;
+  }
+
+  dd {
+    break-before: avoid;
+  }
+
+  :global(.dl-inset) > dl,
+  dl:global(.dl-inset) {
+    > dt:has(+ dd),
+    > div > dt:has(+ dd) {
+      float: left;
+      margin-right: 1rem;
+    }
+
+    > dd::after,
+    > div > dd::after {
+      content: " ";
+      display: block;
+      height: 0;
+      clear: left;
+    }
+  }
+
+  :global(.dl-indented) > dl,
+  dl:global(.dl-indented) {
+    > dd,
+    > div > dd {
+      margin-left: 2rem;
+    }
+  }
 }
