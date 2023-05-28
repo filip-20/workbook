@@ -14,24 +14,33 @@ export interface AddToolbarProps {
   onDropdownToggled?: (isOpen: boolean) => void,
 }
 
-export default function AddToolbar(props: AddToolbarProps) {
-  const { cellLoc } = props;
+export default function AddToolbar({ cellLoc, className, style, onDropdownToggled }: AddToolbarProps) {
   const dispatch = useAppDispatch();
 
   const addCellHandler = (typeName: string) => {
-    addCell({dispatch, typeName, afterCell: cellLoc})
+    addCell({ dispatch, typeName, after: cellLoc })
+  }
+
+  const onMenuToggled = (isOpen: boolean) => {
+    onDropdownToggled?.call(null, isOpen)
   }
 
   return (
-    <ButtonToolbar className={props.className} style={props.style}>
+    <ButtonToolbar className={className} style={style}>
       <ButtonGroup className="me-2" size="sm">
         <Button variant="success" onClick={() => addCellHandler('text')}><Plus /> Text</Button>
-        <DropdownButton onToggle={(isOpen, evt) => props.onDropdownToggled?.call(null, isOpen)} size="sm" variant="success" as={ButtonGroup} title={<><Plus /> App</>}>
+        <DropdownButton onToggle={onMenuToggled} size="sm" variant="success" as={ButtonGroup} title={<><Plus /> App</>}>
           {embeddedApps.map(app => <Dropdown.Item key={app.typeName} onClick={() => addCellHandler(`app/${app.typeName}`)} size="sm">{app.name}</Dropdown.Item>)}
         </DropdownButton>
-        <DropdownButton onToggle={(isOpen, evt) => props.onDropdownToggled?.call(null, isOpen)} size="sm" variant="success" as={ButtonGroup} title={<><Plus /> Context</>}>
-          {contextCells.map(({name, typeName}) => <Dropdown.Item onClick={() => addCellHandler(typeName)} size="sm">{name}</Dropdown.Item>)}
-        </DropdownButton>
+        {
+          cellLoc.contextId === -1 ?
+            <Button variant="success" onClick={() => addCellHandler('context')}><Plus /> Context</Button>
+            : (
+              <DropdownButton onToggle={onMenuToggled} size="sm" variant="success" as={ButtonGroup} title={<><Plus /> Context</>}>
+                {contextCells.map(({ name, typeName }) => <Dropdown.Item key={typeName} onClick={() => addCellHandler(typeName)} size="sm">{name}</Dropdown.Item>)}
+              </DropdownButton>
+            )
+        }
       </ButtonGroup>
     </ButtonToolbar>
   )

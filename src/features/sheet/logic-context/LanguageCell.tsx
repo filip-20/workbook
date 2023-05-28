@@ -1,5 +1,5 @@
 import { parseConstants, parseFunctions, parsePredicates, SyntaxError } from "@fmfi-uk-1-ain-412/js-fol-parser";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, Form, FormControl, InputGroup } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { useAppSelector } from "../../../app/hooks";
@@ -33,19 +33,21 @@ function parseOrEmpty<T>(value: string, parseFunction: (value: string) => Array<
 }
 
 export default function LanguageCell({ cellLoc, isEdited, onDataChanged }: LanguageCellProps) {
-  const cell = useAppSelector(sheetSelectors.cell(cellLoc.id));
+  const context = useAppSelector(sheetSelectors.logicContext(cellLoc))
+  const cell = useAppSelector(sheetSelectors.cell(cellLoc));
   const data = { ...(cell.data as LanguageCellData) };
 
   const [constants, setConstants] = useState(data.constants)
   const [functions, setFunctions] = useState(data.functions)
   const [predicates, setPredicates] = useState(data.predicates)
 
-  const syncedState = useRef({constants, predicates, functions})
-  syncedState.current = {constants, predicates, functions}
+  const syncedState = useRef({ constants, predicates, functions })
+  syncedState.current = { constants, predicates, functions }
   const getData = () => syncedState.current
 
   const dispatch = useDispatch();
 
+  // extend logic context after exit from edit mode
   useEffect(() => {
     if (!isEdited) {
       dispatch(sheetActions.extendLogicContext({
@@ -63,33 +65,38 @@ export default function LanguageCell({ cellLoc, isEdited, onDataChanged }: Langu
     onDataChanged(getData);
   }
 
-  const symStr = (syms: string) => syms.split(',').map(s => `\\text{\\textsf{${s.trim()}}}`)
+  const title = useMemo(() => {
+    if (context.constants.length === 0 && context.functions.length === 0 && context.predicates.length === 0) {
+      return 'Lets define language 𝓛:'
+    } else {
+      return 'Lets extend language 𝓛:'
+    }
+  }, [context.constants, context.predicates, context.functions])
+
+  const symStr = (syms: string) => syms.split(',').map(s => `\\text{\\textsf{${s.replaceAll('_', '\\_').trim()}}}`)
   if (isEdited) {
     return (
-      <Card>
-        <Card.Header>Language</Card.Header>
-        <Card.Body>
-
-          <LanguageInput
-            label="Individual constant"
-            value={constants}
-            updateFunction={v => updateData(v, setConstants)}
-            parseFunction={parseConstants}
-          />
-          <LanguageInput
-            label="Functions"
-            value={functions}
-            updateFunction={v => updateData(v, setFunctions)}
-            parseFunction={parseFunctions}
-          />
-          <LanguageInput
-            label="Predicates"
-            value={predicates}
-            updateFunction={v => updateData(v, setPredicates)}
-            parseFunction={parsePredicates}
-          />
-        </Card.Body>
-      </Card>
+      <div style={{ padding: '1rem' }}>
+        <p>{title}</p>
+        <LanguageInput
+          label="Individual constant"
+          value={constants}
+          updateFunction={v => updateData(v, setConstants)}
+          parseFunction={parseConstants}
+        />
+        <LanguageInput
+          label="Functions"
+          value={functions}
+          updateFunction={v => updateData(v, setFunctions)}
+          parseFunction={parseFunctions}
+        />
+        <LanguageInput
+          label="Predicates"
+          value={predicates}
+          updateFunction={v => updateData(v, setPredicates)}
+          parseFunction={parsePredicates}
+        />
+      </div>
     )
   } else {
     const text = `
@@ -101,9 +108,12 @@ $$ \\mathcal{P}_{\\mathcal{L}} = \\{${symStr(predicates)}\\} $$
     `;
     return (
       <div style={{ padding: '1rem' }}>
-        <FormattedTextRenderer
-          text={text}
-        />
+        <p>{title}</p>
+        <div style={{paddingLeft: '1rem'}}>
+          <FormattedTextRenderer
+            text={text}
+          />
+        </div>
       </div>
     )
   }
@@ -129,12 +139,12 @@ function LanguageInput({ label, value, updateFunction, parseFunction }: Language
   }
 
   return (
-      <InputGroup className="mb-2">
-        <InputGroup.Text>
-          {label}:
-        </InputGroup.Text>
-        <Form.Control isInvalid={parseError !== undefined} value={value} onChange={e => changeHandler(e.target.value)} />
-        <FormControl.Feedback type="invalid">{parseError && parseError}</FormControl.Feedback>
-      </InputGroup>
+    <InputGroup className="mb-2">
+      <InputGroup.Text>
+        {label}:
+      </InputGroup.Text>
+      <Form.Control isInvalid={parseError !== undefined} value={value} onChange={e => changeHandler(e.target.value)} />
+      <FormControl.Feedback type="invalid">{parseError && parseError}</FormControl.Feedback>
+    </InputGroup>
   )
 }

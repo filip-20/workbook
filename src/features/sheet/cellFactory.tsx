@@ -9,6 +9,7 @@ import ProoveTheoremCell, { initialProoveTheoremCellState } from "./logic-contex
 import { emptyContext } from "./slice/logicContext";
 import { CellLocator, sheetActions } from "./slice/sheetSlice";
 import TextCell from "./TextCell";
+import ContextCell from "./ContextContainer";
 
 
 interface RenderPayload {
@@ -16,14 +17,17 @@ interface RenderPayload {
   typeName: string,
   data: any,
   key: React.Key,
-  onDataChanged: (data: any) => void,
   isEdited: boolean,
-  katexMacros: object
+  katexMacros: object,
+  fullscreenCell: CellLocator | undefined,
+  requestEditMode: (isEdited: boolean) => void,
+  onDataChanged: (data: any) => void,
+  onFullscreenToggleClick: (isFullscreen: boolean, cellLoc: CellLocator) => void,
 }
 
 interface AddPayload {
   dispatch: ReturnType<typeof useAppDispatch>,
-  afterCell: CellLocator,
+  after: CellLocator,
   typeName: string
 }
 
@@ -38,10 +42,10 @@ const cells: Array<CellFactory> = [
   {
     name: 'Text',
     typeName: 'text',
-    renderComponent: ({ cellLoc, key, onDataChanged, isEdited, katexMacros }) => (
-      <TextCell cellId={cellLoc.id} key={key} katexMacros={katexMacros} isEdited={isEdited} onDataChanged={onDataChanged} />
+    renderComponent: (props) => (
+      <TextCell {...props} />
     ),
-    addCell: ({ dispatch, afterCell }) => dispatch(sheetActions.insertTextCell('', afterCell.index)),
+    addCell: ({ dispatch, after }) => dispatch(sheetActions.insertTextCell('', after)),
   },
   {
     name: 'App',
@@ -49,7 +53,15 @@ const cells: Array<CellFactory> = [
     renderComponent: (props) => (
       <AppCell {...props} />
     ),
-    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertAppCell(typeName.slice(4) /* ??? */, null, afterCell.index)),
+    addCell: ({ dispatch, after, typeName }) => dispatch(sheetActions.insertAppCell(typeName.slice(4) /* ??? */, null, after)),
+  },
+  {
+    name: 'Logic context',
+    typeName: 'context',
+    renderComponent: (props) => (
+      <ContextCell {...{ ...props, cellLoc: { ...props.cellLoc, contextId: props.cellLoc.id } }} />
+    ),
+    addCell: ({ dispatch, after, typeName }) => dispatch(sheetActions.insertCell({ after, type: typeName, data: [] })),
   },
   {
     name: 'Language',
@@ -57,7 +69,7 @@ const cells: Array<CellFactory> = [
     renderComponent: (payload) => (
       <LanguageCell {...payload} />
     ),
-    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialLanguageCellData }))
+    addCell: ({ dispatch, after, typeName }) => dispatch(sheetActions.insertCell({ after, type: typeName, data: initialLanguageCellData }))
   },
   {
     name: 'Display context',
@@ -65,29 +77,31 @@ const cells: Array<CellFactory> = [
     renderComponent: (payload) => (
       <DisplayContextCell {...payload} />
     ),
-    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialLanguageCellData }))
+    addCell: ({ dispatch, after, typeName }) => dispatch(sheetActions.insertCell({ after, type: typeName, data: initialLanguageCellData }))
   },
   {
     name: 'Add axioms',
     typeName: 'context/addAxioms',
     renderComponent: (payload) => (
       <AddFormulasCell
-        makeContextExtension={formulas => ({...emptyContext, axioms: formulas})}
+        title="Lets add axiom/s: "
+        makeContextExtension={formulas => ({ ...emptyContext, axioms: formulas })}
         {...payload}
       />
     ),
-    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialAddFormulasCellData }))
+    addCell: ({ dispatch, after, typeName }) => dispatch(sheetActions.insertCell({ after, type: typeName, data: initialAddFormulasCellData }))
   },
   {
     name: 'Add formulas',
     typeName: 'context/addFormulas',
     renderComponent: (payload) => (
       <AddFormulasCell
-        makeContextExtension={formulas => ({...emptyContext, formulas: formulas})}
+        title="Let"
+        makeContextExtension={formulas => ({ ...emptyContext, formulas: formulas })}
         {...payload}
       />
     ),
-    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialAddFormulasCellData }))
+    addCell: ({ dispatch, after, typeName }) => dispatch(sheetActions.insertCell({ after, type: typeName, data: initialAddFormulasCellData }))
   },
   {
     name: 'Proove theorem',
@@ -95,7 +109,7 @@ const cells: Array<CellFactory> = [
     renderComponent: (payload) => (
       <ProoveTheoremCell {...payload} />
     ),
-    addCell: ({ dispatch, afterCell, typeName }) => dispatch(sheetActions.insertCell({ afterIndex: afterCell.index, type: typeName, data: initialProoveTheoremCellState }))
+    addCell: ({ dispatch, after, typeName }) => dispatch(sheetActions.insertCell({ after, type: typeName, data: initialProoveTheoremCellState }))
   },
 ]
 

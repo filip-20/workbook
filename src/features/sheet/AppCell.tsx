@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { CellLocator, sheetActions, sheetSelectors } from "./slice/sheetSlice";
+import { useAppSelector } from '../../app/hooks';
+import { CellLocator, sheetSelectors } from "./slice/sheetSlice";
 import { BsExclamationTriangleFill } from 'react-icons/bs';
 import styles from './CellContainer.module.scss';
 import { PrepareResult } from '../../embeddedApps';
@@ -29,12 +29,11 @@ const unsupportedApp = (type: string) => {
 }
 
 function AppCell({ cellLoc, isEdited, typeName, data, proof, onDataChanged, updateProofVerdict }: AppCellProps) {
-  const cell = useAppSelector(sheetSelectors.cell(cellLoc.id));
-  const context = useAppSelector(sheetSelectors.logicContext(cellLoc))
+  const context = useAppSelector(sheetSelectors.logicContext(cellLoc));
   const { prepare, AppComponent } = getAppInfo(typeName) || unsupportedApp(typeName);
   const prepareResult = useRef<PrepareResult | null>(null);
 
-  useMemo(() => console.debug('App cell context changed', context), [context]);
+  //useMemo(() => console.debug('App cell context changed', context), [context]);
 
   if (prepareResult.current === null) {
     prepareResult.current = prepare(data)
@@ -56,7 +55,7 @@ function AppCell({ cellLoc, isEdited, typeName, data, proof, onDataChanged, upda
       <div className={styles.appContainer}>
         <AppComponent
           isEdited={isEdited}
-          context={context}
+          context={cellLoc.contextId === -1 ? undefined : context}
           proof={proof}
           updateProofVerdict={updateProofVerdict}
           instance={instance}

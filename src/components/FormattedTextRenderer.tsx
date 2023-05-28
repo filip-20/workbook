@@ -12,6 +12,7 @@ import classNames from 'classnames/dedupe';
 import 'katex/dist/katex.min.css';
 import styles from './FormattedTextRenderer.module.scss'
 import mdDirectives from './md-directives';
+import { memo } from "react";
 
 export interface FormattedTextRendererProps {
   className?: string,
@@ -19,7 +20,7 @@ export interface FormattedTextRendererProps {
   katexMacros?: object,
 }
 
-export default function FormattedTextRenderer(props: FormattedTextRendererProps) {
+function FormattedTextRenderer(props: FormattedTextRendererProps) {
   const { className, text, katexMacros } = props;
   
   const rehypeSanitizeOptions = {
@@ -68,3 +69,5 @@ export default function FormattedTextRenderer(props: FormattedTextRendererProps)
     />
   )
 }
+
+export default memo(FormattedTextRenderer);

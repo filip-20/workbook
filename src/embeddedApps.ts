@@ -1,6 +1,7 @@
 import ResolutionEditor from 'resolution-editor'
-import StructureExplorer from '@fmfi-uk-1-ain-412/fol-graphexplorer'
+import StructureExplorer from 'structure-explorer'
 import TableauEditor from 'tableauEditor'
+import { CellContext } from './features/sheet/slice/logicContext'
 
 export interface PrepareResult {
   instance: any,
@@ -10,12 +11,21 @@ type PrepareFunction = (
   initialState: any
 ) => PrepareResult
 
+interface AppComponentProps {
+  instance: any,
+  onStateChange: () => void,
+  isEdited: boolean,
+  context?: CellContext,
+  proof?: any,
+  updateProofVerdict?: (verdict: boolean) => void,
+} 
+
 interface EmeddedApp {
   name: string,
   typeName: string,
   supportsProofs: boolean,
   prepare: PrepareFunction,
-  AppComponent: (props: any) => JSX.Element,
+  AppComponent: (props: AppComponentProps) => JSX.Element,
 }
 
 export const embeddedApps: EmeddedApp[] = 

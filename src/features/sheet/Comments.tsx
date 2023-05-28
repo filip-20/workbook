@@ -1,6 +1,6 @@
 import { Row, Col, Dropdown } from "react-bootstrap";
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
-import { CellComment, sheetActions, sheetSelectors } from "./slice/sheetSlice";
+import { CellComment, CellLocator, sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import Moment from "react-moment";
 import 'moment/locale/sk';
 import { authSelectors } from "../auth/authSlice";
@@ -23,24 +23,22 @@ const EditCommentMenu = (props: { onDelete: () => void, onEdit: () => void }) =>
   </Dropdown>
 
 interface CommentProps {
-  cellId: number,
+  cellLoc: CellLocator,
   comment: CellComment,
   katexMacros?: object,
 }
 
-function Comment(props: CommentProps) {
-  const { cellId, comment, katexMacros } = props;
-
+function Comment({ cellLoc, comment, katexMacros }: CommentProps) {
+  const { id: cellId } = cellLoc;
   const [isEdited, setIsEdited] = useState(false);
-
   const user = useAppSelector(authSelectors.user);
 
   const dispatch = useAppDispatch();
   const canEdit = user ? user.login === comment.author : false;
-  const handleDelete = () => dispatch(sheetActions.remmoveCellComment({ cellId, commentId: comment.id }));
+  const handleDelete = () => dispatch(sheetActions.remmoveCellComment({ cellLoc, commentId: comment.id }));
   const handleCommentUpdate = (text:string) => {
     if (JSON.stringify(text) !== JSON.stringify(comment.text)) {
-      dispatch(sheetActions.updateCellComment({ cellId, commentId: comment.id, text }));  
+      dispatch(sheetActions.updateCellComment({ cellLoc, commentId: comment.id, text }));  
     }
     setIsEdited(false);
   }
@@ -101,19 +99,16 @@ function Comment(props: CommentProps) {
 export interface CommentsProps {
   className?: string,
   style?: React.CSSProperties,
-  cellId: number,
+  cellLoc: CellLocator,
   katexMacros?: object,
 }
 
-export default function Comments(props: CommentsProps) {
-  const { className, style, cellId, katexMacros } = props;
-  const comments = useAppSelector(sheetSelectors.cellComments(cellId));
-  const commonCommentProps = { cellId, katexMacros };
-
+export default function Comments({ className, style, cellLoc, katexMacros }: CommentsProps) {
+  const comments = useAppSelector(sheetSelectors.cellComments(cellLoc));
+  const commonCommentProps = { cellLoc, katexMacros };
   if (comments.length === 0) {
     return (<></>)
   }
-
   return (
     <div className={className} style={style}>
       {comments.map(c => <Comment comment={c} {...commonCommentProps} />)}

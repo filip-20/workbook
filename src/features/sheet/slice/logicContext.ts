@@ -1,15 +1,14 @@
-import { SymbolWithArity } from "@fmfi-uk-1-ain-412/js-fol-parser";
+import { Language, SymbolWithArity } from "@fmfi-uk-1-ain-412/js-fol-parser";
 import { createSelector } from "@reduxjs/toolkit";
 import { RootState } from "../../../app/store";
-import { CellLocator } from "./sheetSlice";
+import { CellLocator, sheetSelectors } from "./sheetSlice";
 
 export interface NamedFormula {
   name: string,
   formula: string,
 }
 
-export interface Theorem {
-  theorem: NamedFormula,
+export interface Theorem extends NamedFormula {
   prooved: boolean,
 }
 
@@ -28,6 +27,10 @@ export const emptyContext: LogicContext = {
   constants: [], predicates: [], functions: [], formulas: [], axioms: [], theorems: []
 }
 
+export function isEmptyFormula(f: NamedFormula) {
+  return f.name.trim() === '' && f.formula.trim() === '';
+}
+
 function mergeContexts(l1: ContextExtension, l2: ContextExtension): LogicContext {
   return {
     constants: (l1.constants || []).concat(l2.constants || []),
@@ -38,19 +41,38 @@ function mergeContexts(l1: ContextExtension, l2: ContextExtension): LogicContext
     theorems: (l1.theorems || []).concat(l2.theorems || []),
   }
 }
-function prevCell(cell: CellLocator | undefined) {
+
+function prevCell(cell: CellLocator | undefined): (state: RootState) => CellLocator | undefined {
   return (state: RootState) => {
     if (cell) {
-      return cell.index - 1 < 0 ? undefined : { index: cell.index - 1, id: state.sheet.present.sheetFile.cellsOrder[cell.index - 1] }
+      const cellsOrder = sheetSelectors.contextCellsList(cell)(state)
+      return cell.index - 1 < 0 ? undefined : { index: cell.index - 1, id: cellsOrder[cell.index - 1], contextId: cell.contextId }
     } else {
       return undefined;
     }
   }
 }
 
-const cellContextExtension = (cell: CellLocator) => (state: RootState) => state.sheet.present.sheetFile.cells[cell.id].contextExtension;
+const cellContextExtension = (cellLoc: CellLocator) => (state: RootState) => state.sheet.present.sheetFile.cells[cellLoc.id].contextExtension;
 
-export class CellContext implements LogicContext {
+const contextSelectorMemo: { [key: string]: (state: RootState) => CellContext } = {}
+export function cellContext(cell: CellLocator): (state: RootState) => CellContext {
+  const key = JSON.stringify({id: cell.id, index: cell.index});
+  if (contextSelectorMemo[key] === undefined) {
+    contextSelectorMemo[key] = createSelector(
+      [
+        (state: RootState) => { const prev = prevCell(cell)(state); return prev === undefined ? undefined : cellContext(prev)(state) },
+        (state: RootState) => { const prev = prevCell(cell)(state); return prev === undefined ? undefined : cellContextExtension(prev)(state) },
+      ], (prevContext, prevExtension) => {
+        console.log('Computing cell context of ', cell);
+        return new CellContext(mergeContexts(prevContext || emptyContext, prevExtension || emptyContext))
+      }
+    )
+  }
+  return contextSelectorMemo[key];
+}
+
+export class CellContext implements LogicContext, Language {
   private context: LogicContext
   private symbolsLUT: Map<string, { arity: number, index: number, type: 'constant' | 'function' | 'predicate' | 'axiom' | 'formula' | 'theorem' }>
 
@@ -73,8 +95,11 @@ export class CellContext implements LogicContext {
     context.functions.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: s.arity, type: 'function', index }))
     context.axioms.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: 0, type: 'axiom', index }))
     context.formulas.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: 0, type: 'formula', index }))
-    context.theorems.forEach((s, index) => this.symbolsLUT.set(s.theorem.name, { arity: 0, type: 'theorem', index }))
+    context.theorems.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: 0, type: 'theorem', index }))
     console.log('SymbolsLut', this.symbolsLUT)
+  }
+  logicContext() {
+    return this.context;
   }
   isConstant(symbol: string) {
     return this.symbolsLUT.get(symbol)?.type === 'constant'
@@ -108,7 +133,7 @@ export class CellContext implements LogicContext {
         return {
           type: 'theorem',
           name,
-          formula: this.theorems[s.index].theorem.formula
+          formula: this.theorems[s.index].formula
         }
       case 'formula':
         return {
@@ -120,29 +145,4 @@ export class CellContext implements LogicContext {
         return undefined;
     }
   }
-}
-
-const contextSelectorMemo: { [key: string]: (state: RootState) => CellContext } = {}
-export function cellContext(cell: CellLocator): (state: RootState) => CellContext {
-  const key = JSON.stringify({id: cell.id, index: cell.index});
-  if (contextSelectorMemo[key] === undefined) {
-    contextSelectorMemo[key] = createSelector(
-      [
-        (state: RootState) => { const prev = prevCell(cell)(state); return prev === undefined ? undefined : cellContext(prev)(state) },
-        (state: RootState) => { const prev = prevCell(cell)(state); return prev === undefined ? undefined : cellContextExtension(prev)(state) },
-      ], (prevContext, prevExtension) => {
-        console.log('Computing cell context of ', cell);
-        /*
-        if (prevContext === undefined && prevExtension === undefined) {
-          return emptyContext;
-        } else if (prevExtension === undefined) {
-          return prevContext || emptyContext;
-        } else if (prevContext === undefined) {
-          return prevExtension;
-        }*/
-        return new CellContext(mergeContexts(prevContext || emptyContext, prevExtension || emptyContext))
-      }
-    )
-  }
-  return contextSelectorMemo[key];
 }
