@@ -1,53 +1,51 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Row, Col } from 'react-bootstrap';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
+import { CellLocator, sheetActions, sheetSelectors } from "./slice/sheetSlice";
 import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
-import AppCell from './AppCell';
-import TextCell from './TextCell';
 import AddComment from './AddComment';
 import Comments from './Comments';
 import { storageActions } from '../sheetStorage/sheetStorage';
 import styles from './CellContainer.module.scss';
 import classNames from 'classnames/dedupe';
+import { renderCellComponent } from './cellFactory';
 
 import config from '../../config.json';
 
 export type CellContainerProps = {
   className?: string,
-  cellId: number,
-  cellIndex: number,
+  cellLoc: CellLocator,
   katexMacros: object,
-  onFullscreenToggleClick: (isFullscreen: boolean) => void,
+  fullscreenCell: CellLocator | undefined,
+  onFullscreenToggleClick: (isFullscreen: boolean, cellLoc: CellLocator) => void,
 };
 
-export default function CellContainer(props: CellContainerProps) {
-  const { className, cellId, cellIndex, katexMacros } = props;
-  const { onFullscreenToggleClick } = props;
-
+export default function CellContainer({ className, cellLoc, katexMacros, fullscreenCell, onFullscreenToggleClick }: CellContainerProps) {
   const dispatch = useAppDispatch();
-  const cell = useAppSelector(sheetSelectors.cell(cellId));
+  const { id: cellId } = cellLoc;
+  const cell = useAppSelector(sheetSelectors.cell(cellLoc));
   const { type, data } = cell;
   const unsyncedDataKey = `cellData_${cellId}`;
 
   const lastCreatedCellId = useAppSelector(sheetSelectors.lastCreatedCellId);
   const undoRedoCounter = useAppSelector(sheetSelectors.undoRedoCounter);
   const lastUndoRedoCounter = useRef(undoRedoCounter);
-  const [isEdited, setIsEdited] = useState(lastCreatedCellId === cellId);
+  const [isEdited, setIsEdited] = useState(lastCreatedCellId === cellId && type !== 'context');
   const [addComment, setAddComment] = useState(false);
   const [addToolbarVisible, setAddToolbarVisible] = useState(false);
   const [cellHovered, setCellHovered] = useState(false);
   const addToolbarHovered = useRef(false);
-  const dropdownOpened = useRef(false);
-  const hasComments = useAppSelector(sheetSelectors.cellComments(cellId)).length > 0;
+  const [dropdownOpened, setDropdownOpened] = useState(false);
+  const hasComments = useAppSelector(sheetSelectors.cellComments(cellLoc)).length > 0;
 
   const lastData = useRef<any>(data);
-  const finishUpdate = useRef<{timeout: ReturnType<typeof setTimeout>, getData: () => any} | undefined>(undefined);
+  const finishUpdate = useRef<{ timeout: ReturnType<typeof setTimeout>, getData: () => any } | undefined>(undefined);
 
   const toggleVisibility = (toolbarHovered: boolean, dropdownOpened_: boolean) => {
     addToolbarHovered.current = toolbarHovered
-    dropdownOpened.current = dropdownOpened_
+    //dropdownOpened.current = dropdownOpened_
+    setDropdownOpened(dropdownOpened_)
 
     if (dropdownOpened_ || toolbarHovered) {
       setAddToolbarVisible(true);
@@ -60,7 +58,9 @@ export default function CellContainer(props: CellContainerProps) {
     console.log('unmounting cell ', cellId);
     const timeout = finishUpdate.current?.timeout;
     if (timeout) {
-      dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: false}))
+      let t = performance.now()
+      dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: false }))
+      console.log('dispatch of unsyncedChange took ', performance.now()-t);
       //dispatch(storageActions.subUnsyncedChange())
       clearTimeout(timeout);
       finishUpdate.current = undefined;
@@ -71,7 +71,7 @@ export default function CellContainer(props: CellContainerProps) {
     // data was changed in redux, delayed update must be canceled
     const timeout = finishUpdate.current?.timeout;
     if (timeout) {
-      dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: false}))
+      dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: false }))
       //dispatch(storageActions.subUnsyncedChange())
       clearTimeout(timeout);
       finishUpdate.current = undefined;
@@ -80,14 +80,14 @@ export default function CellContainer(props: CellContainerProps) {
   }
 
   const updateData = () => {
-    const {timeout, getData} = finishUpdate.current!; 
+    const { timeout, getData } = finishUpdate.current!;
     const data = getData();
     clearTimeout(timeout);
     //dispatch(storageActions.subUnsyncedChange())
-    dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: false}))
+    dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: false }))
     finishUpdate.current = undefined;
     if (JSON.stringify(lastData.current) !== JSON.stringify(data)) {
-      dispatch(sheetActions.updateCellData({cellId, data}));
+      dispatch(sheetActions.updateCellData({ cellLoc, data }));
       lastData.current = data;
     }
   }
@@ -102,34 +102,45 @@ export default function CellContainer(props: CellContainerProps) {
     });
   }
 
+  const requestEditMode = (isEdited1: boolean) => {
+    if (isEdited1 && !isEdited) {
+      toggleEditHandler();
+    } else if (!isEdited1 && isEdited) {
+      toggleEditHandler();
+    }
+  }
+
   const onDataChangedHandler = (getData: () => any) => {
-    console.log('onupdatehandler ', cellId)
+    //console.log('onupdatehandler ', cellId)
     if (finishUpdate.current === undefined) {
-      console.log('onupdatehandler ', cellId, ': creating timeout')
+      //console.log('onupdatehandler ', cellId, ': creating timeout')
       //dispatch(storageActions.addUnsyncedChange())
-      dispatch(storageActions.unsyncedChange({key: unsyncedDataKey, unsynced: updateData}))
+      let t = performance.now()
+      dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: updateData }))
+      console.log('dispatch of unsyncedChange took ', performance.now()-t);
       finishUpdate.current = {
         timeout: setTimeout(updateData,
-                  config.frontend.cellUpdateIntervalSec * 1000), 
+          config.frontend.cellUpdateIntervalSec * 1000),
         getData
       }
     } else {
-      console.log('onupdatehandler', cellId,': timeout exists')
       finishUpdate.current.getData = getData;
     }
   }
 
-  const createCell = (id: number, type: string, onDataChanged: (data: any) => void) => {
-    // When undoRedoCounter changes, cells are recreated so they are synced with changed sheet state in redux
-    if (type === 'text') {
-      return (<TextCell key={undoRedoCounter} katexMacros={katexMacros} isEdited={isEdited} data={cell.data} onDataChanged={onDataChanged} />)
-    } else {
-      return (<AppCell key={undoRedoCounter} cellId={id} isEdited={isEdited} onDataChanged={onDataChangedHandler} />)
-    }
+  const addToolbarStyle = () => {
+    let style: React.CSSProperties = {};
+    style.display = cellHovered || addToolbarVisible ? 'initial' : 'none';
+    style.zIndex = dropdownOpened ? 1050 : undefined;
+    return style;
   }
 
   return (
-    <div className={className}>
+    <div
+      className={
+        classNames(className)
+      }
+    >
       <Row
         className='g-2'
         onMouseEnter={() => setCellHovered(true)}
@@ -137,33 +148,49 @@ export default function CellContainer(props: CellContainerProps) {
       >
         <Col xs={!(hasComments || addComment) || 8} xl={!(hasComments || addComment) || 9}>
           <div
-            onDoubleClick={toggleEditHandler}
-            className={classNames(styles.cellWrapper,
-              'border w-100 position-relative',
-              {[styles.isEdited]: isEdited})}
+            // unlock with double click
+            onDoubleClick={() => requestEditMode(true)}
+            className={classNames(styles.cellContainer,
+              'w-100 position-relative',
+              {
+                [styles.isEdited]: isEdited,
+                [styles.notContextContainer]: type !== 'context',
+              })}
             tabIndex={0}
           >
             <EditToolbar
-              className={styles.editToolbar}
+              className={type === 'context' ? styles.editToolbarCtx : styles.editToolbar}
               style={cellHovered ? { display: 'initial' } : { display: 'none' }}
-              cellId={cellId} cellIndex={cellIndex}
+              cellLoc={cellLoc}
               isEdited={isEdited}
               onAddComment={() => setAddComment(prev => !prev)}
-              onToggleFullscreen={(isFullscreen) => onFullscreenToggleClick(isFullscreen)}
+              onToggleFullscreen={(isFullscreen) => onFullscreenToggleClick(isFullscreen, cellLoc)}
               onToggleEdit={toggleEditHandler}
             />
             <div className={styles.cellContent}>
-              {createCell(cellId, type, onDataChangedHandler)}
+              {renderCellComponent({
+                cellLoc,
+                /* When undoRedoCounter changes, cells are recreated so they are synced with changed sheet state in redux */
+                key: undoRedoCounter,
+                katexMacros,
+                isEdited,
+                typeName: type,
+                data: cell.data,
+                fullscreenCell,
+                requestEditMode,
+                onDataChanged: onDataChangedHandler,
+                onFullscreenToggleClick,
+              })}
             </div>
           </div>
         </Col>
         {(hasComments || addComment) &&
           <Col xs={4} xl={3}>
-            <Comments cellId={cellId} katexMacros={katexMacros} />
+            <Comments cellLoc={cellLoc} katexMacros={katexMacros} />
             {addComment &&
               <AddComment
                 unsyncedKey={`newCellComment/${cellId}`}
-                cellId={cellId}
+                cellLoc={cellLoc}
                 onSave={() => setAddComment(false)}
                 onCancel={() => setAddComment(false)}
                 katexMacros={katexMacros}
@@ -172,16 +199,18 @@ export default function CellContainer(props: CellContainerProps) {
         }
       </Row>
       <div
-        onMouseEnter={() => toggleVisibility(true, dropdownOpened.current)}
-        onMouseLeave={() => toggleVisibility(false, dropdownOpened.current)}
+        onMouseEnter={() => toggleVisibility(true, dropdownOpened)}
+        onMouseLeave={() => toggleVisibility(false, dropdownOpened)}
         className={classNames('d-flex', styles.addToolbarContainer)}
       >
-        <AddToolbar
-          className={styles.addToolbar}
-          style={cellHovered || addToolbarVisible ? { display: 'initial' } : { display: 'none' }}
-          cellIndex={cellIndex}
-          onDropdownToggled={(isOpen) => toggleVisibility(addToolbarHovered.current, isOpen)}
-        />
+        {
+          <AddToolbar
+            className={styles.addToolbar}
+            style={addToolbarStyle()}
+            cellLoc={cellLoc}
+            onDropdownToggled={(isOpen) => toggleVisibility(addToolbarHovered.current, isOpen)}
+          />
+        }
       </div>
     </div>
   )

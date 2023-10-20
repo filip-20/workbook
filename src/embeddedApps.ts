@@ -2,8 +2,9 @@ import ResolutionEditor from '@fmfi-uk-1-ain-412/resolution-editor'
 import StructureExplorer from '@fmfi-uk-1-ain-412/fol-graphexplorer'
 import TableauEditor from '@fmfi-uk-1-ain-412/tableaueditor'
 import FormalizationCheckerConf from '@fmfi-uk-1-ain-412/formalization-checker'
+import { CellContext } from './features/sheet/slice/logicContext'
 
-interface PrepareResult {
+export interface PrepareResult {
   instance: any,
   getState: (instance: any) => any,
 }
@@ -12,32 +13,46 @@ type PrepareFunction = (
   additionalArgs?: any,
 ) => PrepareResult
 
+interface AppComponentProps {
+  instance: any,
+  onStateChange: () => void,
+  isEdited: boolean,
+  context?: CellContext,
+  proof?: any,
+  updateProofVerdict?: (verdict: boolean) => void,
+} 
+
 interface EmeddedApp {
   name: string,
   typeName: string,
+  supportsProofs: boolean,
   prepare: PrepareFunction,
-  AppComponent: (props: any) => JSX.Element,
+  AppComponent: (props: AppComponentProps) => JSX.Element,
 }
 
-const embeddedApps: EmeddedApp[] = 
+export const embeddedApps: EmeddedApp[] = 
   [
     {
       name: 'Structure explorer',
       typeName: 'structureExplorer',
+      supportsProofs: false,
       ...StructureExplorer
     },
     {
       name: 'Tableau editor',
       typeName: 'tableauEditor',
+      supportsProofs: true,
       ...TableauEditor
     },
     {
       name: 'Resolution editor',
+      supportsProofs: true,
       typeName: 'resolutionEditor',
       ...ResolutionEditor
     },
     {
       name: 'Formalization checker',
+      supportsProofs: false,
       typeName: 'formalizationChecker',
       ...FormalizationCheckerConf('https://student.dai.fmph.uniba.sk/services/formalization-checker')
     }
@@ -49,8 +64,6 @@ embeddedApps.forEach( app => {
   appType2AppInfo[app.typeName] = app
 });
 
-function getAppInfo(typeName: string): EmeddedApp {
+export function getAppInfo(typeName: string): EmeddedApp {
   return appType2AppInfo[typeName];
 }
-
-export { embeddedApps, getAppInfo }

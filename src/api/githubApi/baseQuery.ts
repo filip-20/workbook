@@ -12,7 +12,8 @@ const baseQuery = fetchBaseQuery({
     }
     return headers;
   },
-  cache: 'no-cache'
+  cache: 'no-cache',
+
  });
 
  const githubBaseQuery: BaseQueryFn<

@@ -1,38 +1,41 @@
-// TODO put interface into separate package
-import { PrepareResult } from '@fmfi-uk-1-ain-412/fol-graphexplorer';
-import { useEffect, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { getAppInfo } from '../../embeddedApps';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
+import { useAppSelector } from '../../app/hooks';
+import { CellLocator, sheetSelectors } from "./slice/sheetSlice";
 import { BsExclamationTriangleFill } from 'react-icons/bs';
 import styles from './CellContainer.module.scss';
 import { authSelectors } from '../auth/authSlice';
+import { PrepareResult } from '../../embeddedApps';
 
 export interface AppCellProps {
-  cellId: number
+  cellLoc: CellLocator
   isEdited: boolean,
+  typeName: string,
+  data: any,
   onDataChanged: (getData: () => any) => void,
+  proof?: any,
+  updateProofVerdict?: (verdict: boolean) => void,
 }
 
 const unsupportedApp = (type: string) => {
   return {
     prepare: () => 0,
     AppComponent: () => (
-      <div style={{textAlign: 'center'}}>
-      <BsExclamationTriangleFill color='red' size={70} />
-      <p>Unsupported app type: {type}</p>
+      <div style={{ textAlign: 'center' }}>
+        <BsExclamationTriangleFill color='red' size={70} />
+        <p>Unsupported app type: {type}</p>
       </div>
     )
   }
 }
 
-function AppCell(props: AppCellProps) {
-  const { cellId, isEdited, onDataChanged } = props;
+function AppCell({ cellLoc, isEdited, typeName, data, proof, onDataChanged, updateProofVerdict }: AppCellProps) {
+  const context = useAppSelector(sheetSelectors.logicContext(cellLoc));
+  const { prepare, AppComponent } = getAppInfo(typeName) || unsupportedApp(typeName);
   const ghAccessToken = useAppSelector(authSelectors.accessToken);
-  const cell = useAppSelector(sheetSelectors.cell(cellId));
-  const { type, data } = cell;
-  const { prepare, AppComponent } = getAppInfo(type) || unsupportedApp(type);
   const prepareResult = useRef<PrepareResult | null>(null);
+
+  //useMemo(() => console.debug('App cell context changed', context), [context]);
 
   if (prepareResult.current === null) {
     prepareResult.current = prepare(data, { ghAccessToken })
@@ -47,12 +50,19 @@ function AppCell(props: AppCellProps) {
 
   return (
     <div
-      className={`${styles.appCell} ${styles[`${type}Cell`]}`}
+      className={`${styles.appCell} ${styles[`${typeName}Cell`]}`}
       onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
-      {!isEdited && <div className={styles.appOverlay}/>}
+      {!isEdited && <div className={styles.appOverlay} />}
       <div className={styles.appContainer}>
-        <AppComponent isEdited={isEdited} instance={instance} onStateChange={onAppStateChanged} />
+        <AppComponent
+          isEdited={isEdited}
+          context={cellLoc.contextId === -1 ? undefined : context}
+          proof={proof}
+          updateProofVerdict={updateProofVerdict}
+          instance={instance}
+          onStateChange={onAppStateChanged}
+        />
       </div>
     </div>
   )

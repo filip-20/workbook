@@ -2,11 +2,12 @@ import { Alert, Container, Spinner } from "react-bootstrap";
 import { useAppSelector } from "../../app/hooks";
 import CellContainer from "./CellContainer";
 import AddToolbar from "./AddToolbar";
-import { sheetSelectors } from "./slice/sheetSlice";
+import { CellLocator, sheetSelectors } from "./slice/sheetSlice";
 import { useMemo, useState } from "react";
 
 import styles from "./Sheet.module.scss";
 import katex from "katex";
+import ContextContainer from "./ContextContainer";
 
 export interface SheetProps {
 }
@@ -17,7 +18,7 @@ export default function Sheet(props: SheetProps) {
   const cellsOrder = useAppSelector(sheetSelectors.cellsOrder);
   const settings = useAppSelector(sheetSelectors.sheetSettings);
 
-  const [fullscreenCellId, setFullscreenCellId] = useState<number | undefined>(undefined);
+  const [fullscreenCell, setFullscreenCell] = useState<CellLocator | undefined>(undefined);
 
   /* parse global katex macros string from sheet settings */
   const katexMacros = useMemo(() => {
@@ -43,17 +44,14 @@ export default function Sheet(props: SheetProps) {
   } else {
     return (
       <article className="m-3 h-100">
-        {
-          cellsOrder.map((cellId, index) => (
-            <CellContainer key={cellId} cellId={cellId} cellIndex={index}
-              className={fullscreenCellId !== undefined ? (cellId === fullscreenCellId ? styles.fullscreenCell : 'd-none') : undefined}
-              onFullscreenToggleClick={isFullscreen => { console.log('fullscreen: ' + isFullscreen); setFullscreenCellId(isFullscreen ? cellId : undefined) }}
-              katexMacros={katexMacros}
-            />
-          ))
-        }
-        {cellsOrder.length === 0 && <AddToolbar className="justify-content-center" cellIndex={-1} />}
+        <ContextContainer
+          cellLoc={{id: -1, index: -1, contextId: -1}}
+          katexMacros={katexMacros}
+          fullscreenCell={fullscreenCell}
+          onFullscreenToggleClick={(isFullscreen, cell) => setFullscreenCell(isFullscreen ? cell : undefined) }
+        />
       </article>
     )
   }
 }
+

@@ -1,40 +1,52 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Row, Col } from 'react-bootstrap';
 import styles from './TextCell.module.scss'
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { sheetActions, sheetSelectors } from "./slice/sheetSlice";
+import { useAppSelector } from "../../app/hooks";
+import { CellLocator, sheetSelectors } from "./slice/sheetSlice";
 import FormattedTextRenderer from "../../components/FormattedTextRenderer";
 import TextEditor from "../../components/TextEditor";
 import classNames from 'classnames/dedupe';
 
 export interface TextCellProps {
+  cellLoc: CellLocator,
   katexMacros: object,
   isEdited: boolean,
-  data: string,
+  requestEditMode: (isEdited: boolean) => void,
   onDataChanged: (getData: () => string) => void,
 }
 
-function TextCell({ data, isEdited, katexMacros, onDataChanged }: TextCellProps) {
-  const [ content, setContent ] = useState(data);
+function TextCell ({ cellLoc, isEdited, katexMacros, requestEditMode, onDataChanged }: TextCellProps) {
+  const data = useAppSelector(sheetSelectors.cell(cellLoc)).data as string;
+  
+  const [content, setContent] = useState(data);
   const contentMutable = useRef(data);
   const editText = (
     <div
       className={`${styles.textEdit} ${styles.cmMinHeight}`}
-      onDoubleClick={(e) => isEdited && e.stopPropagation()}
     >
       <TextEditor
         value={content}
-        onChange={(value, viewUpdate) => {
+        onChange={(value, _) => {
           setContent(value);
           contentMutable.current = value;
           onDataChanged(() => contentMutable.current);
         }}
+        onKeyDownCapture={e => {
+          // exit edit mode with Ctrl+Enter
+          if (e.key === 'Enter' && e.ctrlKey) {
+            requestEditMode(false);
+            e.preventDefault();
+          }
+        }}
+
       />
     </div>
   );
 
   return (
-    <div className={classNames(styles.textCell, {[styles.isEdited]: isEdited})}>
+    <div
+      className={classNames(styles.textCell, { [styles.isEdited]: isEdited })}
+    >
       <Row className="g-0 align-items-stretch">
         {isEdited &&
           <Col xs={12} lg={6} className={styles.textEditCol}>{editText}</Col>
@@ -49,6 +61,6 @@ function TextCell({ data, isEdited, katexMacros, onDataChanged }: TextCellProps)
       </Row>
     </div>
   )
-}
+};
 
 export default TextCell;

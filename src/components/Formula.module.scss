@@ -1,0 +1,37 @@
+@import "~bootstrap/scss/bootstrap";
+
+.invalidFormula {
+  color: red;
+}
+
+.formulaItem>:nth-child(2) {
+  @extend .ms-3;
+}
+
+.formulaItem>.copyButton {
+  visibility: hidden;
+}
+
+.formulaItem:hover>.copyButton {
+  visibility: visible;
+}
+
+.formulaList {
+  display: inline-block;
+}
+
+.formulaList>:first-child:not(:only-child) {
+  @extend .mb-2, .mt-0;
+}
+
+.formulaList>div:not(:only-child) {
+  @extend .my-2;
+}
+
+.formulaList>:last-child:not(:only-child) {
+  @extend .mt-2, .mb-0;
+}
+
+.formulaList>:only-child {
+  @extend .my-0;
+}

@@ -43,7 +43,7 @@ export default function SheetSettingsModal(props: SheetSettingsModalProps) {
 
   const dispatch = useAppDispatch();
 
-  console.log('render ', settings)
+  //console.log('render ', settings)
 
   const handleSave = (s: SheetSettings) => {
     if (JSON.stringify(settings) !== JSON.stringify(s)) {

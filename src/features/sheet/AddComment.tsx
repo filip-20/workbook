@@ -3,7 +3,7 @@ import TextEditor, { ReactCodeMirrorRef } from '../../components/TextEditor';
 import React, { useCallback, useRef, useEffect, useState } from "react";
 import FormattedTextRendered from "../../components/FormattedTextRenderer";
 import { useAppDispatch } from "../../app/hooks";
-import { sheetActions } from "./slice/sheetSlice";
+import { CellLocator, sheetActions } from "./slice/sheetSlice";
 import sheetStorage, { storageActions } from "../sheetStorage/sheetStorage";
 import classNames from 'classnames/dedupe';
 import styles from "./Comments.module.scss";
@@ -95,15 +95,14 @@ export function CommentEditor(props: CommentEditorProps) {
 export interface AddCommentProps {
   className?: string,
   style?: React.CSSProperties,
-  cellId: number,
+  cellLoc: CellLocator,
   unsyncedKey: string,
   onSave: () => void,
   onCancel: () => void,
   katexMacros?: object,
 }
 
-export default function AddComment(props: AddCommentProps) {
-  const { className, style, cellId, unsyncedKey, onSave, onCancel, katexMacros } = props;
+export default function AddComment({ className, style, cellLoc, unsyncedKey, onSave, onCancel, katexMacros }: AddCommentProps) {
   const dispatch = useAppDispatch();
 
   return (
@@ -116,8 +115,8 @@ export default function AddComment(props: AddCommentProps) {
           saveText="Pridať"
           unsyncedKey={unsyncedKey}
           onCancel={onCancel}
-          onSave={(text) => {dispatch(sheetActions.addCellComment({ cellId, text })); onSave()} }
-          idPrefix={`cell-${cellId}-add-comment`}
+          onSave={(text) => {dispatch(sheetActions.addCellComment({ cellLoc, text })); onSave()} }
+          idPrefix={`cell-${cellLoc.id}-add-comment`}
           katexMacros={katexMacros}
         />
       </div>

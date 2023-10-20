@@ -1,9 +1,14 @@
 @use 'sass:map';
+@import "~bootstrap/scss/bootstrap";
 @import '~bootstrap/scss/bootstrap-utilities';
 @import './_shadows';
 
-.cellWrapper {
+.cellContainer {
   height: fit-content;
+}
+
+.notContextContainer {
+  @extend .border;
   box-shadow: none;
   transition: box-shadow .15s;
 
@@ -43,19 +48,26 @@
   z-index: $zindex-dropdown - 20;
 }
 
+.editToolbarCtx {
+  position: absolute;
+  left: map.get($spacers, 3);
+  top: - map.get($spacers, 3);
+  z-index: $zindex-dropdown - 20;
+}
+
+.appCell .appOverlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: $zindex-dropdown - 30;
+  // background-color: rgba($body-bg, 0.35);
+}
+
 .appCell {
   position: relative;
   padding: map.get($spacers, 3);
-
-  .appOverlay {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    z-index: $zindex-dropdown - 30;
-    // background-color: rgba($body-bg, 0.35);
-  }
 
   & .appContainer {
     pointer-events: none;
