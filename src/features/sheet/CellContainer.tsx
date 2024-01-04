@@ -9,9 +9,10 @@ import Comments from './Comments';
 import { storageActions } from '../sheetStorage/sheetStorage';
 import styles from './CellContainer.module.scss';
 import classNames from 'classnames/dedupe';
-import { renderCellComponent } from './cellFactory';
+import { RenderPayload, getCellComponentFunction, renderCellComponent } from './cellFactory';
 
 import config from '../../config.json';
+import { DelayedUpdateContainer } from './DelayedUpdateContainer';
 
 export type CellContainerProps = {
   className?: string,
@@ -30,7 +31,6 @@ export default function CellContainer({ className, cellLoc, katexMacros, fullscr
 
   const lastCreatedCellId = useAppSelector(sheetSelectors.lastCreatedCellId);
   const undoRedoCounter = useAppSelector(sheetSelectors.undoRedoCounter);
-  const lastUndoRedoCounter = useRef(undoRedoCounter);
   const [isEdited, setIsEdited] = useState(lastCreatedCellId === cellId && type !== 'context');
   const [addComment, setAddComment] = useState(false);
   const [addToolbarVisible, setAddToolbarVisible] = useState(false);
@@ -40,7 +40,6 @@ export default function CellContainer({ className, cellLoc, katexMacros, fullscr
   const hasComments = useAppSelector(sheetSelectors.cellComments(cellLoc)).length > 0;
 
   const lastData = useRef<any>(data);
-  const finishUpdate = useRef<{ timeout: ReturnType<typeof setTimeout>, getData: () => any } | undefined>(undefined);
 
   const toggleVisibility = (toolbarHovered: boolean, dropdownOpened_: boolean) => {
     addToolbarHovered.current = toolbarHovered
@@ -54,52 +53,8 @@ export default function CellContainer({ className, cellLoc, katexMacros, fullscr
     }
   }
 
-  useEffect(() => () => {
-    console.log('unmounting cell ', cellId);
-    const timeout = finishUpdate.current?.timeout;
-    if (timeout) {
-      let t = performance.now()
-      dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: false }))
-      console.log('dispatch of unsyncedChange took ', performance.now()-t);
-      //dispatch(storageActions.subUnsyncedChange())
-      clearTimeout(timeout);
-      finishUpdate.current = undefined;
-    }
-  }, []);
-
-  if (lastUndoRedoCounter.current !== undoRedoCounter) {
-    // data was changed in redux, delayed update must be canceled
-    const timeout = finishUpdate.current?.timeout;
-    if (timeout) {
-      dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: false }))
-      //dispatch(storageActions.subUnsyncedChange())
-      clearTimeout(timeout);
-      finishUpdate.current = undefined;
-    }
-    lastUndoRedoCounter.current = undoRedoCounter;
-  }
-
-  const updateData = () => {
-    const { timeout, getData } = finishUpdate.current!;
-    const data = getData();
-    clearTimeout(timeout);
-    //dispatch(storageActions.subUnsyncedChange())
-    dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: false }))
-    finishUpdate.current = undefined;
-    if (JSON.stringify(lastData.current) !== JSON.stringify(data)) {
-      dispatch(sheetActions.updateCellData({ cellLoc, data }));
-      lastData.current = data;
-    }
-  }
-
   const toggleEditHandler = () => {
-    setIsEdited(prev => {
-      const n = !prev;
-      if (n === false && finishUpdate.current !== undefined) {
-        updateData();
-      }
-      return n;
-    });
+    setIsEdited(prev => !prev);
   }
 
   const requestEditMode = (isEdited1: boolean) => {
@@ -110,21 +65,11 @@ export default function CellContainer({ className, cellLoc, katexMacros, fullscr
     }
   }
 
-  const onDataChangedHandler = (getData: () => any) => {
-    //console.log('onupdatehandler ', cellId)
-    if (finishUpdate.current === undefined) {
-      //console.log('onupdatehandler ', cellId, ': creating timeout')
-      //dispatch(storageActions.addUnsyncedChange())
-      let t = performance.now()
-      dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: updateData }))
-      console.log('dispatch of unsyncedChange took ', performance.now()-t);
-      finishUpdate.current = {
-        timeout: setTimeout(updateData,
-          config.frontend.cellUpdateIntervalSec * 1000),
-        getData
-      }
-    } else {
-      finishUpdate.current.getData = getData;
+  const onDelayedUpdate = (getData: () => any) => {
+    const data = getData();
+    if (JSON.stringify(lastData.current) !== JSON.stringify(data)) {
+      dispatch(sheetActions.updateCellData({ cellLoc, data }));
+      lastData.current = data;
     }
   }
 
@@ -168,19 +113,25 @@ export default function CellContainer({ className, cellLoc, katexMacros, fullscr
               onToggleEdit={toggleEditHandler}
             />
             <div className={styles.cellContent}>
-              {renderCellComponent({
-                cellLoc,
-                /* When undoRedoCounter changes, cells are recreated so they are synced with changed sheet state in redux */
-                key: undoRedoCounter,
-                katexMacros,
-                isEdited,
-                typeName: type,
-                data: cell.data,
-                fullscreenCell,
-                requestEditMode,
-                onDataChanged: onDataChangedHandler,
-                onFullscreenToggleClick,
-              })}
+              <DelayedUpdateContainer
+                onDelayedUpdate={onDelayedUpdate}
+                delay={config.frontend.cellUpdateIntervalSec * 1000}
+                unsyncedDataKey={unsyncedDataKey}
+                component={getCellComponentFunction(type)}
+                props={{
+                  cellLoc,
+                  /* When undoRedoCounter changes, cells are recreated so they are synced with changed sheet state in redux */
+                  key: undoRedoCounter,
+                  katexMacros,
+                  isEdited,
+                  typeName: type,
+                  data: cell.data,
+                  fullscreenCell,
+                  requestEditMode,
+                  onDataChanged: () => 0, // dummy function, replaced inside DelayedUpdateContainer component
+                  onFullscreenToggleClick,
+                } as RenderPayload}
+              />
             </div>
           </div>
         </Col>

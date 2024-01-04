@@ -12,7 +12,8 @@ import TextCell from "./TextCell";
 import ContextCell from "./ContextContainer";
 
 
-interface RenderPayload {
+export type CellUpdateFunction = (getData: () => any) => void
+export interface RenderPayload {
   cellLoc: CellLocator,
   typeName: string,
   data: any,
@@ -21,7 +22,7 @@ interface RenderPayload {
   katexMacros: object,
   fullscreenCell: CellLocator | undefined,
   requestEditMode: (isEdited: boolean) => void,
-  onDataChanged: (data: any) => void,
+  onDataChanged: CellUpdateFunction,
   onFullscreenToggleClick: (isFullscreen: boolean, cellLoc: CellLocator) => void,
 }
 
@@ -123,6 +124,13 @@ export function renderCellComponent(payload: RenderPayload): JSX.Element {
     return typeName2factory['app'].renderComponent(payload)
   }
   return typeName2factory[payload.typeName]!.renderComponent(payload);
+}
+
+export function getCellComponentFunction(typeName: string) {
+  if (typeName2factory[typeName] === undefined) {
+    return typeName2factory['app'].renderComponent;
+  }
+  return typeName2factory[typeName]!.renderComponent;
 }
 
 export function addCell(payload: AddPayload): void {
