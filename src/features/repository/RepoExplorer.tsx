@@ -12,7 +12,7 @@ import { FetchBaseQueryError } from "@reduxjs/toolkit/dist/query";
 import CreateFileButton from "./CreateFileButton";
 import { useRef } from "react";
 import { emptySheet } from "../sheet/slice/sheetSlice";
-import { getSessionBranchName } from "../sheetStorage/github/githubStorage";
+import { getSessionBranchName, pathURIEncode } from "../../storageWorker/githubStorage/utils";
 
 export interface RepoExplorerProps {
   owner: string,
@@ -48,10 +48,6 @@ function isEmptyRepoError(error: any) {
     return true;
   }
   return false;
-}
-
-export function pathURIEncode(path: string) {
-  return path.split('/').map(p => encodeURIComponent(p)).reduce((p, c) => `${p}/${c}`);
 }
 
 function RepoExplorer(props: RepoExplorerProps) {

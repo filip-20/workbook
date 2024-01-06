@@ -20,10 +20,13 @@ export const storageMiddleware: Middleware =
       console.log('history changed');
       const fileContent = state.sheet.present.sheetFile;
       const change = {
-        content: JSON.stringify(fileContent, null, 2), 
+        contentObj: fileContent, //JSON.stringify(fileContent, null, 2), 
         message
       }
-      api.dispatch(storageActions.enqueueChange(change));
+      api.dispatch(storageActions.enqueueTask({
+        type: 'auto_save',
+        payload: change
+      }));
       if (state.sheetStorage.status === 'idle') {
         api.dispatch(processQueue())
       }
@@ -37,10 +40,13 @@ export const storageMiddleware: Middleware =
     const state = api.getState();
     const fileContent = state.sheet.present.sheetFile;
     const change = {
-      content: JSON.stringify(fileContent, null, 2), 
+      contentObj: fileContent,//JSON.stringify(fileContent, null, 2), 
       message: type.slice(-4)
     }
-    api.dispatch(storageActions.enqueueChange(change));
+    api.dispatch(storageActions.enqueueTask({
+      type: 'auto_save',
+      payload: change
+    }));
     if (state.sheetStorage.status === 'idle') {
       api.dispatch(processQueue())
     }

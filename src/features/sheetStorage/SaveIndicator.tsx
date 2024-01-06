@@ -25,7 +25,7 @@ export default function SaveIndicator(props: SaveIndicatorProps) {
   const storageSynced = useAppSelector(storageSelectors.storageSynced)
   const storageStatus = useAppSelector(storageSelectors.status);
   const queue = useAppSelector(storageSelectors.queue);
-  const errorMessage = useAppSelector(storageSelectors.errorMessage);
+  const errorMessage = useAppSelector(storageSelectors.storage)?.autosaveError?.msg;
 
   // Active/error states: filled icons, idle states: regular icons
   const showOffline = (pending: number) =>

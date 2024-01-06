@@ -1,7 +1,9 @@
 import { Button, Modal } from "react-bootstrap";
 import { useAppSelector } from "../../../app/hooks";
-import { GhMergeError, ghStorageSelectors } from "./githubStorage";
+//import { GhMergeError, ghStorageSelectors } from "./githubStorage";
 import { useEffect, useState } from "react";
+import { GhCustomManualSaveErrInfo, GhMergeError } from "../../../storageWorker/githubStorage/types";
+import { storageSelectors } from "../sheetStorage";
 
 export interface MergeSheetModalProps {
   show: boolean
@@ -9,7 +11,7 @@ export interface MergeSheetModalProps {
 }
 
 export default function MergeSheetModal(props: MergeSheetModalProps) {
-  const ghState = useAppSelector(ghStorageSelectors.ghState);
+  const ghState = useAppSelector(storageSelectors.storage)?.manualSaveError?.custom as GhCustomManualSaveErrInfo | undefined;
   const [closed, setClosed] = useState(false);
   useEffect(() => {
     setClosed(false);
@@ -45,6 +47,14 @@ export default function MergeSheetModal(props: MergeSheetModalProps) {
         </>
       )
     }
+    /*if (error.type === 'no_session_branch') {
+      return (
+        <>
+          <p>Changes are <strong>not mergable</strong> to origin branch. This may be because manual changes to workbook file were made in origin branch.</p>
+          <p>To fix this problem you need resolve conflicts manually on github{error.url === undefined ? '. ' : <> at <a href={error.url}>{error.url}</a></>} </p>
+        </>
+      )
+    }*/
     if (error.type === 'sync_fail') {
       return (
         <>

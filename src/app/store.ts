@@ -9,9 +9,6 @@ import undoable, { includeAction, excludeAction } from 'redux-undo';
 
 //const jsonState = localStorage.getItem('reduxState')
 //const preloadedState = jsonState === null ? undefined : {sheet: JSON.parse(jsonState)}
-
-
-
 export const store = configureStore({
   reducer: {
     auth: authReducer,

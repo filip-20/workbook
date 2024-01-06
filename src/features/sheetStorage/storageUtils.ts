@@ -1,7 +1,7 @@
 import { store } from "../../app/store";
 import { storageSelectors, StorageStatus } from "./sheetStorage";
 
-export function waitForStorageIdle() {
+function waitForStorageIdle() {
   return new Promise<void>((resolve, reject) => {
     const processStatus = (status: StorageStatus) => {
       if (status === 'idle') {

@@ -5,10 +5,10 @@ import { BiGitBranch } from "react-icons/bi";
 import { BsCaretDownFill, BsCircle, BsCircleFill, BsSlashCircle } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import { ReposGetApiResponse, ReposListBranchesApiResponse, useReposGetQuery, useReposListBranchesQuery } from "../../api/githubApi/endpoints/repos";
-import { isSessionBranchName } from "../sheetStorage/github/githubStorage";
 import { displayLoadable } from "./displayLoadable";
 
 import styles from "./styles.module.css";
+import { isSessionBranchName } from "../../storageWorker/githubStorage/utils";
 
 export interface BranchSelectProps {
   owner: string,

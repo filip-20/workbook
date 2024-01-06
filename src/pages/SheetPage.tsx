@@ -12,13 +12,15 @@ import BranchLabel from "../features/repository/BranchLabel";
 import LoginPage from "./LoginPage";
 import SheetSettingsModal, { SettingTab } from "../features/sheet/modals/SheetSettingsModal";
 import MergeSheetModal from "../features/sheetStorage/github/MergeSheetModal";
-import { GithubFileLocation, openSheet } from "../features/sheetStorage/github/githubStorage";
+//import { GithubFileLocation, openSheet } from "../features/sheetStorage/github/githubStorage";
 import SaveIndicator from "../features/sheetStorage/SaveIndicator";
 import MergeButton from "../features/sheetStorage/github/MergeButton";
 import SaveErrorModal from "../features/sheetStorage/github/SaveErrorModal";
 import UndoRedoButtonGroup from "../features/sheet/UndoRedo";
 import classNames from 'classnames/dedupe';
 import styles from './SheetPage.module.scss';
+import { loadSheet } from "../features/sheetStorage/sheetStorage";
+import { GithubFileLocation } from "../storageWorker/githubStorage/types";
 
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
@@ -35,7 +37,8 @@ function SheetPage() {
     let lastLoaded: GithubFileLocation | undefined = undefined
     if (ghLocation.current !== undefined && JSON.stringify(ghLocation.current) !== JSON.stringify(lastLoaded)) {
       lastLoaded = {...ghLocation.current};
-      dispatch(openSheet(ghLocation.current));
+      //dispatch(openSheet(ghLocation.current));
+      dispatch(loadSheet('github', ghLocation.current))
     }
   }, [ghLocation, dispatch]);
 

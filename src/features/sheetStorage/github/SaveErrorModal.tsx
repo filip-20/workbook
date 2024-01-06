@@ -4,15 +4,18 @@ import { BiDownload, BiRefresh, BiTrash } from "react-icons/bi";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { githubApi as gitDbApi } from '../../../api/githubApi/endpoints/git'
 import { parseFilepath } from "../../../pages/RepoPage";
-import { storageActions, storageSelectors } from "../sheetStorage";
-import { ghClearSessionBranch, GhSaveError, ghStorageSelectors } from "./githubStorage";
+import { AutoSaveTask, storageActions, storageSelectors } from "../sheetStorage";
+//import { ghClearSessionBranch, GhSaveError, ghStorageSelectors } from "./githubStorage";
 import Loading from "../../../components/Loading";
 import { githubApiErrorMessage } from "../../../api/githubApi/errorMessage";
 import ErrBox from "../../../components/ErrBox";
+import { GhCustomAutosaveErrInfo } from "../../../storageWorker/githubStorage/engine";
+import { GhSaveError } from "../../../storageWorker/githubStorage/types";
+import { swCustomCmd } from "../../../storageWorker/workerApi";
 
 export default function SaveErrorModal() {
   const queue = useAppSelector(storageSelectors.queue);
-  const ghState = useAppSelector(ghStorageSelectors.ghState);
+  const ghState = useAppSelector(storageSelectors.storage)?.autosaveError?.custom as GhCustomAutosaveErrInfo;
 
   const [deleteRefState, setDeleteRefState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [deleteRefError, setDeleteRefError] = useState<string | undefined>(undefined);
@@ -36,8 +39,10 @@ export default function SaveErrorModal() {
   }
 
   const json: string | undefined = (() => {
-    if (queue.items.length > 0) {
-      return queue.items[queue.items.length - 1].content;
+    const autosaveTasks = queue.items.filter(t => t.task.type === 'auto_save')
+    if (autosaveTasks.length > 0) {
+      const sheet = (autosaveTasks[autosaveTasks.length - 1].task as AutoSaveTask).payload.contentObj
+      return JSON.stringify(sheet, null, 2);
     } else {
       return undefined;
     }
@@ -61,7 +66,7 @@ export default function SaveErrorModal() {
     const r = await dispatch(gitDbApi.endpoints.gitDeleteRef.initiate({ owner, repo, ref: `heads/${ref}` }));
     console.log('delete ref response: ', r);
     if ('data' in r) {
-      dispatch(ghClearSessionBranch());
+      await swCustomCmd({type: 'clearSessionBranch', payload: undefined})
       dispatch(storageActions.resume());
     } else {
       setDeleteRefState('error');

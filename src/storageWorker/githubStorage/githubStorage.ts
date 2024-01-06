@@ -1,40 +1,29 @@
-export const a = 42
-/*
-import { AppDispatch, RootState, store } from "../../../app/store"
-import { sheetActions } from "../../sheet/slice/sheetSlice"
+//import { AppDispatch, RootState, store } from "../../../app/store"
+//import { sheetActions } from "../../sheet/slice/sheetSlice"
 
-import { githubApi as gitDbApi } from '../../../api/githubApi/endpoints/git'
-import { githubApi as pullsApi } from "../../../api/githubApi/endpoints/pulls"
-import { githubApi as reposApi, PullRequestSimple, ReposCreateOrUpdateFileContentsApiArg } from "../../../api/githubApi/endpoints/repos"
+import { githubApi as gitDbApi } from './githubApi/endpoints/git'
+import { githubApi as pullsApi } from "./githubApi/endpoints/pulls"
+import { githubApi as reposApi, PullRequestSimple, ReposCreateOrUpdateFileContentsApiArg } from "./githubApi/endpoints/repos"
 
-import { ReposListBranchesApiResponse } from "../../../api/githubApi/endpoints/repos"
-import githubApiParseLastPage from "../../../api/githubApi/lastPage";
-import { githubApiErrorMessage, isFetchBaseQueryError, isGithubErrorResponse } from "../../../api/githubApi/errorMessage";
+import { ReposListBranchesApiResponse } from "./githubApi/endpoints/repos"
+import githubApiParseLastPage from "./githubApi/lastPage";
+import { githubApiErrorMessage, isFetchBaseQueryError, isGithubErrorResponse } from "./githubApi/errorMessage";
 
-import { pathURIEncode } from "../../repository/RepoExplorer";
+//import { pathURIEncode } from "../../repository/RepoExplorer";
 import sha1 from 'sha1';
 import { Base64 } from 'js-base64';
-import { HistoryRecord, storageActions } from "../sheetStorage"
-import { ActionCreators as UndoActionCreators } from 'redux-undo'
-import { waitForStorageIdle } from "../storageUtils"
+//mport { ActionCreators as UndoActionCreators } from 'redux-undo'
+//import { waitForStorageIdle } from "../storageUtils"
 
-export interface GithubFileLocation {
-  owner: string,
-  repo: string,
-  path: string,
-  ref: string,
-}
-
-export interface GhSaveError {
-  type: 'background_update' | 'unknown_error' | 'merged_session',
+//import { store, storageActions, StorageDispatch as AppDispatch, StorageState as RootState } from "./store"
+//import { UpdateRecord } from "../../sheetStorage"
+import { AppDispatch, RootState, storageActions, store } from './store';
+import { getSessionBranchName, pathURIEncode } from './utils';
+import { GhMergeError, GhSaveError, GithubFileLocation } from './types';
+//import { AutosavePayload } from '../workerApi';
+interface AutosavePayload {
   message: string,
-}
-
-export interface GhMergeError {
-  type: 'not_mergable' | 'api_call_failed' | 'multiple_pulls' | 'pr_create_failed' | 'branch_delete_failed' | 'sync_fail' | 'unknown',
-  message: string,
-  call?: string,
-  url?: string,
+  contentObj: object
 }
 
 type MergeState = 'idle' | 'merge_waiting' | 'merging' | 'success' | 'error'
@@ -113,30 +102,6 @@ function listAllPulls(owner: string, repo: string, state: "all" | "open" | "clos
   }
 }
 
-export function getSessionBranchName(fileInfo: { owner: string, repo: string, path: string, ref: string }) {
-  const { path, ref } = fileInfo;
-  const getName = (p: string) => {
-    const f = p.split('/').pop()?.split('.');
-    let name = f ? (f.length === 1 ? f[0] : f.slice(0, -1).join('.')) : '';
-    // make the name comply with branch name specs (https://git-scm.com/docs/git-check-ref-format)
-    name = name.replace('..', '');
-    name = name.replace('@{', '');
-    name = name.replace('~', '');
-    name = name.replace('^', '');
-    name = name.replace(':', '');
-    name = name.replace('?', '');
-    name = name.replace('*', '');
-    name = name.replace('[', '');
-    name = name.replace(' ', '-');
-    return name;
-  }
-  return `${ref}_session_${getName(path)}_${sha1(path)}`;
-}
-
-export function isSessionBranchName(name: string) {
-  return name.match(/_session_/) !== null && name.match(/_[a-z0-9]+$/) !== null;
-}
-
 function loadFile(fileInfo: { owner: string, repo: string, path: string, ref: string }) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     fileInfo.path = pathURIEncode(fileInfo.path);
@@ -159,7 +124,9 @@ function loadFile(fileInfo: { owner: string, repo: string, path: string, ref: st
 export function openSheet(location: GithubFileLocation) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const { owner, repo, ref } = location;
-    dispatch(sheetActions.startLoading());
+
+    // TODO MOVE TO sheetStorage
+    //dispatch(sheetActions.startLoading());
 
     // list all branches
     let branches: ReposListBranchesApiResponse = [];
@@ -167,8 +134,8 @@ export function openSheet(location: GithubFileLocation) {
       branches = await listAllRepoBranches(owner, repo)(dispatch, getState);
     } catch (e) {
       console.log('branch listing error ', branches)
-      dispatch(sheetActions.setErrorMessage({ message: `API call (listAllRepoBranches) failed, try again.`, newState: "load_error" }))
-      return;
+      //dispatch(sheetActions.setErrorMessage({ message: `API call (listAllRepoBranches) failed, try again.`, newState: "load_error" }))
+      return { error: `API call (listAllRepoBranches) failed, try again.` };
     }
 
     // find base branch and session branch in branches list
@@ -179,8 +146,8 @@ export function openSheet(location: GithubFileLocation) {
     if (sheetBranch === undefined) {
       // given fileInfo that comes from URL is not valid
       // Error 404 may be returned
-      dispatch(sheetActions.setErrorMessage({ message: `The requested work sheet was not found in the repository. Check the file name, path, and branch.`, newState: "load_error" }))
-      return;
+      // dispatch(sheetActions.setErrorMessage({ message: `The requested work sheet was not found in the repository. Check the file name, path, and branch.`, newState: "load_error" }))
+      return { error: `The requested work sheet was not found in the repository. Check the file name, path, and branch.` };
     }
 
     console.log('branches: ', branches)
@@ -196,8 +163,8 @@ export function openSheet(location: GithubFileLocation) {
     const r1 = await loadFile(sheetFileLocation)(dispatch, getState);
     if ('error' in r1) {
       const { error } = r1;
-      dispatch(sheetActions.setErrorMessage({ message: error, newState: "load_error" }))
-      return;
+      //dispatch(sheetActions.setErrorMessage({ message: error, newState: "load_error" }))
+      return { error: error || 'Failed to load file' };
     }
     const { content, sha } = r1;
 
@@ -227,10 +194,7 @@ export function openSheet(location: GithubFileLocation) {
       console.log('isSessionBranchMerged: ', merged);
     }
     const sheetId = sha1(JSON.stringify({ storageType: 'github', location }))
-    // init sheet
-    dispatch(sheetActions.initFromJson({ json: content, sheetId }));
-    // reset sheet undo redo history
-    dispatch(UndoActionCreators.clearHistory())
+    return { json: content, sheetId }
   }
 }
 
@@ -239,6 +203,20 @@ export function mergeChanges() {
     const getEngineState = () => getState().sheetStorage.storageEngine!.state as GhStorageState;
     const { owner, repo, path } = getEngineState().location;
     const filename = path.replace(/^([^/]*\/)*([^/]+)\.workbook$/, '$2');
+
+    if (getEngineState().sessionBranch === undefined) {
+      const mergeError: GhMergeError = {
+        type: 'no_session_branch',
+        message: 'There is no session branch therefore no changes to merge',
+      }
+      dispatch(ghUpdateState({
+        ...getEngineState(),
+        mergeState: 'error',
+        mergeError
+      }))
+      return false;
+    }
+
     const sourceBranch = getEngineState().sessionBranch!;
     const targetBranch = getEngineState().baseBranch;
 
@@ -246,20 +224,6 @@ export function mergeChanges() {
       ...getEngineState(),
       mergeState: 'merge_waiting'
     }));
-
-    try {
-      await waitForStorageIdle();
-    } catch (e) {
-      dispatch(ghUpdateState({
-        ...getEngineState(),
-        mergeState: 'error',
-        mergeError: {
-          type: 'sync_fail',
-          message: ''
-        }
-      }))
-      return false;
-    }
 
     dispatch(ghUpdateState({
       ...getEngineState(),
@@ -468,7 +432,7 @@ function isSessionBranchMerged() {
   }
 }
 
-function commitRecord(record: {content: string, message: string}) {
+function commitRecord(record: AutosavePayload) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const engineState: GhStorageState = getState().sheetStorage.storageEngine!.state
     const { owner, repo, path } = engineState.location;
@@ -478,7 +442,7 @@ function commitRecord(record: {content: string, message: string}) {
       path: pathURIEncode(path),
       body: {
         message: record.message,
-        content: Base64.encode(record.content),
+        content: Base64.encode(JSON.stringify(record.contentObj, null, 2)),
         sha,
         branch: sessionBranch!.name,
       }
@@ -539,11 +503,11 @@ function waitForMerge() {
   })
 }
 
-export function processRecord(record: {id: number, content: string, message: string}) {
+export function processRecord(record: AutosavePayload) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     try {
       await waitForMerge();
-    } catch (e) {}
+    } catch (e) { }
 
     const getEngineState = () => getState().sheetStorage.storageEngine!.state;
     if (getEngineState().sessionBranch === undefined) {
@@ -554,7 +518,7 @@ export function processRecord(record: {id: number, content: string, message: str
           saveError: r.saveError
         }
         dispatch(storageActions.processResult({
-          id: record.id,
+          //id: record.id,
           errorMessage: `Creation of session branch failed: ${r.saveError.message}`,
           newEngineState,
         }));
@@ -582,7 +546,7 @@ export function processRecord(record: {id: number, content: string, message: str
         }
       }
       dispatch(storageActions.processResult({
-        id: record.id,
+        //id: record.id,
         errorMessage: `API call failed: ${githubApiErrorMessage(merged.error)}`,
         newEngineState,
       }));
@@ -597,7 +561,7 @@ export function processRecord(record: {id: number, content: string, message: str
         }
       }
       dispatch(storageActions.processResult({
-        id: record.id,
+        //id: record.id,
         errorMessage: 'Merged session branch must be deleted',
         newEngineState,
       }));
@@ -613,7 +577,7 @@ export function processRecord(record: {id: number, content: string, message: str
         saveError: r.saveError
       }
       dispatch(storageActions.processResult({
-        id: record.id,
+        //id: record.id,
         errorMessage: `Commit failed: ${r.saveError.message}`,
         newEngineState
       }));
@@ -629,8 +593,8 @@ export function processRecord(record: {id: number, content: string, message: str
         sha,
         sessionBranch,
       }
-      dispatch(storageActions.processResult({ id: record.id, newEngineState }));
-      console.log('Commited record ' + record.id);
+      dispatch(storageActions.processResult({ /*id: record.id,*/ newEngineState }));
+      //console.log('Commited record ' + record.id);
     }
   }
-}*/
+}
