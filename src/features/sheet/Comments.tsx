@@ -111,7 +111,7 @@ export default function Comments({ className, style, cellLoc, katexMacros }: Com
   }
   return (
     <div className={className} style={style}>
-      {comments.map(c => <Comment comment={c} {...commonCommentProps} />)}
+      {comments.map(c => <Comment key={c.id} comment={c} {...commonCommentProps} />)}
     </div>
   )
 }
