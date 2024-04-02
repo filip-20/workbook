@@ -19,6 +19,7 @@ function TextCell ({ cellLoc, isEdited, katexMacros, requestEditMode, onDataChan
   const data = useAppSelector(sheetSelectors.cell(cellLoc)).data as string;
   
   const [content, setContent] = useState(data);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const contentMutable = useRef(data);
   const editText = (
     <div
@@ -27,7 +28,13 @@ function TextCell ({ cellLoc, isEdited, katexMacros, requestEditMode, onDataChan
       <TextEditor
         value={content}
         onChange={(value, _) => {
-          setContent(value);
+          if (debounceTimer.current !== undefined) {
+            clearTimeout(debounceTimer.current);
+          }
+          debounceTimer.current = setTimeout(() => {
+            setContent(value);
+            debounceTimer.current = undefined;
+          }, 300);
           contentMutable.current = value;
           onDataChanged(() => contentMutable.current);
         }}
