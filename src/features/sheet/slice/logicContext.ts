@@ -72,6 +72,12 @@ export function cellContext(cell: CellLocator): (state: RootState) => CellContex
   return contextSelectorMemo[key];
 }
 
+export function clearContextMemo() {
+  for (let key of Object.keys(contextSelectorMemo)) {
+    delete contextSelectorMemo[key];
+  }
+}
+
 export class CellContext implements LogicContext, Language {
   private context: LogicContext
   private symbolsLUT: Map<string, { arity: number, index: number, type: 'constant' | 'function' | 'predicate' | 'axiom' | 'formula' | 'theorem' }>

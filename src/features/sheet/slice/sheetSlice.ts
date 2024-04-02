@@ -1,7 +1,7 @@
 import { AnyAction, createEntityAdapter, createSelector, createSlice, EntityState, PayloadAction } from "@reduxjs/toolkit";
 import undoable, { includeAction } from "redux-undo";
 import { AppDispatch, RootState } from '../../../app/store'
-import { ContextExtension, LogicContext, cellContext } from "./logicContext";
+import { ContextExtension, LogicContext, cellContext, clearContextMemo } from "./logicContext";
 import { testSheetIntegrity } from "./sheetVersions";
 import { WritableDraft } from "immer/dist/internal";
 
@@ -360,10 +360,17 @@ const remmoveCellComment = function (payload: { cellLoc: CellLocator, commentId:
   }
 }
 
+function initSheet(json: string, sheetId: string) {
+  return (dispatch: AppDispatch, getState: () => RootState) => {
+    clearContextMemo();
+    dispatch(sheetActions.initFromJson({json, sheetId}));
+  }
+}
+
 /* Actions */
 const insertTextCell = (text: string, after: CellLocator) => sheetActions.insertCell({ after, type: 'text', data: text })
 const insertAppCell = (type: string, state: any, after: CellLocator) => sheetActions.insertCell({ after, type, data: state })
-export const sheetActions = { ...sheetSlice.actions, addCellComment, remmoveCellComment, insertTextCell, insertAppCell };
+export const sheetActions = { ...sheetSlice.actions, addCellComment, remmoveCellComment, insertTextCell, insertAppCell, initSheet };
 
 export interface CellLocator {
   id: number,
