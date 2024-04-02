@@ -6,7 +6,7 @@ import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
 import AddComment from './AddComment';
 import Comments from './Comments';
-import { storageActions } from '../sheetStorage/sheetStorage';
+import { storageActions } from '../sheetStorage/storageSlice';
 import styles from './CellContainer.module.scss';
 import classNames from 'classnames/dedupe';
 import { RenderPayload, getCellComponentFunction, renderCellComponent } from './cellFactory';
@@ -27,11 +27,14 @@ export default function CellContainer({ className, cellLoc, katexMacros, fullscr
   const { id: cellId } = cellLoc;
   const cell = useAppSelector(sheetSelectors.cell(cellLoc));
   const { type, data } = cell;
-  const unsyncedDataKey = `cellData_${cellId}`;
+  const unsyncedDataKey = `cellData_${cellId}_${type.replace('/','_')}`;
 
-  const lastCreatedCellId = useAppSelector(sheetSelectors.lastCreatedCellId);
   const undoRedoCounter = useAppSelector(sheetSelectors.undoRedoCounter);
-  const [isEdited, setIsEdited] = useState(lastCreatedCellId === cellId && type !== 'context');
+  const lastCreatedCellId = useAppSelector(sheetSelectors.lastCreatedCellId);
+  const [isEdited, setIsEdited] = useState(
+    /* ensures newly created cell is editable */
+    lastCreatedCellId === cellId && type !== 'context'
+  );
   const [addComment, setAddComment] = useState(false);
   const [addToolbarVisible, setAddToolbarVisible] = useState(false);
   const [cellHovered, setCellHovered] = useState(false);
@@ -128,7 +131,7 @@ export default function CellContainer({ className, cellLoc, katexMacros, fullscr
                   data: cell.data,
                   fullscreenCell,
                   requestEditMode,
-                  onDataChanged: () => 0, // dummy function, replaced inside DelayedUpdateContainer component
+                  onDataChanged: () => 0, // dummy function, this value is replaced inside DelayedUpdateContainer component
                   onFullscreenToggleClick,
                 } as RenderPayload}
               />
