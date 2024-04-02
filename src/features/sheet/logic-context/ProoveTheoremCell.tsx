@@ -172,7 +172,7 @@ export default function ProoveTheoremCell({ cellLoc, isEdited, data, onDataChang
           </Dropdown.Toggle>
           <Dropdown.Menu>
             {embeddedApps.filter(app => app.supportsProofs).map(app => (
-              <Dropdown.Item onClick={() => prooveWithSelectHandler(app.typeName)}>{app.name}</Dropdown.Item>
+              <Dropdown.Item key={app.typeName} onClick={() => prooveWithSelectHandler(app.typeName)}>{app.name}</Dropdown.Item>
             ))}
           </Dropdown.Menu>
         </Dropdown>
@@ -192,7 +192,7 @@ export default function ProoveTheoremCell({ cellLoc, isEdited, data, onDataChang
             />
           </div>
           <p className="mt-2" style={{ color: localState.verdict ? 'green' : 'red' }}>
-            Theorem <InlineMath math={localState.newTheorem.name} /> was {localState.verdict ? '' : <strong>not</strong>} prooved.
+            Theorem <InlineMath math={localState.newTheorem.name} /> was {localState.verdict ? '' : <strong>not</strong>} proved.
           </p>
         </>
       )}
@@ -223,12 +223,12 @@ function prepareProofAssingment(proof: ProofAssignment, context: CellContext, ap
     const convertFormulas = (fs: NamedFormula[] | Theorem[]) => {
       let result: {
         [key: string]: string[]
-        | { prooved: boolean, clauses: string[] }
+        | { proved: boolean, clauses: string[] }
       } = {}
       for (let f of fs) {
         const convMap = convertFormula(f);
         if ('prooved' in f) {
-          result[f.name] = { prooved: f.prooved, clauses: convMap[f.name] };
+          result[f.name] = { proved: f.prooved, clauses: convMap[f.name] };
         } else {
           result[f.name] = convMap[f.name];
         }
@@ -245,7 +245,7 @@ function prepareProofAssingment(proof: ProofAssignment, context: CellContext, ap
       ConversionDisplay: () => ResolvenceConversion({
         conversions: [
           { desc: 'Axioms conversion: ', negate: false, conv: axiomsConv },
-          { desc: 'Prooved theorems conversion: ', negate: false, conv: theoremsConv },
+          { desc: 'Proved theorems conversion: ', negate: false, conv: theoremsConv },
           { desc: 'Theorem negation conversion: ', negate: true, conv: newTheoremConv }
         ],
         context: extendedContext
@@ -263,7 +263,7 @@ interface CNFConversionProps {
     desc: string,
     negate: boolean,
     // map from formula name to array of tex formated clauses
-    conv: { [name: string]: string[] | { prooved: boolean, clauses: string[] } }
+    conv: { [name: string]: string[] | { proved: boolean, clauses: string[] } }
   }[],
   context: CellContext,
 }
@@ -276,20 +276,20 @@ function ResolvenceConversion({ conversions, context }: CNFConversionProps) {
           ...c,
           conv: Object.fromEntries(
             Object.entries(c.conv)
-              .filter(([_, v]) => 'prooved' in v ? v.prooved : true)
+              .filter(([_, v]) => 'proved' in v ? v.proved : true)
           )
         }))
         .filter(c => Object.keys(c.conv).length > 0).map(c => (
-          <>
+          <div key={c.desc}>
             {c.desc}
             <div className='ml-2 mt-2'>
               <table className="ms-3">
                 <tbody>
                   {Object.entries(c.conv)
-                    .filter(([_, conv]) => 'prooved' in conv ? conv.prooved : true)
+                    .filter(([_, conv]) => 'proved' in conv ? conv.proved : true)
                     .map(([name, conv]) => 'clauses' in conv ? [name, conv.clauses] : [name, conv])
                     .map(([name, clauses]) => (
-                      <tr>
+                      <tr key={name.toString()}>
                         <td className="pe-4 py-1 align-top"><InlineMath math={`${c.negate ? '\\neg' : ''} ${name as string}`} />:</td>
                         <td className="align-top">
                           <FormulaList context={context} formulas={clauses as string[]} clause showCopy />
@@ -301,7 +301,7 @@ function ResolvenceConversion({ conversions, context }: CNFConversionProps) {
               </table>
 
             </div>
-          </>)
+          </div>)
         )}
     </div >
   )
@@ -319,7 +319,7 @@ function AxiomsList({ context }: { context: CellContext }) {
   return (
     <Accordion style={{marginBottom: '1rem'}}>
       <Accordion.Item eventKey="0">
-        <Accordion.Header>List of axioms and prooved theorems</Accordion.Header>
+        <Accordion.Header>List of axioms and proved theorems</Accordion.Header>
         <Accordion.Body>
           <FormulaList
             context={context}
