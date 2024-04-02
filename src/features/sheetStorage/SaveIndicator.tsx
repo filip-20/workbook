@@ -1,7 +1,8 @@
 import { useAppSelector } from "../../app/hooks";
-import { storageSelectors } from "./sheetStorage";
+import { storageSelectors } from "./storageSlice";
 import { IconType } from "react-icons/lib";
 import {
+  BsClock,
   BsCloudArrowUpFill,
   BsCloudCheck,
   BsCloudSlash,
@@ -23,9 +24,10 @@ const IndicatorTemplate: React.FC<IndicatorTemplateProps> = (props) =>
 
 export default function SaveIndicator(props: SaveIndicatorProps) {
   const storageSynced = useAppSelector(storageSelectors.storageSynced)
-  const storageStatus = useAppSelector(storageSelectors.status);
-  const queue = useAppSelector(storageSelectors.queue);
-  const errorMessage = useAppSelector(storageSelectors.storage)?.autosaveError?.msg;
+  const queueState = useAppSelector(storageSelectors.taskQueueState);
+  const queue = useAppSelector(storageSelectors.taskQueue);
+  const errorMessage = useAppSelector(storageSelectors.taskError);
+  const unsyncedChanges = useAppSelector(storageSelectors.unsyncedChanges);
 
   // Active/error states: filled icons, idle states: regular icons
   const showOffline = (pending: number) =>
@@ -39,21 +41,25 @@ export default function SaveIndicator(props: SaveIndicatorProps) {
 
   return (
     <div className={props.className} style={props.style}>
-      {storageStatus === 'idle' && queue.items.length > 0 && storageSynced &&
+      {queueState === 'idle' && queue.items.length > 0 && storageSynced &&
         <IndicatorTemplate icon={BsCloudCheck}>
           Changes saved
         </IndicatorTemplate>}
-      {(storageStatus === 'processing' || storageStatus === 'task_finished') &&
+      {queueState === 'idle' && unsyncedChanges > 0 &&
+        <IndicatorTemplate icon={BsClock}>
+          Waiting changes {unsyncedChanges}
+        </IndicatorTemplate>}
+      {(queueState === 'processing' || queueState === 'task_finished') &&
         <IndicatorTemplate icon={BsCloudArrowUpFill}>
           Saving changes
         </IndicatorTemplate>}
-      {storageStatus === 'error' &&
+      {queueState === 'error' &&
         <div title={errorMessage}>
           <IndicatorTemplate icon={BsExclamationTriangleFill}>
             Save error
           </IndicatorTemplate>
         </div>}
-      {storageStatus === 'offline_paused' &&
+      {queueState === 'offline_paused' &&
         showOffline(queue.items.length - queue.nextIndex)}
     </div>
   );

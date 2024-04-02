@@ -3,7 +3,7 @@ import { useAppSelector } from "../../../app/hooks";
 //import { GhMergeError, ghStorageSelectors } from "./githubStorage";
 import { useEffect, useState } from "react";
 import { GhCustomManualSaveErrInfo, GhMergeError } from "../../../storageWorker/githubStorage/types";
-import { storageSelectors } from "../sheetStorage";
+import { storageSelectors } from "../storageSlice";
 
 export interface MergeSheetModalProps {
   show: boolean
@@ -11,7 +11,7 @@ export interface MergeSheetModalProps {
 }
 
 export default function MergeSheetModal(props: MergeSheetModalProps) {
-  const ghState = useAppSelector(storageSelectors.storage)?.manualSaveError?.custom as GhCustomManualSaveErrInfo | undefined;
+  const ghState = useAppSelector(storageSelectors.storageEngine)?.custom?.mergeErr as GhCustomManualSaveErrInfo | undefined;
   const [closed, setClosed] = useState(false);
   useEffect(() => {
     setClosed(false);

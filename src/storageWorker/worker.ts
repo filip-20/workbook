@@ -2,6 +2,8 @@
 
 import { initGithubEngine } from "./githubStorage/engine";
 import { StorageEngine } from "./storageEngine";
+import { EngineMessage } from "./workerApi";
+/*
 import { AutoSavePayload, CustomCmdPayload, EngineCommand, InitPayload, LoadSheetPayload, ManualSavePayload } from "./workerApi";
 
 interface InitCmd {
@@ -40,13 +42,33 @@ export type StorageWorkerCmd =
   | ResumeCmd
   | CustomCmd
 
-
+*/
 let storageEngine: StorageEngine
-
-self.onmessage = async (e: MessageEvent<{cmd: StorageWorkerCmd, requestId: number}>) => {
-  const {cmd, requestId} = e.data;
+self.onmessage = async (e: MessageEvent<{msg: EngineMessage, requestId: number}>) => {
+  const {msg, requestId} = e.data;
 
   console.log('worker got message', e.data)
+
+  if (msg.type === 'runCommand' && msg.command.name === 'init') {
+    switch(msg.command.payload.engineType) {
+      case 'github':
+        storageEngine = initGithubEngine(msg.command.payload)
+        break
+      default: 
+        throw new Error('Unknown engine type')
+    }
+  }
+
+  if (msg.type === 'runCommand') {
+    console.log('runcommand start')
+    postMessage({requestId, result: await storageEngine.runCommand(msg.command)})
+    console.log('runcommand end')
+  } else if (msg.type === 'runTask') {
+    postMessage({requestId, result: await storageEngine.runTask(msg.task)})
+  }
+
+}
+/*
   switch(cmd.type) {
     case 'init': {
       console.log('Init cmd payload', cmd.payload)
@@ -86,7 +108,7 @@ self.onmessage = async (e: MessageEvent<{cmd: StorageWorkerCmd, requestId: numbe
       postMessage({result, requestId})
       break;
     }
-  }
-}
+  }*/
+
 
 //export { StorageEngine };

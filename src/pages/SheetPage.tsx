@@ -19,12 +19,13 @@ import SaveErrorModal from "../features/sheetStorage/github/SaveErrorModal";
 import UndoRedoButtonGroup from "../features/sheet/UndoRedo";
 import classNames from 'classnames/dedupe';
 import styles from './SheetPage.module.scss';
-import { loadSheet } from "../features/sheetStorage/sheetStorage";
+import { loadSheet, storageSelectors } from "../features/sheetStorage/storageSlice";
 import { GithubFileLocation } from "../storageWorker/githubStorage/types";
 
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
   const user = useAppSelector(authSelectors.user);
+  const iid = useAppSelector(storageSelectors.instanceId);
   const location = useLocation();
   const params = useParams();
   const { owner, repo } = params;
@@ -88,7 +89,10 @@ function SheetPage() {
               </ButtonGroup>
             </ButtonToolbar>
           </div>
-          <Sheet />
+          <Sheet
+            /* forces unmount of old sheet components on reload */ 
+            key={iid}
+          />
         </Container>
       )
     }

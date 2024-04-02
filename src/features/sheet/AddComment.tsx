@@ -4,7 +4,7 @@ import React, { useCallback, useRef, useEffect, useState } from "react";
 import FormattedTextRendered from "../../components/FormattedTextRenderer";
 import { useAppDispatch } from "../../app/hooks";
 import { CellLocator, sheetActions } from "./slice/sheetSlice";
-import sheetStorage, { storageActions } from "../sheetStorage/sheetStorage";
+import { storageActions } from "../sheetStorage/storageSlice";
 import classNames from 'classnames/dedupe';
 import styles from "./Comments.module.scss";
 

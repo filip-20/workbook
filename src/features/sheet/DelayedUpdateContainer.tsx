@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { storageActions } from "../sheetStorage/sheetStorage";
+import { storageActions } from "../sheetStorage/storageSlice";
 import { sheetSelectors } from "./slice/sheetSlice";
 import { CellUpdateFunction } from "./cellFactory";
 
@@ -26,7 +26,7 @@ export function DelayedUpdateContainer<T extends UpdatableStateCell>({onDelayedU
 
   // when cell is unmounted pending update is ignored
   useEffect(() => () => {
-    console.log('unmounting cell ');
+    console.log('unmounting cell ', unsyncedDataKey);
     const timeout = finishUpdate.current?.timeout;
     if (timeout) {
       let t = performance.now()

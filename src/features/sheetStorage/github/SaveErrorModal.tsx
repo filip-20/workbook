@@ -4,18 +4,19 @@ import { BiDownload, BiRefresh, BiTrash } from "react-icons/bi";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { githubApi as gitDbApi } from '../../../api/githubApi/endpoints/git'
 import { parseFilepath } from "../../../pages/RepoPage";
-import { AutoSaveTask, storageActions, storageSelectors } from "../sheetStorage";
+import { runCommand, storageActions, storageSelectors } from "../storageSlice";
 //import { ghClearSessionBranch, GhSaveError, ghStorageSelectors } from "./githubStorage";
 import Loading from "../../../components/Loading";
 import { githubApiErrorMessage } from "../../../api/githubApi/errorMessage";
 import ErrBox from "../../../components/ErrBox";
 import { GhCustomAutosaveErrInfo } from "../../../storageWorker/githubStorage/engine";
 import { GhSaveError } from "../../../storageWorker/githubStorage/types";
-import { swCustomCmd } from "../../../storageWorker/workerApi";
+import { AutosaveTask } from "../../../storageWorker/workerApi";
 
 export default function SaveErrorModal() {
-  const queue = useAppSelector(storageSelectors.queue);
-  const ghState = useAppSelector(storageSelectors.storage)?.autosaveError?.custom as GhCustomAutosaveErrInfo;
+  const queueState = useAppSelector(storageSelectors.taskQueueState);
+  const queue = useAppSelector(storageSelectors.taskQueue);
+  const ghState = useAppSelector(storageSelectors.storageEngine)?.custom?.autosaveErr as GhCustomAutosaveErrInfo;
 
   const [deleteRefState, setDeleteRefState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [deleteRefError, setDeleteRefError] = useState<string | undefined>(undefined);
@@ -39,9 +40,9 @@ export default function SaveErrorModal() {
   }
 
   const json: string | undefined = (() => {
-    const autosaveTasks = queue.items.filter(t => t.task.type === 'auto_save')
+    const autosaveTasks = queue.items.filter(t => t.task.type === 'autosave')
     if (autosaveTasks.length > 0) {
-      const sheet = (autosaveTasks[autosaveTasks.length - 1].task as AutoSaveTask).payload.contentObj
+      const sheet = (autosaveTasks[autosaveTasks.length - 1].task as AutosaveTask).payload.contentObj
       return JSON.stringify(sheet, null, 2);
     } else {
       return undefined;
@@ -66,7 +67,8 @@ export default function SaveErrorModal() {
     const r = await dispatch(gitDbApi.endpoints.gitDeleteRef.initiate({ owner, repo, ref: `heads/${ref}` }));
     console.log('delete ref response: ', r);
     if ('data' in r) {
-      await swCustomCmd({type: 'clearSessionBranch', payload: undefined})
+      //await swCustomCmd({type: 'clearSessionBranch', payload: undefined})
+      await runCommand({name: 'clearSessionBranch', payload: undefined})
       dispatch(storageActions.resume());
     } else {
       setDeleteRefState('error');
@@ -148,7 +150,7 @@ export default function SaveErrorModal() {
     <Modal
       size="lg"
       aria-labelledby="contained-modal-title-vcenter"
-      show={type !== undefined}
+      show={type !== undefined && queueState === 'error'}
     /*onHide={() => setClosed(true)}*/
     /*centered*/
     >

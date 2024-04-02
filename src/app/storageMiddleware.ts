@@ -1,5 +1,5 @@
 import { Middleware, MiddlewareAPI, Dispatch, AnyAction } from "redux";
-import { processQueue, storageActions } from "../features/sheetStorage/sheetStorage";
+import { storageActions } from "../features/sheetStorage/storageSlice";
 import { AppDispatch, RootState } from "./store";
 
 export const storageMiddleware: Middleware =
@@ -24,12 +24,9 @@ export const storageMiddleware: Middleware =
         message
       }
       api.dispatch(storageActions.enqueueTask({
-        type: 'auto_save',
+        type: 'autosave',
         payload: change
       }));
-      if (state.sheetStorage.status === 'idle') {
-        api.dispatch(processQueue())
-      }
     } else {
       console.log('history NOT CHANGED')
     }
@@ -44,26 +41,21 @@ export const storageMiddleware: Middleware =
       message: type.slice(-4)
     }
     api.dispatch(storageActions.enqueueTask({
-      type: 'auto_save',
+      type: 'autosave',
       payload: change
     }));
-    if (state.sheetStorage.status === 'idle') {
-      api.dispatch(processQueue())
-    }
     return res;
   }
 
-  if (type === 'sheetStorage/processResult' 
-      || type === 'sheetStorage/resume'
-  ) {
+  if (type === 'storage/processTaskResult') {
     const res = next(action);
-    api.dispatch(processQueue())
+    api.dispatch(storageActions.processQueue())
     return res;
   }
 
   if (type === 'browser/online' || type === 'browser/offline') {
     const res = next(action);
-    api.dispatch(processQueue());
+    api.dispatch(storageActions.processQueue());
     return res;
   }
 

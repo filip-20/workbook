@@ -4,12 +4,14 @@ export interface AutosavePayload {
   contentObj: object
 }*/
 
-import { AutoSaveResult, LoadSheetResult, ManualSaveResult } from "./storageEngine"
-import { StorageWorkerCmd } from "./worker"
+//import { AutoSaveResult, LoadSheetResult, ManualSaveResult } from "./storageEngine"
+//import { StorageWorkerCmd } from "./worker"
 
 // list of supported storage engine types 
 export type EngineType = 'github'
 
+
+/*
 export type EngineCommand = 'init'
   | 'load_sheet'
   | 'process_update'
@@ -33,13 +35,76 @@ export interface CustomCmdPayload {
   type: string,
   payload: any,
 }
+*/
+
+export interface LoadCommand {
+  name: 'load',
+  payload: any
+}
+export interface InitCommand {
+  name: 'init',
+  payload: {
+    engineType: EngineType,
+    custom: any,
+  }
+}
+interface CustomCommand {
+  name: string,
+  payload: any,
+}
+export type Command = InitCommand | LoadCommand | CustomCommand
+
+interface CommandSuccess {
+  result: 'success',
+  custom?: any,
+  data?: any,
+}
+interface CommandError {
+  result: 'error',
+  errorMessage: string,
+  custom?: any,
+}
+export type CommandResult = CommandSuccess | CommandError
+
+export interface AutosavePayload {
+  message: string,
+  contentObj: object
+}
+export interface AutosaveTask {
+  type: 'autosave',
+  payload: AutosavePayload
+}
+interface CustomTask {
+  type: string,
+  payload: any
+}
+export type Task = AutosaveTask | CustomTask
+
+interface TaskSuccess {
+  result: 'success',
+  custom?: any
+}
+interface TaskError {
+  result: 'error',
+  errorMessage: string,
+  custom?: any,
+}
+export type TaskResult = TaskSuccess | TaskError
+
+export type EngineMessage = {
+  type: 'runCommand'
+  command: Command
+} | {
+  type: 'runTask'
+  task: Task
+}
 
 let requestId = 0;
 let worker = new Worker(new URL('worker.ts', import.meta.url), {type: 'module'});
-function workerCall(worker: Worker, cmd: StorageWorkerCmd) {
+function workerCall(worker: Worker, msg: EngineMessage) {
   return new Promise((resolve, reject) => {
     const rId = requestId++;
-    const listener = (e: MessageEvent<{cmd: EngineCommand, result: any, requestId: number}>) => {
+    const listener = (e: MessageEvent<{result: any, requestId: number}>) => {
       const {requestId: rId, result} = e.data;
       if (requestId === rId) {
         worker.removeEventListener('message', listener);
@@ -47,10 +112,20 @@ function workerCall(worker: Worker, cmd: StorageWorkerCmd) {
       }
     }
     worker.addEventListener('message', listener);
-    worker.postMessage({cmd, requestId})
+    worker.postMessage({msg, requestId})
   });
 }
 
+
+export async function swCommand(command: Command) {
+  return workerCall(worker, {type: 'runCommand', command}) as unknown as CommandResult
+}
+
+export async function swTask(task: Task) {
+  return workerCall(worker, {type: 'runTask', task}) as unknown as TaskResult
+}
+
+/*
 export async function swInit(engineType: EngineType, initPayload: any) {
   return workerCall(worker, {type: 'init', payload: {engineType, initPayload}}) ;
 }
@@ -73,4 +148,4 @@ export async function swResume() {
 
 export async function swCustomCmd(cmd: CustomCmdPayload) {
   return workerCall(worker, {type: 'custom_cmd', payload: cmd});
-}
+}*/

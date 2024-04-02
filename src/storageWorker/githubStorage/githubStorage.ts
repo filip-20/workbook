@@ -194,7 +194,7 @@ export function openSheet(location: GithubFileLocation) {
       console.log('isSessionBranchMerged: ', merged);
     }
     const sheetId = sha1(JSON.stringify({ storageType: 'github', location }))
-    return { json: content, sheetId }
+    return { json: content, sheetId, custom: {canMerge: sessionBranch !== undefined} }
   }
 }
 
