@@ -2,8 +2,9 @@ import { AnyAction, createEntityAdapter, createSelector, createSlice, EntityStat
 import undoable, { includeAction } from "redux-undo";
 import { AppDispatch, RootState } from '../../../app/store'
 import { ContextExtension, LogicContext, cellContext, clearContextMemo } from "./logicContext";
-import { testSheetIntegrity } from "./sheetVersions";
+import { deserializeWorkbook, serializeWorkbook, testSheetIntegrity } from "./workbookFormat";
 import { WritableDraft } from "immer/dist/internal";
+import { deserialize } from "v8";
 
 export interface CellComment {
   id: number,
@@ -27,6 +28,10 @@ export interface Cell {
 
 export interface SheetSettings {
   katexMacros?: string
+  github?: {
+    editBranch: string,
+    handinBranch: string,
+  }
 }
 
 const defaultSettings: SheetSettings = {
@@ -95,29 +100,21 @@ export const sheetSlice = createSlice({
         sheetId
       }
 
-      let sheetFile = null;
-      try {
-        sheetFile = JSON.parse(json);
-      } catch (e) {
-        const syntaxErr = e as SyntaxError
+      const res = deserializeWorkbook(json);
+      if (res.result === 'success') {
+        const { sheetFile } = res;
+
+        const { localState } = state;
+        const sf = sheetFile as SheetFile;
+        state.sheetFile = sheetFile;
+
+        // initialize cellIdCounter with max cell id + 1
+        localState.cellIdCounter = Object.entries(sf.cells).map(e => e[1].id).reduce((prev, cur) => Math.max(prev, cur), 0) + 1
+
+        state.state = 'loaded';
+      } else {
         state.state = "load_error";
-        state.errorMessage = `JSON parse failed: ${syntaxErr.message}`;
-      }
-      if (sheetFile) {
-        const { passed, error } = testSheetIntegrity(sheetFile);
-        if (!passed) {
-          state.state = "load_error"
-          state.errorMessage = `JSON file does not contain propper workbook: ${error}`;
-        } else {
-          const { localState } = state;
-          const sf = sheetFile as SheetFile;
-          state.sheetFile = sheetFile;
-
-          // initialize cellIdCounter with max cell id + 1
-          localState.cellIdCounter = Object.entries(sf.cells).map(e => e[1].id).reduce((prev, cur) => Math.max(prev, cur), 0) + 1
-
-          state.state = 'loaded';
-        }
+        state.errorMessage = res.message
       }
     },
     insertCell: (state, action: PayloadAction<{ after: CellLocator, type: string, data: any }>) => {
@@ -360,10 +357,23 @@ const remmoveCellComment = function (payload: { cellLoc: CellLocator, commentId:
   }
 }
 
+export function downloadSheet() {
+  return (dispatch: AppDispatch, getState: () => RootState) => {
+    const state = getState();
+    const serialized = serializeWorkbook(state.sheet.present.sheetFile)
+    const url = window.URL.createObjectURL(new Blob([serialized], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.setAttribute('download', 'workbook-sheet.json');
+    link.href = url;
+    link.click();
+    link.remove();
+  }
+}
+
 function initSheet(json: string, sheetId: string) {
   return (dispatch: AppDispatch, getState: () => RootState) => {
     clearContextMemo();
-    dispatch(sheetActions.initFromJson({json, sheetId}));
+    dispatch(sheetActions.initFromJson({ json, sheetId }));
   }
 }
 
@@ -393,7 +403,7 @@ export const sheetSelectors = {
   undoRedoCounter: (state: RootState) => state.sheet.present.localState.undoRedoCounter,
   lastCreatedCellId: (state: RootState) => state.sheet.present.localState.lastCreatedCellId,
   logicContext: (cell: CellLocator) => cellContext(cell),
-  contextCellsList: (cellLoc: CellLocator) => { return (state: RootState) => getParentCellsOrder(state.sheet.present, cellLoc)},
+  contextCellsList: (cellLoc: CellLocator) => { return (state: RootState) => getParentCellsOrder(state.sheet.present, cellLoc) },
 }
 
 export default undoable(sheetSlice.reducer, {
