@@ -6,8 +6,9 @@ import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { sheetActions, sheetSelectors, SheetSettings } from "../slice/sheetSlice";
 import katex from "katex";
 import React from "react";
+import { storageSelectors } from "../../sheetStorage/storageSlice";
 
-export type SettingTab = 'NONE' | 'KATEX_MACROS' | 'github';
+export type SettingTab = 'NONE' | 'KATEX_MACROS' | 'github' | 'debug';
 
 export interface SheetSettingTabProps {
   settings: SheetSettings,
@@ -29,7 +30,8 @@ type TabsInfo = {
 export const tabsInfo: TabsInfo = {
   'NONE': { title: '', tabComponent: () => <></> },
   'KATEX_MACROS': { title: 'Katex macros', tabComponent: KatexMacrosTab },
-  'github': { title: 'Github settings', tabComponent: GithubSettingsTab }
+  'github': { title: 'Github settings', tabComponent: GithubSettingsTab },
+  'debug': { title: 'Debug info', tabComponent: DebugInfoTab},
 }
 
 function copyObj(obj: any) {
@@ -113,10 +115,10 @@ function GithubSettingsTab(props: SheetSettingTabProps) {
   const [handinBranch, setHandinBranch] = useState(props.settings.github?.handinBranch || '')
 
   const handleSave = () => {
-      props.settings.github = {
-        editBranch, handinBranch
-      }
-      props.onSave(props.settings);
+    props.settings.github = {
+      editBranch, handinBranch
+    }
+    props.onSave(props.settings);
   }
 
   return (
@@ -132,6 +134,22 @@ function GithubSettingsTab(props: SheetSettingTabProps) {
           </Form.Group>
         </Row>
         <Button variant="success" type="submit" onClick={handleSave}>Save</Button>
+      </Form>
+    </>
+  )
+}
+
+function DebugInfoTab(props: SheetSettingTabProps) {
+  const storageEngineInfo = useAppSelector(storageSelectors.storageEngine)
+  return (
+    <>
+      <Form>
+        <Row className="mb-3">
+          <Form.Group className="mb-3">
+            <Form.Label>Storage engine info</Form.Label>
+            <Form.Control readOnly as="textarea" rows={8} value={JSON.stringify(storageEngineInfo, null, 2)} />
+          </Form.Group>
+        </Row>
       </Form>
     </>
   )
