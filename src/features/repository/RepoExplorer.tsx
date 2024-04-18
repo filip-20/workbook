@@ -13,6 +13,7 @@ import CreateFileButton from "./CreateFileButton";
 import { useRef } from "react";
 import { emptySheet } from "../sheet/slice/sheetSlice";
 import { getSessionBranchName, pathURIEncode } from "../../storageWorker/githubStorage/utils";
+import DisplayReadme from "./DisplayReadme";
 
 export interface RepoExplorerProps {
   owner: string,
@@ -57,13 +58,9 @@ function RepoExplorer(props: RepoExplorerProps) {
   const repoInfo = useReposGetQuery({ owner, repo }, { skip: branch !== undefined });
   const branches = useReposListBranchesQuery({ owner, repo, perPage: 100 }, { skip: branch === undefined && !repoInfo.isSuccess });
   const content = useReposGetContentQuery({ owner, repo, ref: branch, path: pathURIEncode(path) }, { skip: branch === undefined && !repoInfo.isSuccess && !branches.isSuccess });
-
-
-  console.log('repo explorer');
-  console.log(content)
-
-  const existingFilenames = useRef<Set<string>>(new Set());
   
+  const existingFilenames = useRef<Set<string>>(new Set());
+
   if (repoInfo.isSuccess && !branch) {
     branch = repoInfo.data.default_branch;
   }
@@ -102,7 +99,7 @@ function RepoExplorer(props: RepoExplorerProps) {
 
     const unsavedChanges = () => {
       const branchList = branches.data;
-      const expectedSessionBranchName = getSessionBranchName({owner, repo, path: filePath, ref: branch || ''});
+      const expectedSessionBranchName = getSessionBranchName({ owner, repo, path: filePath, ref: branch || ''});
       return branchList?.find(b => b.name === expectedSessionBranchName) !== undefined;
     }
 
@@ -116,16 +113,16 @@ function RepoExplorer(props: RepoExplorerProps) {
     if (content.isFetching) {
       return (
         <ListGroup.Item className={styles.fileItem} key={file.name}>
-        <span className={styles.itemIcon}>{icon}</span>
-        <Placeholder xs={1} bg="secondary" />
-      </ListGroup.Item>
+          <span className={styles.itemIcon}>{icon}</span>
+          <Placeholder xs={1} bg="secondary" />
+        </ListGroup.Item>
       )
     }
 
     return (
       <ListGroup.Item className={styles.fileItem} key={file.name}>
         <span className={styles.itemIcon}>{icon}</span>
-        {link ? <Link className={styles.linkStyle} style={{marginRight: '1em'}} to={link}>{file.name}</Link> : file.name}
+        {link ? <Link className={styles.linkStyle} style={{ marginRight: '1em' }} to={link}>{file.name}</Link> : file.name}
         {unsavedChanges() && <Badge pill bg="secondary">unmerged</Badge>}
       </ListGroup.Item>
     )
@@ -160,30 +157,35 @@ function RepoExplorer(props: RepoExplorerProps) {
   }
 
   return (
-    <Card className="mb-5">
-      <Card.Header className="h6">
-        <Row className="g-2 align-items-baseline">
-          <Col xs="auto">
-            <BranchSelect owner={owner} repo={repo} path={path} branch={branch} makeLink={makeLink} />
-          </Col>
-          <Col>
-            <Pathbar owner={owner} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
-          </Col>
-          <Col xs="auto">
-            <CreateFileButton
-              owner={owner} repo={repo} path={path} branch={branch}
-              existingFilenames={existingFilenames.current}
-              transformFilename={(filename: string) => `${filename}.workbook`}
-              commitMessage="Created"
-              withContent={JSON.stringify(emptySheet)}
-            >
-              <FileEarmarkPlusFill /> New worksheet
-            </CreateFileButton>
-          </Col>
-        </Row>
-      </Card.Header>
-      {displayLoadable(content, loading, renderFiles, emptyOrError)}
-    </Card>
+    <>
+      <Card className="mb-4">
+        <Card.Header className="h6">
+          <Row className="g-2 align-items-baseline">
+            <Col xs="auto">
+              <BranchSelect owner={owner} repo={repo} path={path} branch={branch} makeLink={makeLink} />
+            </Col>
+            <Col>
+              <Pathbar owner={owner} repoName={repo} branch={branch} path={path} makeLink={makeLink} />
+            </Col>
+            <Col xs="auto">
+              <CreateFileButton
+                owner={owner} repo={repo} path={path} branch={branch}
+                existingFilenames={existingFilenames.current}
+                transformFilename={(filename: string) => `${filename}.workbook`}
+                commitMessage="Created"
+                withContent={JSON.stringify(emptySheet)}
+              >
+                <FileEarmarkPlusFill /> New worksheet
+              </CreateFileButton>
+            </Col>
+          </Row>
+        </Card.Header>
+        {displayLoadable(content, loading, renderFiles, emptyOrError)}
+      </Card>
+      { // display readme only after files have been shown
+        content && <DisplayReadme {...{ owner, repo, path, branch }} />
+      }
+    </>
   )
 }
 
