@@ -17,18 +17,17 @@ export const storageMiddleware: Middleware =
     const res = next({...action, historyChanged});
     const state = api.getState();
     if (message !== undefined) {
-      console.log('history changed');
       const fileContent = state.sheet.present.sheetFile;
       const change = {
-        contentObj: fileContent, //JSON.stringify(fileContent, null, 2), 
+        contentObj: fileContent, 
+        serialized: '', // will be serialized on worker side
         message
       }
       api.dispatch(storageActions.enqueueTask({
         type: 'autosave',
-        payload: change
+        payload: change,
+        skipOnError: false
       }));
-    } else {
-      console.log('history NOT CHANGED')
     }
     return res;
   }
@@ -37,12 +36,14 @@ export const storageMiddleware: Middleware =
     const state = api.getState();
     const fileContent = state.sheet.present.sheetFile;
     const change = {
-      contentObj: fileContent,//JSON.stringify(fileContent, null, 2), 
+      contentObj: fileContent,
+      serialized: '', // will be serialized on worker side
       message: type.slice(-4)
     }
     api.dispatch(storageActions.enqueueTask({
       type: 'autosave',
-      payload: change
+      payload: change,
+      skipOnError: false,
     }));
     return res;
   }

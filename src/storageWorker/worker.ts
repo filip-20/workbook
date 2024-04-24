@@ -1,18 +1,17 @@
 /* eslint-disable no-restricted-globals */
 
 import { StorageEngine } from "./storageEngine";
-import { EngineMessage } from "./workerApi";
+import { AutosaveTask, EngineMessage, Task } from "./workerApi";
 
 import { initGithubEngine } from "./githubStorage/engine";
-import { initGithubEngine as initGhEngine1 } from "./githubStorage1/engine";
+import { initGithubEngine as initGhEngine1 } from "./githubStorage1/adapter";
+import { serializeWorkbook } from "../features/sheet/slice/workbookFormat";
 
 let storageEngine: StorageEngine
 self.onmessage = async (e: MessageEvent<{msg: EngineMessage, requestId: number}>) => {
   const {msg, requestId} = e.data;
 
-  console.log('worker got message', e.data)
-
-  if (msg.type === 'runCommand' && msg.command.name === 'init') {
+  if (msg.type === 'runCommand' && msg.command.type === 'init') {
     switch(msg.command.payload.engineType) {
       case 'github':
         storageEngine = initGithubEngine(msg.command.payload)
@@ -25,10 +24,18 @@ self.onmessage = async (e: MessageEvent<{msg: EngineMessage, requestId: number}>
     }
   }
 
+  if (msg.type === 'runTask' && msg.task.type === 'autosave') {
+    // serialize workbook object
+    const autosaveTask = msg.task as AutosaveTask
+    autosaveTask.payload.serialized = serializeWorkbook(autosaveTask.payload.contentObj)
+  }
+
   if (msg.type === 'runCommand') {
-    postMessage({requestId, result: await storageEngine.runCommand(msg.command)})
+    const result = await storageEngine.runCommand(msg.command)
+    postMessage({requestId, result})
   } else if (msg.type === 'runTask') {
-    postMessage({requestId, result: await storageEngine.runTask(msg.task)})
+    const result = await storageEngine.runTask(msg.task)
+    postMessage({requestId, result})
   }
 
 }

@@ -1,95 +1,60 @@
-/*
-export interface AutosavePayload {
-  message: string,
-  contentObj: object
-}*/
-
-//import { AutoSaveResult, LoadSheetResult, ManualSaveResult } from "./storageEngine"
-//import { StorageWorkerCmd } from "./worker"
+import { SheetFile } from "../features/sheet/slice/sheetSlice"
 
 // list of supported storage engine types 
-export type EngineType = 'github'
+export type EngineType = 'github' | 'github1'
 
-
-/*
-export type EngineCommand = 'init'
-  | 'load_sheet'
-  | 'process_update'
-  | 'save_changes'
-  | 'resume'
-
-export type InitPayload = {
-  engineType: EngineType
-  initPayload: any
-}
-export interface LoadSheetPayload {
-  location: any
-}
-export interface AutoSavePayload {
-  message: string,
-  contentObj: object
-}
-export type ManualSavePayload = undefined
-export type ResumePayload = undefined
-export interface CustomCmdPayload {
+interface CustomCommand {
   type: string,
-  payload: any,
+  payload?: any,
 }
-*/
-
-export interface LoadCommand {
-  name: 'load',
-  payload: any
-}
-export interface InitCommand {
-  name: 'init',
+export interface InitCommand extends CustomCommand {
+  type: 'init',
   payload: {
     engineType: EngineType,
     custom: any,
   }
 }
-interface CustomCommand {
-  name: string,
-  payload: any,
-}
-export type Command = InitCommand | LoadCommand | CustomCommand
+export type Command = InitCommand | CustomCommand
 
-interface CommandSuccess {
-  result: 'success',
-  custom?: any,
-  data?: any,
+export interface LoadResult {
+  filename: string, json: string, sheetId: string
 }
-interface CommandError {
-  result: 'error',
-  errorMessage: string,
-  custom?: any,
-}
-export type CommandResult = CommandSuccess | CommandError
 
 export interface AutosavePayload {
   message: string,
-  contentObj: object
+  contentObj: SheetFile,
+  serialized: string,
 }
-export interface AutosaveTask {
+
+export interface CustomTask extends CustomCommand {
+  skipOnError: boolean,
+}
+export interface AutosaveTask extends CustomTask {
   type: 'autosave',
   payload: AutosavePayload
-}
-interface CustomTask {
-  type: string,
-  payload: any
 }
 export type Task = AutosaveTask | CustomTask
 
 interface TaskSuccess {
   result: 'success',
-  custom?: any
+  data?: any,
+  customState?: any,
 }
 interface TaskError {
   result: 'error',
+  // general error message for every failed task
   errorMessage: string,
-  custom?: any,
+  // optional custom specific error 
+  customError?: any,
+  customState?: any,
 }
-export type TaskResult = TaskSuccess | TaskError
+interface TaskSkipped {
+  result: 'skipped',
+  errorMessage: string,
+}
+
+export type TaskResult = TaskSuccess | TaskError | TaskSkipped
+export type CommandResult = TaskSuccess | TaskError
 
 export type EngineMessage = {
   type: 'runCommand'
@@ -102,7 +67,7 @@ export type EngineMessage = {
 let requestId = 0;
 let worker = new Worker(new URL('worker.ts', import.meta.url), {type: 'module'});
 function workerCall(worker: Worker, msg: EngineMessage) {
-  return new Promise((resolve, reject) => {
+  return new Promise<TaskResult | CommandResult>((resolve, reject) => {
     const rId = requestId++;
     const listener = (e: MessageEvent<{result: any, requestId: number}>) => {
       const {requestId: rId, result} = e.data;
@@ -116,36 +81,10 @@ function workerCall(worker: Worker, msg: EngineMessage) {
   });
 }
 
-
-export async function swCommand(command: Command) {
+export async function swCommand<Data>(command: Command): Promise<CommandResult> {
   return workerCall(worker, {type: 'runCommand', command}) as unknown as CommandResult
 }
 
-export async function swTask(task: Task) {
-  return workerCall(worker, {type: 'runTask', task}) as unknown as TaskResult
+export async function swTask<Data, CustomState>(task: Task): Promise<TaskResult> {
+  return workerCall(worker, {type: 'runTask', task})
 }
-
-/*
-export async function swInit(engineType: EngineType, initPayload: any) {
-  return workerCall(worker, {type: 'init', payload: {engineType, initPayload}}) ;
-}
-
-export async function swLoadSheet(location: any) {
-  return workerCall(worker, {type: 'load_sheet', payload: location}) as any as LoadSheetResult;
-}
-
-export async function swAutoSave(message: string, contentObj: object) {
-  return workerCall(worker, {type: 'auto_save', payload: {message, contentObj}}) as any as AutoSaveResult;
-}
-
-export async function swManualSave() {
-  return workerCall(worker, {type: 'manual_save', payload: undefined}) as any as ManualSaveResult;
-}
-
-export async function swResume() {
-  return workerCall(worker, {type: 'resume', payload: undefined});
-}
-
-export async function swCustomCmd(cmd: CustomCmdPayload) {
-  return workerCall(worker, {type: 'custom_cmd', payload: cmd});
-}*/

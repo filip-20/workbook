@@ -1,5 +1,5 @@
 import { StorageEngine } from "../storageEngine";
-import { AutosavePayload, Command, CommandResult, TaskResult, Task } from "../workerApi";
+import { AutosavePayload, TaskResult, Task, Command, CommandResult } from "../workerApi";
 import { GhStorageState, ghClearSessionBranch, mergeChanges, openSheet, processRecord } from "./githubStorage";
 import { storageActions, store } from "./store";
 import { GhCustomManualSaveErrInfo, GithubFileLocation } from "./types";
@@ -32,7 +32,7 @@ export function initGithubEngine(initPayload: any): StorageEngine {
     dispatch(storageActions.setToken(payload.custom.ghToken));
     return {
       result: 'success',
-      custom,
+      customState: custom,
     }
   }
 
@@ -42,7 +42,7 @@ export function initGithubEngine(initPayload: any): StorageEngine {
       return { result: 'error', errorMessage: res.error }
     }
     custom.canMerge = res.custom.canMerge;
-    return { result: 'success', data: {json: res.json, sheetId: res.sheetId}, custom }
+    return { result: 'success', data: {json: res.json, sheetId: res.sheetId}, customState: custom }
   }
 
   async function autosave(record: AutosavePayload): Promise<TaskResult> {
@@ -50,7 +50,7 @@ export function initGithubEngine(initPayload: any): StorageEngine {
     const state = getState()
     if (state.sheetStorage.status === 'task_finished') {
       custom.canMerge = true;
-      return { result: 'success', custom }
+      return { result: 'success', customState: custom }
     }
 
     custom.autosaveErr = {
@@ -63,7 +63,7 @@ export function initGithubEngine(initPayload: any): StorageEngine {
     return {
       result: 'error',
       errorMessage: state.sheetStorage.errorMessage || 'err',
-      custom
+      customState: custom
     };
   }
 
@@ -75,10 +75,10 @@ export function initGithubEngine(initPayload: any): StorageEngine {
       custom.mergeErr = {
         baseBranch, mergeState, mergeError, sessionBranch,
       }
-      return { result: 'error', errorMessage: state.mergeError?.message || 'save error', custom }
+      return { result: 'error', errorMessage: state.mergeError?.message || 'save error', customState: custom }
     } else {
       custom.canMerge = false;
-      return { result: 'success', custom }
+      return { result: 'success', customState: custom }
     }
   }
 
@@ -89,12 +89,12 @@ export function initGithubEngine(initPayload: any): StorageEngine {
 
   const engine: StorageEngine = {
     runCommand: async (cmd: Command) => {
-      switch (cmd.name) {
+      switch (cmd.type) {
         case 'init': return init(cmd.payload);
         case 'load': return load(cmd.payload as GithubFileLocation)
         case 'clearSessionBranch': return clearSessionBranch();
         default:
-          throw new Error("Unknown command in github engine: " + cmd.name)
+          throw new Error("Unknown command in github engine: " + cmd.type)
       }
     },
     runTask: async (task: Task) => {

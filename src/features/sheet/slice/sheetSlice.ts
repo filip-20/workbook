@@ -65,6 +65,7 @@ export interface SheetSlice {
   errorMessage?: string,
   sheetFile: SheetFile,
   localState: LocalState,
+  filename: string
 }
 
 const initialState: SheetSlice = {
@@ -75,6 +76,7 @@ const initialState: SheetSlice = {
     undoRedoCounter: 0,
     sheetId: 'initial',
   },
+  filename: '',
 }
 
 export const sheetSlice = createSlice({
@@ -91,10 +93,11 @@ export const sheetSlice = createSlice({
     startLoading: (state) => {
       state.state = 'loading';
     },
-    initFromJson: (state, action: PayloadAction<{ json: string, sheetId: string }>) => {
-      const { json, sheetId } = action.payload;
+    initFromJson: (state, action: PayloadAction<{ filename: string, json: string, sheetId: string }>) => {
+      const { filename, json, sheetId } = action.payload;
 
       state.sheetFile = emptySheet;
+      state.filename = filename;
       state.localState = {
         ...initialState.localState,
         sheetId
@@ -363,17 +366,17 @@ export function downloadSheet() {
     const serialized = serializeWorkbook(state.sheet.present.sheetFile)
     const url = window.URL.createObjectURL(new Blob([serialized], { type: 'application/json' }));
     const link = document.createElement('a');
-    link.setAttribute('download', 'workbook-sheet.json');
+    link.setAttribute('download', state.sheet.present.filename);
     link.href = url;
     link.click();
     link.remove();
   }
 }
 
-function initSheet(json: string, sheetId: string) {
+function initSheet(filename: string, json: string, sheetId: string) {
   return (dispatch: AppDispatch, getState: () => RootState) => {
     clearContextMemo();
-    dispatch(sheetActions.initFromJson({ json, sheetId }));
+    dispatch(sheetActions.initFromJson({filename, json, sheetId }));
   }
 }
 

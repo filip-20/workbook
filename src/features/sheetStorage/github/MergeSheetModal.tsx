@@ -1,9 +1,8 @@
 import { Button, Modal } from "react-bootstrap";
 import { useAppSelector } from "../../../app/hooks";
-//import { GhMergeError, ghStorageSelectors } from "./githubStorage";
 import { useEffect, useState } from "react";
-import { GhCustomManualSaveErrInfo, GhMergeError } from "../../../storageWorker/githubStorage/types";
 import { storageSelectors } from "../storageSlice";
+import { Gh1CustomState, Gh1MergeErr } from "../../../storageWorker/githubStorage1/types";
 
 export interface MergeSheetModalProps {
   show: boolean
@@ -11,39 +10,42 @@ export interface MergeSheetModalProps {
 }
 
 export default function MergeSheetModal(props: MergeSheetModalProps) {
-  const ghState = useAppSelector(storageSelectors.storageEngine)?.custom?.mergeErr as GhCustomManualSaveErrInfo | undefined;
+  const engine = useAppSelector(storageSelectors.storageEngine)
+  const mergeTask = useAppSelector(state => storageSelectors.lastProcessedTask(state, 'merge'))
   const [closed, setClosed] = useState(false);
+  
+  const customState = engine?.custom as Gh1CustomState
+  const mergeError = mergeTask?.result?.result === 'error' ? mergeTask.result.customError as Gh1MergeErr : undefined
+
+  
   useEffect(() => {
     setClosed(false);
-  }, [ghState?.mergeState])
+  }, [mergeError])
 
-  if (ghState === undefined) {
+  if (engine === undefined || engine.type !== 'github1' || engine.custom === undefined) {
     return <></>
   }
-
-  const state = ghState.mergeState;
-  const { mergeError } = ghState;
 
   const handleClose = () => {
     setClosed(true);
   }
 
-  const renderError = (error: GhMergeError | undefined) => {
+  const renderError = (error: Gh1MergeErr | undefined) => {
     if (error === undefined) {
       return <></>
     }
-    if (error.type === 'api_call_failed') {
+    if (error.reason === 'api_call_failed') {
       return (
         <>
-          <p>Api call{error.call !== undefined && `' ${error.call}'`} to github failed: {error.message}. Try it again.</p>
+          <p>{error.message}. Try it again.</p>
         </>
       )
     }
-    if (error.type === 'not_mergable') {
+    if (error.reason === 'not_mergable') {
       return (
         <>
           <p>Changes are <strong>not mergable</strong> to origin branch. This may be because manual changes to workbook file were made in origin branch.</p>
-          <p>To fix this problem you need resolve conflicts manually on github{error.url === undefined ? '. ' : <> at <a href={error.url}>{error.url}</a></>} </p>
+          <p>To fix this problem you need resolve conflicts manually on github{error.pullUrl === undefined ? '. ' : <> at <a target="_blank" href={error.pullUrl}>{error.pullUrl}</a></>} </p>
         </>
       )
     }
@@ -55,19 +57,12 @@ export default function MergeSheetModal(props: MergeSheetModalProps) {
         </>
       )
     }*/
-    if (error.type === 'sync_fail') {
-      return (
-        <>
-          <p>Failed to sync unsaved changes to repository before merge. Merge was not successful</p>
-        </>
-      )
-    }
     return (<p>Unknown error{error.message && <>: {error.message}</>}</p>)
   }
 
   return (
     <Modal
-      show={state === 'error' && !closed}
+      show={mergeError !== undefined && !closed}
       onHide={handleClose}
       size="lg"
       centered
@@ -76,7 +71,7 @@ export default function MergeSheetModal(props: MergeSheetModalProps) {
         <Modal.Title>Merging changes <strong>failed</strong></Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <p className="text-danger">Merging from branch <strong>{ghState.sessionBranch?.name}</strong> to <strong>{ghState.baseBranch}</strong> failed.</p>
+        <p className="text-danger">Merging from branch <strong>{customState.sessionBranch}</strong> to <strong>{customState.baseBranch}</strong> failed.</p>
         {renderError(mergeError)}
       </Modal.Body>
 

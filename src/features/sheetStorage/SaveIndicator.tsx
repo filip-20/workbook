@@ -1,5 +1,5 @@
-import { useAppSelector } from "../../app/hooks";
-import { storageSelectors } from "./storageSlice";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { storageActions, storageSelectors } from "./storageSlice";
 import { IconType } from "react-icons/lib";
 import {
   BsClock,
@@ -7,8 +7,13 @@ import {
   BsCloudCheck,
   BsCloudSlash,
   BsCloudSlashFill,
-  BsExclamationTriangleFill
+  BsExclamationTriangleFill,
+  BsInfo,
+  BsInfoCircle
 } from "react-icons/bs";
+import { UsersListApiResponse } from "../../api/githubApi/endpoints/users";
+import { Button } from "react-bootstrap";
+import { BiRefresh } from "react-icons/bi";
 
 export interface SaveIndicatorProps {
   className?: string,
@@ -28,6 +33,8 @@ export default function SaveIndicator(props: SaveIndicatorProps) {
   const queue = useAppSelector(storageSelectors.taskQueue);
   const errorMessage = useAppSelector(storageSelectors.taskError);
   const unsyncedChanges = useAppSelector(storageSelectors.unsyncedChanges);
+  const engineCustom = useAppSelector(storageSelectors.storageEngine)
+  const dispatch = useAppDispatch()
 
   // Active/error states: filled icons, idle states: regular icons
   const showOffline = (pending: number) =>
@@ -58,6 +65,7 @@ export default function SaveIndicator(props: SaveIndicatorProps) {
           <IndicatorTemplate icon={BsExclamationTriangleFill}>
             Save error
           </IndicatorTemplate>
+          <Button className="mx-3" size="sm" onClick={() => dispatch(storageActions.resume())}><BiRefresh />Retry</Button>
         </div>}
       {queueState === 'offline_paused' &&
         showOffline(queue.items.length - queue.nextIndex)}
