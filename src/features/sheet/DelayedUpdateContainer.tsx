@@ -17,7 +17,7 @@ export interface DelayedUpdateContainerProps<T extends UpdatableStateCell> {
   props: T
 }
 
-export function DelayedUpdateContainer<T extends UpdatableStateCell>({onDelayedUpdate, delay, unsyncedDataKey, component: Component, props}: DelayedUpdateContainerProps<T>) {
+export function DelayedUpdateContainer<T extends UpdatableStateCell>({ onDelayedUpdate, delay, unsyncedDataKey, component: Component, props }: DelayedUpdateContainerProps<T>) {
   const finishUpdate = useRef<{ timeout: ReturnType<typeof setTimeout>, getData: () => any } | undefined>(undefined);
   const undoRedoCounter = useAppSelector(sheetSelectors.undoRedoCounter);
   const lastUndoRedoCounter = useRef(undoRedoCounter);
@@ -30,34 +30,41 @@ export function DelayedUpdateContainer<T extends UpdatableStateCell>({onDelayedU
     const timeout = finishUpdate.current?.timeout;
     if (timeout) {
       let t = performance.now()
+      // dispatch can trigger call of onDataChangedHandler
+      // so it may either create new timeout or update getData function
       dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: false }))
-      console.log('dispatch of unsyncedChange took ', performance.now()-t);
-      //dispatch(storageActions.subUnsyncedChange())
+      // getData might be updated, here it is ignored anyway
+      console.log('dispatch of unsyncedChange took ', performance.now() - t);
       clearTimeout(timeout);
       finishUpdate.current = undefined;
     }
   }, []);
 
   const updateData = () => {
-    const { timeout, getData } = finishUpdate.current!;
+    const { timeout } = finishUpdate.current!;
     clearTimeout(timeout);
+    // dispatch can trigger call of onDataChangedHandler
+    // so it may either create new timeout or update getData function 
     dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: false }))
+    // getData might be updated
+    const { getData } = finishUpdate.current!;
     finishUpdate.current = undefined;
     onDelayedUpdate(getData)
   }
 
   const onDataChangedHandler = (getData: () => any) => {
-    //console.log('onupdatehandler ', cellId)
+    // call of this function can be triggered by dispatch call
+    // so its effects has to be considered in other functions
     if (finishUpdate.current === undefined) {
-      //console.log('onupdatehandler ', cellId, ': creating timeout')
-      //dispatch(storageActions.addUnsyncedChange())
-      let t = performance.now()
-      dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: updateData }))
-      console.log('dispatch of unsyncedChange took ', performance.now() - t);
       finishUpdate.current = {
         timeout: setTimeout(updateData, delay),
         getData
       }
+      let t = performance.now()
+      // dispatch must be called only after finishUpdate.current value was set,
+      // because it can trigger recursive call of this function
+      dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: updateData }))
+      console.log('dispatch of unsyncedChange took ', performance.now() - t);
     } else {
       finishUpdate.current.getData = getData;
     }
@@ -67,7 +74,10 @@ export function DelayedUpdateContainer<T extends UpdatableStateCell>({onDelayedU
   if (lastUndoRedoCounter.current !== undoRedoCounter) {
     const timeout = finishUpdate.current?.timeout;
     if (timeout) {
+      // dispatch can trigger call of onDataChangedHandler
+      // so it may either create new timeout or update getData function 
       dispatch(storageActions.unsyncedChange({ key: unsyncedDataKey, unsynced: false }))
+      // getData might be updated, here it is ignored anyway
       clearTimeout(timeout);
       finishUpdate.current = undefined;
     }
