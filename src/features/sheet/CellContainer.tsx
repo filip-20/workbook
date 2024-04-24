@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useRef, useState } from 'react';
 import { Row, Col } from 'react-bootstrap';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { CellLocator, sheetActions, sheetSelectors } from "./slice/sheetSlice";
@@ -6,10 +6,9 @@ import AddToolbar from './AddToolbar';
 import EditToolbar from './EditToolbar';
 import AddComment from './AddComment';
 import Comments from './Comments';
-import { storageActions } from '../sheetStorage/storageSlice';
 import styles from './CellContainer.module.scss';
 import classNames from 'classnames/dedupe';
-import { RenderPayload, getCellComponentFunction, renderCellComponent } from './cellFactory';
+import { RenderPayload, getCellComponentFunction } from './cellFactory';
 
 import config from '../../config.json';
 import { DelayedUpdateContainer } from './DelayedUpdateContainer';

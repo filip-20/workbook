@@ -64,7 +64,6 @@ export function cellContext(cell: CellLocator): (state: RootState) => CellContex
         (state: RootState) => { const prev = prevCell(cell)(state); return prev === undefined ? undefined : cellContext(prev)(state) },
         (state: RootState) => { const prev = prevCell(cell)(state); return prev === undefined ? undefined : cellContextExtension(prev)(state) },
       ], (prevContext, prevExtension) => {
-        console.log('Computing cell context of ', cell);
         return new CellContext(mergeContexts(prevContext || emptyContext, prevExtension || emptyContext))
       }
     )
@@ -102,7 +101,6 @@ export class CellContext implements LogicContext, Language {
     context.axioms.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: 0, type: 'axiom', index }))
     context.formulas.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: 0, type: 'formula', index }))
     context.theorems.forEach((s, index) => this.symbolsLUT.set(s.name, { arity: 0, type: 'theorem', index }))
-    console.log('SymbolsLut', this.symbolsLUT)
   }
   logicContext() {
     return this.context;
