@@ -129,10 +129,7 @@ function RepoExplorer(props: RepoExplorerProps) {
     return (
       <ListGroup.Item className={styles.fileItem} key={file.name}>
         <span className={styles.itemIcon}>{icon}</span>
-        {/* Using `a` instead of `Link` to force page reload. 
-            This is workaround for https://github.com/FMFI-UK-1-AIN-412/workbook/issues/40 .
-        */}
-        {link ? <a className={styles.linkStyle} style={{marginRight: '1em'}} href={link}>{file.name}</a> : file.name}
+        {link ? <Link className={styles.linkStyle} style={{marginRight: '1em'}} to={link}>{file.name}</Link> : file.name}
         {unsavedChanges() && <Badge pill bg="secondary">unmerged</Badge>}
       </ListGroup.Item>
     )
