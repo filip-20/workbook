@@ -1,3 +1,5 @@
+export const a = 42
+/*
 import { AppDispatch, RootState, store } from "../../../app/store"
 import { sheetActions } from "../../sheet/slice/sheetSlice"
 
@@ -466,7 +468,7 @@ function isSessionBranchMerged() {
   }
 }
 
-function commitRecord(record: HistoryRecord) {
+function commitRecord(record: {content: string, message: string}) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     const engineState: GhStorageState = getState().sheetStorage.storageEngine!.state
     const { owner, repo, path } = engineState.location;
@@ -537,7 +539,7 @@ function waitForMerge() {
   })
 }
 
-export function processRecord(record: HistoryRecord) {
+export function processRecord(record: {id: number, content: string, message: string}) {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     try {
       await waitForMerge();
@@ -631,4 +633,4 @@ export function processRecord(record: HistoryRecord) {
       console.log('Commited record ' + record.id);
     }
   }
-}
+}*/

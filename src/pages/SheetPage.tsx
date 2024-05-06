@@ -10,19 +10,22 @@ import Pathbar from "../features/repository/Pathbar";
 import Err404Page from "./Err404Page";
 import BranchLabel from "../features/repository/BranchLabel";
 import LoginPage from "./LoginPage";
-import SheetSettingsModal, { SettingTab } from "../features/sheet/modals/SheetSettingsModal";
+import SheetSettingsModal, { SettingTab, tabsInfo } from "../features/sheet/modals/SheetSettingsModal";
 import MergeSheetModal from "../features/sheetStorage/github/MergeSheetModal";
-import { GithubFileLocation, openSheet } from "../features/sheetStorage/github/githubStorage";
 import SaveIndicator from "../features/sheetStorage/SaveIndicator";
 import MergeButton from "../features/sheetStorage/github/MergeButton";
 import SaveErrorModal from "../features/sheetStorage/github/SaveErrorModal";
 import UndoRedoButtonGroup from "../features/sheet/UndoRedo";
 import classNames from 'classnames/dedupe';
 import styles from './SheetPage.module.scss';
+import { loadSheet, storageSelectors } from "../features/sheetStorage/storageSlice";
+import { GithubFileLocation } from "../storageWorker/githubStorage/types";
+import { downloadSheet } from "../features/sheet/slice/sheetSlice";
 
 function SheetPage() {
   const authState = useAppSelector(authSelectors.authState);
   const user = useAppSelector(authSelectors.user);
+  const iid = useAppSelector(storageSelectors.instanceId);
   const location = useLocation();
   const params = useParams();
   const { owner, repo } = params;
@@ -34,8 +37,8 @@ function SheetPage() {
   useEffect(() => {
     let lastLoaded: GithubFileLocation | undefined = undefined
     if (ghLocation.current !== undefined && JSON.stringify(ghLocation.current) !== JSON.stringify(lastLoaded)) {
-      lastLoaded = {...ghLocation.current};
-      dispatch(openSheet(ghLocation.current));
+      lastLoaded = { ...ghLocation.current };
+      dispatch(loadSheet('github1', ghLocation.current))
     }
   }, [ghLocation, dispatch]);
 
@@ -54,13 +57,13 @@ function SheetPage() {
     } else {
       ghLocation.current = { owner, repo, path: path, ref: branch };
       return (
-        <Container fluid className={classNames("w-100 m-0 p-0 bg-body",styles.sheetContainer)}>
+        <Container fluid className={classNames("w-100 m-0 p-0 bg-body", styles.sheetContainer)}>
 
           <MergeSheetModal show={mergeSheetModal} onClose={() => setMergeSheetModal(false)} />
           <SheetSettingsModal tab={settingsTab} onClose={() => setSettingsTab('NONE')} />
           <SaveErrorModal />
 
-          <div className={classNames("p-3 border-bottom d-flex align-items-center flex-wrap position-sticky bg-body",styles.sheetToolbar)}>
+          <div className={classNames("p-3 border-bottom d-flex align-items-center flex-wrap position-sticky bg-body", styles.sheetToolbar)}>
             <div style={{}}>
               <FileEarmarkRuledFill />
               <BranchLabel branch={branch} />
@@ -79,13 +82,20 @@ function SheetPage() {
                     <GearFill />
                   </Dropdown.Toggle>
                   <Dropdown.Menu>
-                    <Dropdown.Item onClick={() => setSettingsTab('KATEX_MACROS')}>Katex macros</Dropdown.Item>
+                    {Object.entries(tabsInfo)
+                      .filter(([tabName]) => tabName !== 'NONE')
+                      .map(([tabName, tabInfo]) => <Dropdown.Item key={tabName} onClick={() => setSettingsTab(tabName as SettingTab)}>{tabInfo.title}</Dropdown.Item>)
+                    }
+                    <Dropdown.Item onClick={() => dispatch(downloadSheet())}>Download sheet</Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>
               </ButtonGroup>
             </ButtonToolbar>
           </div>
-          <Sheet />
+          <Sheet
+            /* forces unmount of old sheet components on reload */
+            key={iid}
+          />
         </Container>
       )
     }

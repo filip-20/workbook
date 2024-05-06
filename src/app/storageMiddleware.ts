@@ -1,5 +1,5 @@
 import { Middleware, MiddlewareAPI, Dispatch, AnyAction } from "redux";
-import { processQueue, storageActions } from "../features/sheetStorage/sheetStorage";
+import { storageActions } from "../features/sheetStorage/storageSlice";
 import { AppDispatch, RootState } from "./store";
 
 export const storageMiddleware: Middleware =
@@ -17,18 +17,17 @@ export const storageMiddleware: Middleware =
     const res = next({...action, historyChanged});
     const state = api.getState();
     if (message !== undefined) {
-      console.log('history changed');
       const fileContent = state.sheet.present.sheetFile;
       const change = {
-        content: JSON.stringify(fileContent, null, 2), 
+        contentObj: fileContent, 
+        serialized: '', // will be serialized on worker side
         message
       }
-      api.dispatch(storageActions.enqueueChange(change));
-      if (state.sheetStorage.status === 'idle') {
-        api.dispatch(processQueue())
-      }
-    } else {
-      console.log('history NOT CHANGED')
+      api.dispatch(storageActions.enqueueTask({
+        type: 'autosave',
+        payload: change,
+        skipOnError: false
+      }));
     }
     return res;
   }
@@ -37,27 +36,27 @@ export const storageMiddleware: Middleware =
     const state = api.getState();
     const fileContent = state.sheet.present.sheetFile;
     const change = {
-      content: JSON.stringify(fileContent, null, 2), 
+      contentObj: fileContent,
+      serialized: '', // will be serialized on worker side
       message: type.slice(-4)
     }
-    api.dispatch(storageActions.enqueueChange(change));
-    if (state.sheetStorage.status === 'idle') {
-      api.dispatch(processQueue())
-    }
+    api.dispatch(storageActions.enqueueTask({
+      type: 'autosave',
+      payload: change,
+      skipOnError: false,
+    }));
     return res;
   }
 
-  if (type === 'sheetStorage/processResult' 
-      || type === 'sheetStorage/resume'
-  ) {
+  if (type === 'storage/processTaskResult') {
     const res = next(action);
-    api.dispatch(processQueue())
+    api.dispatch(storageActions.processQueue())
     return res;
   }
 
   if (type === 'browser/online' || type === 'browser/offline') {
     const res = next(action);
-    api.dispatch(processQueue());
+    api.dispatch(storageActions.processQueue());
     return res;
   }
 

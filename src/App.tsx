@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-
 import "bootstrap/dist/css/bootstrap.min.css";
-
 import Navigation from './pages/Navigation';
 import SheetPage from './pages/SheetPage';
 import RepoPage from './pages/RepoPage';
@@ -26,7 +24,6 @@ function App() {
 
   useEffect(() => {
     if (user && tokenState === 'tokenTested' && accessToken) {
-      console.log('saving user to localstorage');
       saveAuthState(user, accessToken);
     }
   }, [user, tokenState])

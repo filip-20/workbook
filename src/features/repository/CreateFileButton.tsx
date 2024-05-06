@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Alert, Button, Form, Modal, Spinner } from "react-bootstrap";
 import { useReposCreateOrUpdateFileContentsMutation } from "../../api/githubApi/endpoints/repos";
 import { githubApiErrorMessage } from "../../api/githubApi/errorMessage";
-import { pathURIEncode } from "./RepoExplorer";
+import { pathURIEncode } from "../../storageWorker/githubStorage/utils";
 
 export interface CreateFileButtonProps {
   children?: React.ReactNode,

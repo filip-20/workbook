@@ -5,7 +5,8 @@ import { authSelectors } from "../features/auth/authSlice";
 import { useAppSelector } from "../app/hooks";
 import Err404Page from "./Err404Page";
 import LoginPage from "./LoginPage";
-import RepoExplorer, { pathURIEncode } from "../features/repository/RepoExplorer";
+import RepoExplorer from "../features/repository/RepoExplorer";
+import { pathURIEncode } from "../storageWorker/githubStorage/utils";
 
 
 /**

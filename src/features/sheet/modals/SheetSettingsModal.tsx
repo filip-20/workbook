@@ -1,13 +1,14 @@
 import { markdown } from "@codemirror/lang-markdown";
 import { useState } from "react";
-import { Alert, Button, Modal } from "react-bootstrap";
+import { Alert, Button, Form, Modal, Row } from "react-bootstrap";
 import CodeMirror from '@uiw/react-codemirror';
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { sheetActions, sheetSelectors, SheetSettings } from "../slice/sheetSlice";
 import katex from "katex";
 import React from "react";
+import { storageSelectors } from "../../sheetStorage/storageSlice";
 
-export type SettingTab = 'NONE' | 'KATEX_MACROS';
+export type SettingTab = 'NONE' | 'KATEX_MACROS' | 'github' | 'debug';
 
 export interface SheetSettingTabProps {
   settings: SheetSettings,
@@ -21,14 +22,16 @@ export interface SheetSettingsModalProps {
 
 type TabsInfo = {
   [key in SettingTab]: {
-    title: string,
+    title: string, // menu entry name
     tabComponent: (props: SheetSettingTabProps) => JSX.Element,
   }
 }
 
-const tabsInfo: TabsInfo = {
+export const tabsInfo: TabsInfo = {
   'NONE': { title: '', tabComponent: () => <></> },
-  'KATEX_MACROS': { title: 'katex makrá', tabComponent: KatexMacrosTab }
+  'KATEX_MACROS': { title: 'Katex macros', tabComponent: KatexMacrosTab },
+  'github': { title: 'Github settings', tabComponent: GithubSettingsTab },
+  'debug': { title: 'Debug info', tabComponent: DebugInfoTab},
 }
 
 function copyObj(obj: any) {
@@ -43,7 +46,7 @@ export default function SheetSettingsModal(props: SheetSettingsModalProps) {
 
   const dispatch = useAppDispatch();
 
-  console.log('render ', settings)
+  //console.log('render ', settings)
 
   const handleSave = (s: SheetSettings) => {
     if (JSON.stringify(settings) !== JSON.stringify(s)) {
@@ -55,10 +58,10 @@ export default function SheetSettingsModal(props: SheetSettingsModalProps) {
   return (
     <Modal show={tab !== 'NONE'} size="lg" fullscreen="sm-down" onHide={() => onClose()}>
       <Modal.Header closeButton>
-        <Modal.Title>Nastavenia aktuálneho hárku</Modal.Title>
+        <Modal.Title>Current workbook settings</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {React.createElement(tabInfo.tabComponent, { settings: copyObj(settings), onSave: handleSave})}
+        {React.createElement(tabInfo.tabComponent, { settings: copyObj(settings), onSave: handleSave })}
       </Modal.Body>
     </Modal>
   )
@@ -75,7 +78,7 @@ function KatexMacrosTab(props: SheetSettingTabProps) {
         globalGroup: true,
         macros: m,
       });
-      
+
       setErr(undefined);
       console.log(m)
       props.settings.katexMacros = macrosDef;
@@ -94,7 +97,7 @@ function KatexMacrosTab(props: SheetSettingTabProps) {
 
   return (
     <>
-      <h5>Katex makrá</h5>
+      <h5>Katex macros</h5>
       <CodeMirror
         value={props.settings.katexMacros}
         onChange={(value) => setMacrosDef(value)}
@@ -102,7 +105,52 @@ function KatexMacrosTab(props: SheetSettingTabProps) {
       />
       <hr />
       {err !== undefined && <Alert variant="danger">{err}</Alert>}
-      <Button disabled={macrosDef === props.settings.katexMacros} className="float-end" variant="success" onClick={handleSave}>Uložiť</Button>
+      <Button disabled={macrosDef === props.settings.katexMacros} className="float-end" variant="success" onClick={handleSave}>Save</Button>
+    </>
+  )
+}
+
+function GithubSettingsTab(props: SheetSettingTabProps) {
+  const [editBranch, setEditBranch] = useState(props.settings.github?.editBranch || '')
+  const [handinBranch, setHandinBranch] = useState(props.settings.github?.handinBranch || '')
+
+  const handleSave = () => {
+    props.settings.github = {
+      editBranch, handinBranch
+    }
+    props.onSave(props.settings);
+  }
+
+  return (
+    <>
+      <h5>Github settings</h5>
+      <Form>
+        <Row className="mb-3">
+          <Form.Group>
+            <Form.Label>Editing branch</Form.Label>
+            <Form.Control type="text" value={editBranch} onChange={e => setEditBranch(e.target.value)} />
+            <Form.Label>Hand in branch</Form.Label>
+            <Form.Control type="text" value={handinBranch} onChange={e => setHandinBranch(e.target.value)} />
+          </Form.Group>
+        </Row>
+        <Button variant="success" type="submit" onClick={handleSave}>Save</Button>
+      </Form>
+    </>
+  )
+}
+
+function DebugInfoTab(props: SheetSettingTabProps) {
+  const storageEngineInfo = useAppSelector(storageSelectors.storageEngine)
+  return (
+    <>
+      <Form>
+        <Row className="mb-3">
+          <Form.Group className="mb-3">
+            <Form.Label>Storage engine info</Form.Label>
+            <Form.Control readOnly as="textarea" rows={8} value={JSON.stringify(storageEngineInfo, null, 2)} />
+          </Form.Group>
+        </Row>
+      </Form>
     </>
   )
 }

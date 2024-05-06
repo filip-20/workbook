@@ -1,5 +1,39 @@
 import { SheetFile } from "./sheetSlice";
 
+export function serializeWorkbook(workbook: SheetFile) {
+  return JSON.stringify(workbook, null, 2)
+}
+
+export function deserializeWorkbook(workbook: string)
+  : { result: 'success', sheetFile: SheetFile }
+  | { result: 'error', message: string } {
+  let sheetFile;
+  try {
+    sheetFile = JSON.parse(workbook);
+    if (typeof sheetFile !== 'object') {
+      return {
+        result: 'error',
+        message: `Parsed JSON has to be object, it is ${typeof sheetFile}`
+      }
+    }
+  } catch (e) {
+    const syntaxErr = e as SyntaxError
+    return {
+      result: 'error',
+      message: `JSON parse failed: ${syntaxErr}`
+    }
+  }
+  const { passed, error } = testSheetIntegrity(sheetFile);
+  if (passed) {
+    return { result: 'success', sheetFile }
+  } else {
+    return {
+      result: 'error',
+      message: error!
+    }
+  }
+}
+
 export function testSheetIntegrity(sheet: SheetFile): { passed: boolean, error?: string } {
   let error = undefined;
 
