@@ -1,13 +1,13 @@
 {
   "githubApi": {
-    "clientId": "ab1620a970a08360cb9f"
+    "clientId": "e7bc1d65d3eccec0fe1f"
   },
   "backend": {
-    "authUrl": "https://courseware.dai.fmph.uniba.sk/services/lpi-workbook-auth-dev/get_access_token"
+    "authUrl": "https://courseware.dai.fmph.uniba.sk/services/lpi-workbook-auth/get_access_token"
   },
   "frontend": {
     "basePath": "/workbook",
-    "baseUrl": "https://4zzz.github.io/workbook",
+    "baseUrl": "https://fmfi-uk-1-ain-412.github.io/workbook",
     "cellUpdateIntervalSec": 30
   }
 }
