@@ -23,7 +23,7 @@ function TextCell ({ cellLoc, isEdited, katexMacros, requestEditMode, onDataChan
   const contentMutable = useRef(data);
   const editText = (
     <div
-      className={`${styles.textEdit} ${styles.cmMinHeight}`}
+      className={`${styles.textEdit} small ${styles.cmMinHeight}`}
     >
       <TextEditor
         value={content}
@@ -39,8 +39,8 @@ function TextCell ({ cellLoc, isEdited, katexMacros, requestEditMode, onDataChan
           onDataChanged(() => contentMutable.current);
         }}
         onKeyDownCapture={e => {
-          // exit edit mode with Ctrl+Enter
-          if (e.key === 'Enter' && e.ctrlKey) {
+          // exit edit mode with Ctrl+Enter or Cmd+Enter
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
             requestEditMode(false);
             e.preventDefault();
           }
